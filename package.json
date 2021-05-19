@@ -1,6 +1,6 @@
 {
   "name": "svelte-toc",
-  "description": "Clickable, interactive table of contents component for Svelte sites",
+  "description": "Sticky responsive table of contents component for SvelteKit projects",
   "author": "Janosh Riebesell <janosh.riebesell@gmail.com>",
   "homepage": "https://svelte-toc.netlify.app",
   "repository": "https://github.com/janosh/svelte-toc",

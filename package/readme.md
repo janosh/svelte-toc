@@ -33,11 +33,13 @@ In a SvelteKit project:
 </main>
 ```
 
-`Toc.svelte` needs access to the `page` store to be able to subscribe to route changes and then update the list of headings on route changes. Since `page` is imported differently in SvelteKit and Sapper, I went with the SvelteKit way. If you'd like to use this component in a Sapper app, let me know and I'll turn `page` into a prop.
+`Toc.svelte` needs access to the `page` store to be able to update the table of contents on route changes. Since `page` is imported differently in SvelteKit and Sapper, I went with the SvelteKit way. If you'd like to use this component in a Sapper app, let me know and I'll turn `page` into a prop.
 
 ## Props
 
 Full list of props/bindable variables for this component:
+
+<div class="table">
 
 | name               | default                                             | description                                                                                                                                                                                                                                                     |
 | :----------------- | :-------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,6 +47,8 @@ Full list of props/bindable variables for this component:
 | `getTitle`         | `(node) => node.innerText`                          | Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.                                                                                                                                                   |
 | `getDepth`         | `(node) => Number(node.nodeName[1])`                | Function that receives each DOM node matching `headingSelector`  and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).                                                                                                   |
 | `throttleInterval` | `300`                                               | Time duration in milliseconds that determines the minimum time between calls to the `scrollHandler` which updates the currently active heading while scrolling. `300` is a sensible default and probably doesn't need to be changed.                            |
+
+</div>
 
 ## Styling
 
@@ -66,9 +70,9 @@ For example:
 
 ```svelte
 <Toc
-  --hitsBgColor="var(--bodyBg)"
-  --inputColor="var(--textColor)"
-  --iconColor="var(--linkColor)" />
+  --toc-desktop-margin="10em 0 0 0"
+  --toc-desktop-sticky-top="3em"
+  --toc-desktop-width="15em" />
 ```
 
 ## Want to contribute?
@@ -81,3 +85,10 @@ cd svelte-toc
 yarn
 yarn workspace site dev
 ```
+
+## Examples
+
+Used in production on these sites:
+
+- [Svelte Algolia](https://svelte-algolia.netlify.app)
+- [Svelte MultiSelect](https://svelte-multiselect.netlify.app)

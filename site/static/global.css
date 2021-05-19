@@ -8,6 +8,7 @@ body {
   max-width: 1000px;
   margin: auto;
   line-height: 3ex;
+  overflow-x: hidden;
 }
 main {
   max-width: 50em;
@@ -51,6 +52,9 @@ blockquote {
   margin-top: 2em;
 }
 
+div.table {
+  overflow: scroll;
+}
 table {
   border-collapse: collapse;
   width: 100%;

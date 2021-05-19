@@ -1,13 +1,16 @@
 <script>
   import Toc from '../../../package/src/Toc.svelte'
   import Docs from '../docs.svx'
+  import GitHubCorner from '../components/GitHubCorner.svelte'
 </script>
 
-<Toc headingSelector={Array.from({ length: 5 }, (_, i) => `main h` + (i + 2))} />
+<Toc headingSelector={[...Array(5).keys()].map((i) => `main h${i + 2}`)} --toc-mobile-bg-color="black" --toc-mobile-btn-color="white" --toc-desktop-margin="12em 0 0 0" />
+
+<GitHubCorner href="https://github.com/janosh/svelte-toc" />
 
 <main>
 
-# ![Logo](/favicon.svg) Svelte-ToC
+# ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/site/static/favicon.svg) &nbsp;Svelte-ToC
 
 <Docs />
 
