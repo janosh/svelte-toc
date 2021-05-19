@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="site/static/banner.svg" alt="Svelte ToC" height=150>
+  <img src="site/static/favicon.svg" alt="Svelte ToC" height=150>
 </p>
 
 # Svelte ToC
@@ -7,7 +7,7 @@
 <!-- remove above in docs -->
 
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/496f6094-b6b2-4929-ab16-ba2fdc61d57e/deploy-status)](https://app.netlify.com/sites/svelte-toc/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/0238699e-17a8-4423-85de-a5ca30baff0d/deploy-status)](https://app.netlify.com/sites/svelte-toc/deploys)
 
 [Sticky Active Smooth Responsive ToC](https://janosh.dev/blog/sticky-active-smooth-responsive-toc) for SvelteKit projects.
 

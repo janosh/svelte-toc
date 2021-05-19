@@ -6,7 +6,7 @@ node_modules
 build
 
 # deploy config
-site/.netlify
+.netlify
 
 # auto-generated
 site/src/docs.svx
