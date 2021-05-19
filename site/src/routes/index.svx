@@ -1,0 +1,41 @@
+<script>
+  import Toc from '../../../package/src/Toc.svelte'
+  import Docs from '../docs.svx'
+</script>
+
+<Toc headingSelector={Array.from({ length: 5 }, (_, i) => `main h` + (i + 2))} />
+
+<main>
+
+# ![Logo](/favicon.svg) Svelte-ToC
+
+<Docs />
+
+</main>
+
+<style>
+  h1 {
+    font-size: calc(1em + 3vw);
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 3em auto;
+    gap: 1em;
+    place-content: center;
+  }
+  span {
+    padding: 1pt 5pt;
+    border-radius: 4pt;
+    vertical-align: middle;
+    background: #0075ff;
+  }
+  ul li {
+    padding: 5pt;
+  }
+  h1 img {
+    height: 1.2em;
+    vertical-align: -10pt;
+    padding-right: 4pt;
+  }
+</style>

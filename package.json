@@ -1,0 +1,15 @@
+{
+  "name": "svelte-toc",
+  "description": "Clickable, interactive table of contents component for Svelte sites",
+  "author": "Janosh Riebesell <janosh.riebesell@gmail.com>",
+  "homepage": "https://svelte-toc.netlify.app",
+  "repository": "https://github.com/janosh/svelte-toc",
+  "license": "MIT",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "package",
+    "site"
+  ]
+}

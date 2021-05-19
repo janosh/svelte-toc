@@ -1,0 +1,12 @@
+# dependencies
+node_modules
+
+# production build
+.svelte-kit
+build
+
+# deploy config
+site/.netlify
+
+# auto-generated
+site/src/docs.svx

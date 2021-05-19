@@ -1,0 +1,30 @@
+{
+  "name": "svelte-toc",
+  "description": "Clickable, interactive table of contents component for Svelte sites",
+  "author": "Janosh Riebesell <janosh.riebesell@gmail.com>",
+  "homepage": "https://svelte-toc.netlify.app",
+  "repository": "https://github.com/janosh/svelte-toc",
+  "bugs": {
+    "url": "https://github.com/janosh/svelte-toc/issues"
+  },
+  "license": "MIT",
+  "version": "0.1.0",
+  "type": "module",
+  "svelte": "src/Toc.svelte",
+  "keywords": [
+    "svelte",
+    "toc",
+    "table of contents",
+    "component"
+  ],
+  "devDependencies": {
+    "svelte": "^3.38.2",
+    "eslint": "^7.25.0",
+    "eslint-plugin-svelte3": "^3.2.0",
+    "prettier": "^2.2.1",
+    "prettier-plugin-svelte": "^2.2.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

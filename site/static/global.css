@@ -1,0 +1,64 @@
+body {
+  background: #090019;
+  padding: 2em;
+  font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  margin: auto;
+  color: #eee;
+  display: flex;
+  max-width: 1000px;
+  margin: auto;
+  line-height: 3ex;
+}
+main {
+  max-width: 50em;
+  margin: auto;
+  margin-bottom: 3em;
+  width: 100%;
+}
+ul li {
+  margin: 1ex 0;
+}
+a {
+  color: cornflowerblue;
+  text-decoration: none;
+}
+a:hover {
+  color: orange;
+}
+code {
+  padding: 1pt 3pt;
+  border-radius: 3pt;
+  font-size: 1.3em;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+pre code {
+  background-color: transparent;
+}
+pre {
+  border-radius: 1ex;
+  font-size: 0.7em;
+}
+a code {
+  color: white;
+}
+blockquote {
+  border-left: 3pt solid cornflowerblue;
+  padding: 1px 8pt;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 1em 0;
+}
+:is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 2em;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+table :is(td, th) {
+  border: 1px solid gray;
+  padding: 0.4em 0.8em;
+}
+tbody tr:nth-child(odd) {
+  background: black;
+}
