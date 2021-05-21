@@ -6,7 +6,7 @@
 
 <Toc headingSelector={[...Array(5).keys()].map((i) => `main h${i + 2}`)} --toc-mobile-bg-color="black" --toc-mobile-btn-color="white" --toc-desktop-margin="12em 0 0 0" />
 
-<GitHubCorner href="https://github.com/janosh/svelte-toc" />
+<GitHubCorner href="https://github.com/janosh/svelte-toc" --color="black" --bg="white" />
 
 <main>
 
