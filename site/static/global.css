@@ -4,11 +4,13 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   margin: auto;
   color: #eee;
+  line-height: 3ex;
+  overflow-x: hidden;
+}
+div#svelte {
   display: flex;
   max-width: 1000px;
   margin: auto;
-  line-height: 3ex;
-  overflow-x: hidden;
 }
 main {
   max-width: 50em;
@@ -48,7 +50,7 @@ blockquote {
   background: rgba(255, 255, 255, 0.2);
   margin: 1em 0;
 }
-:is(h1, h2, h3, h4, h5, h6) {
+:is(h2, h3, h4, h5, h6) {
   margin-top: 2em;
 }
 
@@ -67,19 +69,13 @@ tbody tr:nth-child(odd) {
   background: black;
 }
 
-/* styling links added by rehype-autolink-headings */
-:where(h1, h2, h3, h4, h5, h6) a {
+/* style links added by rehype-autolink-headings, see svelte.config.js */
+:where(h2, h3, h4, h5, h6) a {
   opacity: 0;
   transition: 0.3s;
-  /* https://primer.style/octicons/link-16 */
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'><path d='M7.775 3.275a.75.75 0 0 0 1.06 1.06l1.25-1.25a2 2 0 1 1 2.83 2.83l-2.5 2.5a2 2 0 0 1-2.83 0 .75.75 0 0 0-1.06 1.06 3.5 3.5 0 0 0 4.95 0l2.5-2.5a3.5 3.5 0 0 0-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 0 1 0-2.83l2.5-2.5a2 2 0 0 1 2.83 0 .75.75 0 0 0 1.06-1.06 3.5 3.5 0 0 0-4.95 0l-2.5 2.5a3.5 3.5 0 0 0 4.95 4.95l1.25-1.25a.75.75 0 0 0-1.06-1.06l-1.25 1.25a2 2 0 0 1-2.83 0z'/></svg>")
-    no-repeat;
-  padding-left: 8px;
-  padding-left: 12pt;
   margin-left: 4pt;
-  vertical-align: sub;
   background-size: contain;
 }
-:where(h1, h2, h3, h4, h5, h6):hover a {
+:where(h2, h3, h4, h5, h6):hover a {
   opacity: 1;
 }

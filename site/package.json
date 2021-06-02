@@ -20,6 +20,7 @@
     "@sveltejs/kit": "^1.0.0-next.99",
     "eslint": "^7.25.0",
     "eslint-plugin-svelte3": "^3.2.0",
+    "hastscript": "^7.0.1",
     "mdsvex": "^0.9.3",
     "prettier": "^2.2.1",
     "prettier-plugin-svelte": "^2.2.0",
