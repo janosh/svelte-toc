@@ -9,8 +9,16 @@
 
   export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
   export let getTitle = (node) => node.innerText
+  export let getSlug = (node) => node.id
   export let getDepth = (node) => Number(node.nodeName[1])
   export let throttleInterval = 300
+  // One of 'replace'|'push' for replacing/appending the current browser history
+  // state every time the ToC is clicked. Unused if getSlug() returned a falsy value
+  // for a given heading.
+  export let historyMode = `replace`
+
+  if (![`replace`, `push`].includes(historyMode))
+    console.error(`historyMode must be one of 'replace'|'push', got ${historyMode}`)
 
   function accumulateOffsetTop(el, totalOffset = 0) {
     while (el) {
@@ -54,16 +62,17 @@
 
     headings = nodes.map((node, idx) => ({
       title: getTitle(node),
+      slug: getSlug(node),
       depth: depths[idx] - minDepth,
     }))
     scrollHandler()
   }
 
   // compute list of HTML headings on mount and on route changes
-  if (typeof window !== `undefined`) page.subscribe(handleRouteChange)
-  onMount(() => {
-    handleRouteChange()
-  })
+  if (typeof window !== `undefined`) {
+    page.subscribe(handleRouteChange)
+  }
+  onMount(handleRouteChange)
 </script>
 
 <svelte:window on:scroll={scrollHandler} bind:innerWidth={windowWidth} />
@@ -79,13 +88,14 @@
   {#if open || windowWidth > 1000}
     <nav transition:blur>
       <h2>Contents</h2>
-      {#each headings as { title, depth }, idx}
+      {#each headings as { title, depth, slug }, idx}
         <li
           tabindex={idx + 1}
           style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
           class:active={activeHeading === idx}
           on:click={() => {
             open = false
+            if (slug) history[`${historyMode}State`](null, null, `#${slug}`)
             nodes[idx].scrollIntoView({ behavior: `smooth`, block: `center` })
           }}>
           {title}
