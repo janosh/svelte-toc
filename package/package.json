@@ -8,7 +8,7 @@
     "url": "https://github.com/janosh/svelte-toc/issues"
   },
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "svelte": "src/Toc.svelte",
   "keywords": [
@@ -18,11 +18,11 @@
     "component"
   ],
   "devDependencies": {
-    "svelte": "^3.38.2",
     "eslint": "^7.25.0",
     "eslint-plugin-svelte3": "^3.2.0",
     "prettier": "^2.2.1",
-    "prettier-plugin-svelte": "^2.2.0"
+    "prettier-plugin-svelte": "^2.2.0",
+    "svelte": "^3.38.2"
   },
   "publishConfig": {
     "access": "public"
