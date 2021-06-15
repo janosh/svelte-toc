@@ -9,51 +9,13 @@
 
   export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
   export let getTitle = (node) => node.innerText
-  export let getSlug = (node) => node.id
   export let getDepth = (node) => Number(node.nodeName[1])
-  export let throttleInterval = 300
-  // One of 'replace'|'push' for replacing/appending the current browser history
-  // state every time the ToC is clicked. Unused if getSlug() returned a falsy value
-  // for a given heading.
-  export let historyMode = `replace`
-
-  if (![`replace`, `push`].includes(historyMode))
-    console.error(`historyMode must be one of 'replace'|'push', got ${historyMode}`)
-
-  function accumulateOffsetTop(el, totalOffset = 0) {
-    while (el) {
-      totalOffset += el.offsetTop - el.scrollTop + el.clientTop
-      el = el.offsetParent
-    }
-    return totalOffset
-  }
-
-  function throttle(callback, limit) {
-    // execute `callback` at most one every `limit` milliseconds
-    let wait = false
-    return function () {
-      if (!wait) {
-        callback.call()
-        wait = true
-        setTimeout(() => (wait = false), limit)
-      }
-    }
-  }
 
   let windowWidth
   let open = false
   let activeHeading = undefined
   let headings = []
   let nodes = []
-  const scrollHandler = throttle(() => {
-    // Offsets need to be recomputed because lazily-loaded
-    // content may increase offsets as user scrolls down.
-    const offsets = nodes.map((el) => accumulateOffsetTop(el))
-    const activeIndex = offsets.findIndex(
-      (offset) => offset > window.scrollY + 0.6 * window.innerHeight
-    )
-    activeHeading = activeIndex === -1 ? headings.length - 1 : activeIndex - 1
-  }, throttleInterval)
 
   function handleRouteChange() {
     nodes = [...document.querySelectorAll(headingSelector)]
@@ -62,20 +24,30 @@
 
     headings = nodes.map((node, idx) => ({
       title: getTitle(node),
-      slug: getSlug(node),
       depth: depths[idx] - minDepth,
     }))
-    scrollHandler()
   }
 
-  // compute list of HTML headings on mount and on route changes
+  // (re-)compute list of HTML headings on mount and on route changes
   if (typeof window !== `undefined`) {
     page.subscribe(handleRouteChange)
   }
-  onMount(handleRouteChange)
+  onMount(() => {
+    const observer = new IntersectionObserver(
+      // callback receives all observed nodes whose intersection changed, we only need the first
+      ([entry]) => {
+        activeHeading = entry.target // assign intersecting node to activeHeading
+      },
+      { threshold: [1] } // only consider heading as intersecting once it fully entered viewport
+    )
+
+    nodes.map((node) => observer.observe(node))
+    handleRouteChange()
+    return () => nodes.map((node) => observer.unobserve(node))
+  })
 </script>
 
-<svelte:window on:scroll={scrollHandler} bind:innerWidth={windowWidth} />
+<svelte:window bind:innerWidth={windowWidth} />
 
 <aside use:onClickOutside={() => (open = false)} class="toc">
   {#if !open}
@@ -92,11 +64,10 @@
         <li
           tabindex={idx + 1}
           style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
-          class:active={activeHeading === idx}
+          class:active={activeHeading === nodes[idx]}
           on:click={() => {
             open = false
-            if (slug) history[`${historyMode}State`](null, null, `#${slug}`)
-            nodes[idx].scrollIntoView({ behavior: `smooth`, block: `center` })
+            nodes[idx].scrollIntoView({ behavior: `smooth`, block: `start` })
           }}>
           {title}
         </li>

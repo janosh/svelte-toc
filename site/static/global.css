@@ -7,6 +7,9 @@ body {
   line-height: 3ex;
   overflow-x: hidden;
 }
+* {
+  scroll-margin-top: 100px;
+}
 div#svelte {
   display: flex;
   max-width: 1000px;
@@ -54,27 +57,11 @@ blockquote {
   margin-top: 2em;
 }
 
-div.table {
-  overflow: scroll;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-}
-table :is(td, th) {
-  border: 1px solid gray;
-  padding: 0.4em 0.8em;
-}
-tbody tr:nth-child(odd) {
-  background: black;
-}
-
 /* style links added by rehype-autolink-headings, see svelte.config.js */
 :where(h2, h3, h4, h5, h6) a {
-  opacity: 0;
   transition: 0.3s;
   margin-left: 4pt;
-  background-size: contain;
+  opacity: 0;
 }
 :where(h2, h3, h4, h5, h6):hover a {
   opacity: 1;

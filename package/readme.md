@@ -39,18 +39,17 @@ In a SvelteKit project:
 
 Full list of props/bindable variables for this component:
 
-<div class="table">
+- `headingSelector` (`str[]`, default: ``[...Array(6).keys()].map(i => `main h${i + 1}`)``): String array of CSS-like selectors that should return all headings to list in ToC. Will be passed to `[...document.querySelectorAll(headingSelector)]` so you can try out selectors in the dev console of your live page to make sure they return what you want.
+- `getTitle` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
+- `getDepth` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 
-| name               | default                                             | description                                                                                                                                                                                                                                                     |
-| :----------------- | :-------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `headingSelector`  | ``[...Array(6).keys()].map(i => `main h${i + 1}`)`` | String array of CSS-like selector that should return all headings to list in ToC. Will be passed to `[...document.querySelectorAll(headingSelector)]` so you can try out selectors in the dev console of your live page to make sure they return what you want. |
-| `getTitle`         | `(node) => node.innerText`                          | Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.                                                                                                                                                   |
-| `getSlug`          | `(node) => node.id`                                 | Function that receives each DOM node matching `headingSelector` and returns the slug to append to the site's URL in the address bar when the corresponding heading is clicked in the ToC.                                                                       |
-| `getDepth`         | `(node) => Number(node.nodeName[1])`                | Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).                                                                                                    |
-| `throttleInterval` | `300`                                               | Time duration in milliseconds that determines the minimum time between calls to the `scrollHandler` which updates the currently active heading while scrolling. `300` is a sensible default and probably doesn't need to be changed.                            |
-| `historyMode`      | `'replace'`                                         | Either `'replace'` or `'push'` if you want clicks on headings to replace or append new states to the browser history. Used only when `getSlug` returned a truthy slug.                                                                                          |
+To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
-</div>
+```css
+* {
+  scroll-margin-top: 100px;
+}
+```
 
 ## Styling
 
