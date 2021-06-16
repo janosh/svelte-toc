@@ -10,10 +10,10 @@
   export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
   export let getTitle = (node) => node.innerText
   export let getDepth = (node) => Number(node.nodeName[1])
+  export let activeHeading = null
+  export let open = false
 
   let windowWidth
-  let open = false
-  let activeHeading = undefined
   let headings = []
   let nodes = []
 
