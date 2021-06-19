@@ -8,10 +8,14 @@
   import MenuIcon from './MenuIcon.svelte'
 
   export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
-  export let getTitle = (node) => node.innerText
-  export let getDepth = (node) => Number(node.nodeName[1])
+  export let getHeadingTitles = (node) => node.innerText
+  export let getHeadingLevels = (node) => Number(node.nodeName[1])
   export let activeHeading = null
   export let open = false
+  export let title = `Contents`
+  export let openButtonLabel = `Open table of contents`
+  export let breakpoint = 1000
+  export let flashClickedHeadingsFor = 1000
 
   let windowWidth
   let headings = []
@@ -19,11 +23,11 @@
 
   function handleRouteChange() {
     nodes = [...document.querySelectorAll(headingSelector)]
-    const depths = nodes.map(getDepth)
+    const depths = nodes.map(getHeadingLevels)
     const minDepth = Math.min(...depths)
 
     headings = nodes.map((node, idx) => ({
-      title: getTitle(node),
+      title: getHeadingTitles(node),
       depth: depths[idx] - minDepth,
     }))
   }
@@ -49,25 +53,37 @@
 
 <svelte:window bind:innerWidth={windowWidth} />
 
-<aside use:onClickOutside={() => (open = false)} class="toc">
+<aside
+  use:onClickOutside={() => (open = false)}
+  class="toc"
+  class:desktop={windowWidth > breakpoint}
+  class:mobile={windowWidth < breakpoint}>
   {#if !open}
-    <button
-      on:click|preventDefault={() => (open = !open)}
-      aria-label="Open table of contents">
+    <button on:click|preventDefault={() => (open = !open)} aria-label={openButtonLabel}>
       <MenuIcon width="1em" />
     </button>
   {/if}
-  {#if open || windowWidth > 1000}
+  {#if open || windowWidth > breakpoint}
     <nav transition:blur>
-      <h2>Contents</h2>
-      {#each headings as { title, depth, slug }, idx}
+      {#if title}
+        <h2>{title}</h2>
+      {/if}
+      {#each headings as { title, depth }, idx}
         <li
           tabindex={idx + 1}
           style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
           class:active={activeHeading === nodes[idx]}
           on:click={() => {
             open = false
-            nodes[idx].scrollIntoView({ behavior: `smooth`, block: `start` })
+            const heading = nodes[idx]
+            heading.scrollIntoView({ behavior: `smooth`, block: `start` })
+            if (flashClickedHeadingsFor) {
+              heading.classList.add(`toc-clicked`)
+              setTimeout(
+                () => heading.classList.remove(`toc-clicked`),
+                flashClickedHeadingsFor
+              )
+            }
           }}>
           {title}
         </li>
@@ -117,34 +133,30 @@
   nav > h2 {
     margin-top: 0;
   }
-  @media (max-width: 1000px) {
-    /* mobile styles */
-    aside {
-      position: fixed;
-      bottom: 1em;
-      right: 1em;
-    }
-    nav {
-      width: var(--toc-mobile-width, 12em);
-      bottom: -1em;
-      right: 0;
-      z-index: -1;
-      background-color: var(--toc-mobile-bg-color, white);
-      margin: 0 1em;
-    }
+
+  aside.toc.mobile {
+    position: fixed;
+    bottom: 1em;
+    right: 1em;
   }
-  @media (min-width: 1001px) {
-    /* desktop styles */
-    aside {
-      width: var(--toc-desktop-width, 12em);
-      margin: var(--toc-desktop-margin, 0);
-    }
-    nav {
-      position: sticky;
-      top: var(--toc-desktop-sticky-top, 2em);
-    }
-    aside > button {
-      display: none;
-    }
+  aside.toc.mobile > nav {
+    width: var(--toc-mobile-width, 12em);
+    bottom: -1em;
+    right: 0;
+    z-index: -1;
+    background-color: var(--toc-mobile-bg-color, white);
+    margin: 0 1em;
+  }
+
+  aside.toc.desktop {
+    width: var(--toc-desktop-width, 12em);
+    margin: var(--toc-desktop-margin, 0);
+  }
+  aside.toc.desktop > nav {
+    position: sticky;
+    top: var(--toc-desktop-sticky-top, 2em);
+  }
+  aside.toc.desktop > button {
+    display: none;
   }
 </style>

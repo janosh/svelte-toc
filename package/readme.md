@@ -40,10 +40,23 @@ In a SvelteKit project:
 Full list of props/bindable variables for this component:
 
 - `headingSelector` (`str[]`, default: ``[...Array(6).keys()].map(i => `main h${i + 1}`)``): String array of CSS-like selectors that should return all headings to list in ToC. Will be passed to `[...document.querySelectorAll(headingSelector)]` so you can try out selectors in the dev console of your live page to make sure they return what you want.
-- `getTitle` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
-- `getDepth` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
-- `open` (`boolean`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
+- `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
+- `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
+- `title` (`str`, default: `'Contents'`): ToC title to display above the list of headings. Set empty string to hide.
+- `openButtonLabel` (`str`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
+- `breakpoint` (`int`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
+- `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
 - `activeHeading` (`DOMNode`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
+- `flashClickedHeadingsFor` (`int`, default: `1000`): How long a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC finished scrolling them into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
+
+    ```css
+    :is(h2, h3, h4, h5, h6) {
+      transition: 0.3s;
+    }
+    .toc-clicked {
+      color: cornflowerblue;
+    }
+    ```
 
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
