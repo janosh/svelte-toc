@@ -1,5 +1,5 @@
 <script>
-  import Toc from '../../../package/src/Toc.svelte'
+  import Toc from '../lib/Toc.svelte'
   import Docs from '../docs.svx'
   import GitHubCorner from '../components/GitHubCorner.svelte'
 </script>
@@ -10,7 +10,7 @@
 
 <main>
 
-# ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/site/static/favicon.svg) &nbsp;Svelte-ToC
+# ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg) &nbsp;Svelte-ToC
 
 <Docs />
 

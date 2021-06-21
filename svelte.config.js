@@ -28,5 +28,8 @@ export default {
 
     // hydrate the div with id 'svelte' in src/app.html
     target: `#svelte`,
+
+    // https://kit.svelte.dev/docs#configuration-trailingslash
+    trailingSlash: `ignore`, // GitHub issue discussing Netlify: https://git.io/JngRL
   },
 }
