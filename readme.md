@@ -93,13 +93,13 @@ For example:
 
 ## Want to contribute?
 
-The repo is split into two workspaces, the `package` itself and the demo `site`. To submit a PR, clone the repo, install dependencies and start the dev server to try out your changes.
+To submit a PR, clone the repo, install dependencies and start the dev server to try out your changes.
 
 ```sh
 git clone https://github.com/janosh/svelte-toc
 cd svelte-toc
 yarn
-yarn workspace site dev
+yarn dev
 ```
 
 ## Examples
