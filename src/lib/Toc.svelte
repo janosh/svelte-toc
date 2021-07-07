@@ -9,6 +9,7 @@
 
   export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
   export let getHeadingTitles = (node) => node.innerText
+  export let getHeadingIds = (node) => node.id
   export let getHeadingLevels = (node) => Number(node.nodeName[1])
   export let activeHeading = null
   export let open = false
@@ -49,6 +50,19 @@
     handleRouteChange()
     return () => nodes.map((node) => observer.unobserve(node))
   })
+
+  const clickHandler = (idx) => () => {
+    open = false
+    const heading = nodes[idx]
+    heading.scrollIntoView({ behavior: `smooth`, block: `start` })
+    if (getHeadingIds) {
+      history.replaceState({}, ``, `#${getHeadingIds(heading)}`)
+    }
+    if (flashClickedHeadingsFor) {
+      heading.classList.add(`toc-clicked`)
+      setTimeout(() => heading.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+    }
+  }
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} />
@@ -73,18 +87,7 @@
           tabindex={idx + 1}
           style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
           class:active={activeHeading === nodes[idx]}
-          on:click={() => {
-            open = false
-            const heading = nodes[idx]
-            heading.scrollIntoView({ behavior: `smooth`, block: `start` })
-            if (flashClickedHeadingsFor) {
-              heading.classList.add(`toc-clicked`)
-              setTimeout(
-                () => heading.classList.remove(`toc-clicked`),
-                flashClickedHeadingsFor
-              )
-            }
-          }}>
+          on:click={clickHandler(idx)}>
           {title}
         </li>
       {/each}
