@@ -1,0 +1,30 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitAny": true,
+    "diagnostics": true,
+    "noImplicitThis": true,
+    "noEmitOnError": true,
+    "moduleResolution": "node",
+    "module": "es2020",
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "target": "es2020",
+    // svelte-preprocess can't figure out whether you're importing values or types, so tell TypeScript
+    // to enforce using `import type` instead of `import` for types.
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    // To have warnings/errors of the Svelte compiler at the correct position,
+    // enable source maps by default.
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "allowJs": true,
+    "checkJs": true,
+    "types": ["svelte"]
+  },
+  "include": ["src"]
+}

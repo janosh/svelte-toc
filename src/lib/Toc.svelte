@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { blur } from 'svelte/transition'
   import { onMount } from 'svelte'
 
@@ -7,23 +7,29 @@
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector = [...Array(6).keys()].map((i) => `main h${i + 1}`)
-  export let getHeadingTitles = (node) => node.innerText
-  export let getHeadingIds = (node) => node.id
-  export let getHeadingLevels = (node) => Number(node.nodeName[1])
-  export let activeHeading = null
-  export let open = false
-  export let title = `Contents`
-  export let openButtonLabel = `Open table of contents`
-  export let breakpoint = 1000
-  export let flashClickedHeadingsFor = 1000
+  export let headingSelector: string = 'main :where(h1, h2, h3, h4, h5, h6)'
+  export let getHeadingTitles = (node: HTMLHeadingElement) => node.innerText
+  export let getHeadingIds = (node: HTMLHeadingElement) => node.id
+  export let getHeadingLevels = (node: HTMLHeadingElement) => Number(node.nodeName[1])
+  export let activeHeading: HTMLHeadingElement | null = null
+  export let open: boolean = false
+  export let title: string = `Contents`
+  export let openButtonLabel: string = `Open table of contents`
+  export let breakpoint: number = 1000
 
-  let windowWidth
-  let headings = []
-  let nodes = []
+  export let flashClickedHeadingsFor: number = 1000
+
+  interface Heading {
+    title: string
+    depth: number
+  }
+
+  let windowWidth: number
+  let headings: Heading[] = []
+  let nodes: HTMLHeadingElement[] = []
 
   function handleRouteChange() {
-    nodes = [...document.querySelectorAll(headingSelector)]
+    nodes = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     const depths = nodes.map(getHeadingLevels)
     const minDepth = Math.min(...depths)
 
@@ -41,7 +47,7 @@
     const observer = new IntersectionObserver(
       // callback receives all observed nodes whose intersection changed, we only need the first
       ([entry]) => {
-        activeHeading = entry.target // assign intersecting node to activeHeading
+        activeHeading = entry.target as HTMLHeadingElement // assign intersecting node to activeHeading
       },
       { threshold: [1] } // only consider heading as intersecting once it fully entered viewport
     )
@@ -51,7 +57,7 @@
     return () => nodes.map((node) => observer.unobserve(node))
   })
 
-  const clickHandler = (idx) => () => {
+  const clickHandler = (idx: number) => () => {
     open = false
     const heading = nodes[idx]
     heading.scrollIntoView({ behavior: `smooth`, block: `start` })
@@ -98,6 +104,7 @@
 <style>
   aside {
     z-index: var(--toc-z-index, 1);
+    min-width: var(--toc-desktop-min-width, 14em);
   }
   nav {
     list-style: none;
@@ -131,7 +138,7 @@
   }
   nav {
     margin: 1em 0;
-    padding: 5pt 1ex 1ex 1.5ex;
+    padding: 1em 1em 1ex;
   }
   nav > h2 {
     margin-top: 0;
@@ -143,20 +150,19 @@
     right: 1em;
   }
   aside.toc.mobile > nav {
+    border-radius: 3pt;
     width: var(--toc-mobile-width, 12em);
     bottom: -1em;
     right: 0;
     z-index: -1;
     background-color: var(--toc-mobile-bg-color, white);
-    margin: 0 1em;
   }
 
   aside.toc.desktop {
-    width: var(--toc-desktop-width, 12em);
     margin: var(--toc-desktop-margin, 0);
   }
   aside.toc.desktop > nav {
-    position: sticky;
+    padding: 5pt 1ex 1ex 1.5ex;
     top: var(--toc-desktop-sticky-top, 2em);
   }
   aside.toc.desktop > button {

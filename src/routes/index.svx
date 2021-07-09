@@ -4,7 +4,7 @@
   import GitHubCorner from '../components/GitHubCorner.svelte'
 </script>
 
-<Toc headingSelector={[...Array(5).keys()].map((i) => `main h${i + 2}`)} --toc-mobile-bg-color="black" --toc-mobile-btn-color="white" --toc-desktop-margin="12em 0 0 0" />
+<Toc headingSelector='main :where(h2, h3, h4)' />
 
 <GitHubCorner href="https://github.com/janosh/svelte-toc" --color="black" --bg="white" />
 
@@ -17,6 +17,11 @@
 </main>
 
 <style>
+  :global(:root) {
+    --toc-mobile-bg-color: #484452;
+    --toc-mobile-btn-color: white;
+    --toc-desktop-margin: 12em 0 0 0;
+  }
   h1 {
     font-size: calc(1em + 3vw);
   }

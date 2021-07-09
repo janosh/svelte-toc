@@ -3,6 +3,7 @@ import { mdsvex } from 'mdsvex'
 import headingSlugs from 'rehype-slug'
 import linkHeadings from 'rehype-autolink-headings'
 import { s } from 'hastscript'
+import preprocess from "svelte-preprocess"
 
 const rehypePlugins = [
   headingSlugs,
@@ -22,7 +23,7 @@ const rehypePlugins = [
 
 export default {
   extensions: [`.svelte`, `.svx`],
-  preprocess: mdsvex({ rehypePlugins }),
+  preprocess: [preprocess(), mdsvex({ rehypePlugins })],
   kit: {
     adapter: adapter(),
 
