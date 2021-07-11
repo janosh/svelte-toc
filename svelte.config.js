@@ -1,9 +1,10 @@
 import adapter from '@sveltejs/adapter-static'
 import { mdsvex } from 'mdsvex'
+import preprocess from "svelte-preprocess"
+
 import headingSlugs from 'rehype-slug'
 import linkHeadings from 'rehype-autolink-headings'
 import { s } from 'hastscript'
-import preprocess from "svelte-preprocess"
 
 const rehypePlugins = [
   headingSlugs,
@@ -27,7 +28,7 @@ export default {
   kit: {
     adapter: adapter(),
 
-    // hydrate the div with id 'svelte' in src/app.html
+    // hydrate the <div/> with id 'svelte' in src/app.html
     target: `#svelte`,
 
     // https://kit.svelte.dev/docs#configuration-trailingslash

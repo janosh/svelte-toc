@@ -1,6 +1,6 @@
-<script>
+<script lang="ts">
   // adapted from https://github.com/tholman/github-corners
-  export let href
+  export let href: string
   export let ariaLabel = `View source on GitHub`
 </script>
 
@@ -21,10 +21,10 @@
 
 <style>
   svg {
-    fill: var(--bg, black);
-    color: var(--color, white);
-    width: var(--size, 50pt);
-    height: var(--size, 50pt);
+    fill: var(--ghc-bg, black);
+    color: var(--ghc-color, white);
+    width: var(--ghc-size, 50pt);
+    height: var(--ghc-size, 50pt);
     position: fixed;
     top: 0;
     border: 0;

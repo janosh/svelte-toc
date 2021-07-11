@@ -7,17 +7,18 @@
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector: string = 'main :where(h1, h2, h3, h4, h5, h6)'
-  export let getHeadingTitles = (node: HTMLHeadingElement) => node.innerText
-  export let getHeadingIds = (node: HTMLHeadingElement) => node.id
-  export let getHeadingLevels = (node: HTMLHeadingElement) => Number(node.nodeName[1])
+  export let headingSelector = `main :where(h1, h2, h3, h4, h5, h6)`
+  export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
+  export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
+  export let getHeadingLevels = (node: HTMLHeadingElement): number =>
+    Number(node.nodeName[1])
   export let activeHeading: HTMLHeadingElement | null = null
-  export let open: boolean = false
-  export let title: string = `Contents`
-  export let openButtonLabel: string = `Open table of contents`
-  export let breakpoint: number = 1000
+  export let open = false
+  export let title = `Contents`
+  export let openButtonLabel = `Open table of contents`
+  export let breakpoint = 1000
 
-  export let flashClickedHeadingsFor: number = 1000
+  export let flashClickedHeadingsFor = 1000
 
   interface Heading {
     title: string
