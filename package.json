@@ -7,6 +7,7 @@
   "license": "MIT",
   "version": "0.1.6",
   "type": "module",
+  "svelte": "Toc.svelte",
   "bugs": {
     "url": "https://github.com/janosh/svelte-toc/issues"
   },
@@ -19,11 +20,11 @@
     "prebuild": "cp readme.md src/docs.svx && sed -i.bak '1,/^<!-- remove above in docs -->$/d' src/docs.svx && rm src/docs.svx.bak",
     "predev": "yarn prebuild",
     "release": "yarn version && yarn package && yarn publish package",
-    "check": "svelte-check --workspace src"
+    "check": "svelte-check --workspace src --tsconfig tsconfig.json"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^1.0.0-next.13",
-    "@sveltejs/kit": "^1.0.0-next.123",
+    "@sveltejs/kit": "^1.0.0-next.125",
     "@tsconfig/svelte": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^4.28.2",
     "@typescript-eslint/parser": "^4.28.2",
