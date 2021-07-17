@@ -23,7 +23,7 @@
     --toc-mobile-bg-color: #484452;
     --toc-mobile-btn-color: white;
     --toc-desktop-margin: 12em 0 0 0;
-    --ghc-color: var(--night);
+    --ghc-color: var(--bg);
     --ghc-bg: white;
   }
   h1 {

@@ -163,6 +163,7 @@
     margin: var(--toc-desktop-margin, 0);
   }
   aside.toc.desktop > nav {
+    position: sticky;
     padding: 5pt 1ex 1ex 1.5ex;
     top: var(--toc-desktop-sticky-top, 2em);
   }
