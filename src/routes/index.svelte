@@ -34,8 +34,4 @@
     vertical-align: -10pt;
     padding-right: 4pt;
   }
-  /* hide Octicon link icon (see svelte.config.js) */
-  :global(h1 > a) {
-    display: none;
-  }
 </style>
