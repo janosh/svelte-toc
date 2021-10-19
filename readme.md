@@ -28,9 +28,7 @@ In a SvelteKit project:
 
 <Toc />
 
-<main>
-  My content
-</main>
+<main>My content</main>
 ```
 
 `Toc.svelte` needs access to the `page` store to be able to update the table of contents on route changes. Since `page` is imported differently in SvelteKit and Sapper, I went with the SvelteKit way. If you'd like to use this component in a Sapper app, let me know and I'll turn `page` into a prop.
@@ -50,19 +48,20 @@ Full list of props/bindable variables for this component:
 - `activeHeading` (`DOMNode`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
 - `flashClickedHeadingsFor` (`int`, default: `1000`): How long a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC finished scrolling them into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
 
-    ```css
-    :is(h2, h3, h4, h5, h6) {
-      transition: 0.3s;
-    }
-    .toc-clicked {
-      color: cornflowerblue;
-    }
-    ```
+  ```css
+  :is(h2, h3, h4, h5, h6) {
+    transition: 0.3s;
+  }
+  .toc-clicked {
+    color: cornflowerblue;
+  }
+  ```
 
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
-* { /* or main :where(h1, h2, h3, h4, h5, h6) or whatever */
+* {
+  /* or main :where(h1, h2, h3, h4, h5, h6) or whatever */
   scroll-margin-top: 100px;
 }
 ```
