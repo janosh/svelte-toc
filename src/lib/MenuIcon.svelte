@@ -1,5 +1,5 @@
-<!-- https://iconify.design/icon-sets/heroicons-solid/menu.html -->
 <script lang="ts">
+  // https://iconify.design/icon-sets/heroicons-solid/menu.html
   export let width: string | number = `1em`
 </script>
 

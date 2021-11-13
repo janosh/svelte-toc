@@ -20,7 +20,7 @@
 
   export let flashClickedHeadingsFor = 1000
 
-  interface Heading {
+  type Heading = {
     title: string
     depth: number
   }
@@ -103,27 +103,27 @@
 </aside>
 
 <style>
-  aside {
+  :where(aside) {
     z-index: var(--toc-z-index, 1);
     min-width: var(--toc-desktop-min-width, 14em);
   }
-  nav {
+  :where(nav) {
     list-style: none;
     max-height: var(--toc-max-height, 90vh);
     overflow: auto;
     overscroll-behavior: contain;
   }
-  nav > li {
+  :where(nav > li) {
     margin-top: 5pt;
     cursor: pointer;
   }
-  nav > li:hover {
+  :where(nav > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
   }
-  nav > li.active {
+  :where(nav > li.active) {
     color: var(--toc-active-color, orange);
   }
-  button {
+  :where(button) {
     position: absolute;
     bottom: 0;
     right: 0;
@@ -137,20 +137,20 @@
     border: none;
     color: var(--toc-mobile-btn-color, black);
   }
-  nav {
+  :where(nav) {
     margin: 1em 0;
     padding: 1em 1em 1ex;
   }
-  nav > h2 {
+  :where(nav > h2) {
     margin-top: 0;
   }
 
-  aside.toc.mobile {
+  :where(aside.toc.mobile) {
     position: fixed;
     bottom: 1em;
     right: 1em;
   }
-  aside.toc.mobile > nav {
+  :where(aside.toc.mobile > nav) {
     border-radius: 3pt;
     width: var(--toc-mobile-width, 12em);
     bottom: -1em;
@@ -159,15 +159,15 @@
     background-color: var(--toc-mobile-bg-color, white);
   }
 
-  aside.toc.desktop {
+  :where(aside.toc.desktop) {
     margin: var(--toc-desktop-margin, 0);
   }
-  aside.toc.desktop > nav {
+  :where(aside.toc.desktop > nav) {
     position: sticky;
     padding: 5pt 1ex 1ex 1.5ex;
     top: var(--toc-desktop-sticky-top, 2em);
   }
-  aside.toc.desktop > button {
+  :where(aside.toc.desktop > button) {
     display: none;
   }
 </style>

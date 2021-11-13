@@ -32,11 +32,11 @@ In a SvelteKit project:
 <main>My content</main>
 ```
 
-`Toc.svelte` needs access to the `page` store to be able to update the table of contents on route changes. Since `page` is imported differently in SvelteKit and Sapper, I went with the SvelteKit way. If you'd like to use this component in a Sapper app, let me know and I'll turn `page` into a prop.
+Note: `Toc.svelte` is for SvelteKit projects only since it needs access to the `page` store to be able to update the ToC on route changes.
 
 ## Props
 
-Full list of props/bindable variables for this component:
+Full list of props and bindable variables for this component (all of them optional):
 
 - `headingSelector` (`string`, default: `'main :where(h1, h2, h3, h4, h5, h6)'`): CSS selector string that should return all headings to list in the ToC. Will be passed to `[...document.querySelectorAll(headingSelector)]` so you can try out selectors in the dev console of your live page to make sure they return what you want.
 - `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
@@ -83,7 +83,7 @@ To control how far from the viewport top headings come to rest when scrolled int
 - `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
 - `var(--toc-desktop-margin, 0)`: Margin of the outer-most `aside.toc` element.
 
-For example:
+Example:
 
 ```svelte
 <Toc
@@ -102,11 +102,3 @@ cd svelte-toc
 yarn
 yarn dev
 ```
-
-## Examples
-
-Used in production on these sites:
-
-- [Svelte Algolia](https://svelte-algolia.netlify.app)
-- [Svelte MultiSelect](https://svelte-multiselect.netlify.app)
-- [Studenten bilden Schüler](https://studenten-bilden-schueler.de)

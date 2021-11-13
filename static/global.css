@@ -35,6 +35,7 @@ a:hover {
   color: orange;
 }
 code {
+  overflow-wrap: break-word;
   padding: 1pt 3pt;
   border-radius: 3pt;
   font-size: 1.3em;
@@ -64,12 +65,12 @@ blockquote {
   color: cornflowerblue;
 }
 
-/* style links added by rehype-autolink-headings, see svelte.config.js */
-:where(h2, h3, h4, h5, h6) a {
+/* style heading anchors added by rehype-autolink-headings, see svelte.config.js */
+:where(h2, h3, h4, h5, h6) a[aria-hidden='true'] {
   transition: 0.3s;
   margin-left: 4pt;
   opacity: 0;
 }
-:where(h2, h3, h4, h5, h6):hover a {
+:where(h2, h3, h4, h5, h6):hover a[aria-hidden='true'] {
   opacity: 1;
 }
