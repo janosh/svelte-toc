@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { blur } from 'svelte/transition'
-  import { onMount } from 'svelte'
-
   import { page } from '$app/stores'
-
+  import { onMount } from 'svelte'
+  import { blur } from 'svelte/transition'
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
 
@@ -78,7 +76,8 @@
   use:onClickOutside={() => (open = false)}
   class="toc"
   class:desktop={windowWidth > breakpoint}
-  class:mobile={windowWidth < breakpoint}>
+  class:mobile={windowWidth < breakpoint}
+>
   {#if !open}
     <button on:click|preventDefault={() => (open = !open)} aria-label={openButtonLabel}>
       <MenuIcon width="1em" />
@@ -94,7 +93,8 @@
           tabindex={idx + 1}
           style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
           class:active={activeHeading === nodes[idx]}
-          on:click={clickHandler(idx)}>
+          on:click={clickHandler(idx)}
+        >
           {title}
         </li>
       {/each}

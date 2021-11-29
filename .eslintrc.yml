@@ -25,3 +25,5 @@ rules:
   no-var: error
   # allow triple slash for typescript file referencing https://git.io/JCeqO
   spaced-comment: [error, always, { markers: [/] }]
+globals:
+  $$props: false

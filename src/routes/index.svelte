@@ -1,7 +1,7 @@
 <script>
-  import Toc from '../lib/Toc.svelte'
-  import Docs from '../docs.svx'
   import GitHubCorner from '../components/GitHubCorner.svelte'
+  import Docs from '../docs.svx'
+  import Toc from '../lib/Toc.svelte'
 </script>
 
 <Toc headingSelector="main :where(h2, h3, h4)" />
@@ -12,7 +12,8 @@
   <h1>
     <img
       src="https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg"
-      alt="Logo" />&nbsp;Svelte-ToC
+      alt="Logo"
+    />&nbsp;Svelte-ToC
   </h1>
 
   <Docs />

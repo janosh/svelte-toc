@@ -89,7 +89,8 @@ Example:
 <Toc
   --toc-desktop-margin="10em 0 0 0"
   --toc-desktop-sticky-top="3em"
-  --toc-desktop-width="15em" />
+  --toc-desktop-width="15em"
+/>
 ```
 
 ## Want to contribute?
