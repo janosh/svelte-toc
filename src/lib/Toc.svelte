@@ -84,7 +84,7 @@
     </button>
   {/if}
   {#if open || windowWidth > breakpoint}
-    <nav transition:blur>
+    <nav transition:blur|local>
       {#if title}
         <h2>{title}</h2>
       {/if}

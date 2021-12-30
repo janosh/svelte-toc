@@ -1,0 +1,30 @@
+<script>
+  import Docs from '../docs.svx'
+  import Toc from '../lib/Toc.svelte'
+</script>
+
+<Toc headingSelector="main :where(h2, h3, h4)" --toc-desktop-margin="14em 0 0 0;" />
+
+<main>
+
+  # ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg) &nbsp;Svelte-ToC
+
+  <Docs />
+
+  ## Test Page Navigation
+
+  - [Page with ToC](/other-toc-page)
+  - [Page without ToC](/no-toc-page)
+
+</main>
+
+<style>
+  h1 {
+    font-size: calc(1em + 3vw);
+  }
+  h1 img {
+    height: 1.2em;
+    vertical-align: -10pt;
+    padding-right: 4pt;
+  }
+</style>
