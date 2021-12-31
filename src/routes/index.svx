@@ -7,14 +7,14 @@
 
 <main>
 
-  # ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg) &nbsp;Svelte-ToC
+# ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg) &nbsp;Svelte-ToC
 
   <Docs />
 
-  ## Test Page Navigation
+## Test Page Navigation
 
-  - [Page with ToC](/other-toc-page)
-  - [Page without ToC](/no-toc-page)
+- [Long Page with ToC](/long-page)
+- [Page without ToC](/no-toc-page)
 
 </main>
 

@@ -69,17 +69,34 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 ## Styling
 
+The HTML structure of this component is
+
+```html
+<aside>
+  <button>open/close (only visible on mobile)</button>
+  <nav>
+    <h2>{title}</h2>
+    <ul>
+      <li>{heading1}</li>
+      <li>{heading2}</li>
+      ...
+    </ul>
+  </nav>
+</aside>
+```
+
 `Toc.svelte` offers the following CSS variables listed here with their defaults that can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
 
 - `var(--toc-z-index, 1)`: Controls `z-index` of the top-level ToC `aside` element on both mobile and desktop.
-- `var(--toc-mobile-width, 12em)`:
-- `var(--toc-desktop-min-width, 14em)`:
+- `var(--toc-width)`: Width of the `aside` element.
+- `var(--toc-mobile-width, 12em)`: Width of the ToC component's `aside.mobile > nav` element.
 - `var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
 - `var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
 - `var(--toc-active-color, orange)`: Text color of the currently active heading. The active heading is the one closest to current scroll position.
 - `var(--toc-mobile-btn-color, black)`: Color of the menu icon used as ToC opener button on mobile screen sizes.
 - `var(--toc-mobile-btn-bg-color, rgba(255, 255, 255, 0.2))`: Background color of the padding area around the menu icon button.
 - `var(--toc-mobile-bg-color, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+- `var(--toc-desktop-bg-color)`: Background color of the `nav` element on desktop screens.
 - `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
 - `var(--toc-desktop-margin, 0)`: Margin of the outer-most `aside.toc` element.
 

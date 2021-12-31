@@ -10,67 +10,105 @@
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
     Number(node.nodeName[1])
-  export let activeHeading: HTMLHeadingElement | null = null
+  export let activeHeading: Heading | null = null
   export let open = false
   export let title = `Contents`
   export let openButtonLabel = `Open table of contents`
   export let breakpoint = 1000
-
   export let flashClickedHeadingsFor = 1000
 
   type Heading = {
     title: string
     depth: number
+    node: HTMLHeadingElement
+    visible?: boolean
   }
 
   let windowWidth: number
+  let windowHeight: number
+  let scrollY: number
   let headings: Heading[] = []
-  let nodes: HTMLHeadingElement[] = []
 
   function handleRouteChange() {
-    nodes = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
+    const nodes = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
+
     const depths = nodes.map(getHeadingLevels)
     const minDepth = Math.min(...depths)
 
     headings = nodes.map((node, idx) => ({
       title: getHeadingTitles(node),
       depth: depths[idx] - minDepth,
+      node,
     }))
+
+    // set first heading as active if null on page load
+    if (activeHeading === null) activeHeading = headings[0]
   }
 
   // (re-)compute list of HTML headings on mount and on route changes
   if (typeof window !== `undefined`) {
     page.subscribe(handleRouteChange)
   }
+
   onMount(() => {
+    handleRouteChange()
     const observer = new IntersectionObserver(
-      // callback receives all observed nodes whose intersection changed, we only need the first
-      ([entry]) => {
-        activeHeading = entry.target as HTMLHeadingElement // assign intersecting node to activeHeading
+      (entries) => {
+        // callback receives only observed nodes whose intersection changed
+        for (const { target, isIntersecting } of entries) {
+          const hdn = headings.find(({ node }) => node === target)
+          if (hdn) hdn.visible = isIntersecting
+        }
       },
-      { threshold: [1] } // only consider heading as intersecting once it fully entered viewport
+      { threshold: 1 } // only consider headings intersecting once they fully entered viewport
     )
 
-    nodes.map((node) => observer.observe(node))
-    handleRouteChange()
-    return () => nodes.map((node) => observer.unobserve(node))
+    headings.map(({ node }) => observer.observe(node))
+    return () => observer.disconnect() // clean up function to run when component unmounts
   })
 
-  const clickHandler = (idx: number) => () => {
-    open = false
-    const heading = nodes[idx]
-    heading.scrollIntoView({ behavior: `smooth`, block: `start` })
-    if (getHeadingIds) {
-      history.replaceState({}, ``, `#${getHeadingIds(heading)}`)
+  function setActiveHeading() {
+    const visibleHeadings = headings.filter((hd) => hd.visible)
+
+    if (visibleHeadings.length > 0) {
+      // if any heading is visible, set the top one as active
+      activeHeading = visibleHeadings[0]
+    } else {
+      // if no headings are visible, set active heading to the last one we scrolled past
+      const nextHdnIdx = headings.findIndex((hd) => hd.node.offsetTop > scrollY)
+      activeHeading = headings[nextHdnIdx > 0 ? nextHdnIdx - 1 : 0]
     }
+    const pageHeight = document.body.scrollHeight
+    const scrollProgress = (scrollY + windowHeight) / pageHeight
+    if (scrollProgress > 0.99) {
+      activeHeading = headings[headings.length - 1]
+    }
+
+    const activeTocLi = document.querySelector(`aside > nav > ul > li.active`)
+    activeTocLi?.scrollIntoViewIfNeeded?.()
+  }
+
+  const clickHandler = (node: HTMLHeadingElement) => () => {
+    open = false
+    // Chrome doesn't yet support multiple simulatneous smooth scrolls (https://stackoverflow.com/q/49318497)
+    // with node.scrollIntoView({ behavior: `smooth` }) so we use window.scrollTo() instead
+    window.scrollTo({ top: node.offsetTop, behavior: `smooth` })
+
+    if (getHeadingIds) history.replaceState({}, ``, `#${getHeadingIds(node)}`)
+
     if (flashClickedHeadingsFor) {
-      heading.classList.add(`toc-clicked`)
-      setTimeout(() => heading.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+      node.classList.add(`toc-clicked`)
+      setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
     }
   }
 </script>
 
-<svelte:window bind:innerWidth={windowWidth} />
+<svelte:window
+  bind:scrollY
+  bind:innerWidth={windowWidth}
+  bind:innerHeight={windowHeight}
+  on:scroll={setActiveHeading}
+/>
 
 <aside
   use:onClickOutside={() => (open = false)}
@@ -88,16 +126,18 @@
       {#if title}
         <h2>{title}</h2>
       {/if}
-      {#each headings as { title, depth }, idx}
-        <li
-          tabindex={idx + 1}
-          style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
-          class:active={activeHeading === nodes[idx]}
-          on:click={clickHandler(idx)}
-        >
-          {title}
-        </li>
-      {/each}
+      <ul>
+        {#each headings as { title, depth, node }, idx}
+          <li
+            tabindex={idx + 1}
+            style="margin-left: {depth}em; font-size: {2 - 0.2 * depth}ex"
+            class:active={activeHeading?.node === node}
+            on:click={clickHandler(node)}
+          >
+            {title}
+          </li>
+        {/each}
+      </ul>
     </nav>
   {/if}
 </aside>
@@ -105,7 +145,7 @@
 <style>
   :where(aside) {
     z-index: var(--toc-z-index, 1);
-    min-width: var(--toc-desktop-min-width, 14em);
+    width: var(--toc-width);
   }
   :where(nav) {
     list-style: none;
@@ -113,14 +153,18 @@
     overflow: auto;
     overscroll-behavior: contain;
   }
-  :where(nav > li) {
+  :where(nav > ul) {
+    list-style: none;
+    padding: 0;
+  }
+  :where(nav > ul > li) {
     margin-top: 5pt;
     cursor: pointer;
   }
-  :where(nav > li:hover) {
+  :where(nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
   }
-  :where(nav > li.active) {
+  :where(nav > ul > li.active) {
     color: var(--toc-active-color, orange);
   }
   :where(button) {
@@ -164,8 +208,11 @@
   }
   :where(aside.toc.desktop > nav) {
     position: sticky;
-    padding: 5pt 1ex 1ex 1.5ex;
+    padding: 12pt 14pt 0;
+    margin: 0 2ex 0 0;
     top: var(--toc-desktop-sticky-top, 2em);
+    background-color: var(--toc-desktop-bg-color);
+    border-radius: 5pt;
   }
   :where(aside.toc.desktop > button) {
     display: none;
