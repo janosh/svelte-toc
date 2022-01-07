@@ -30,5 +30,11 @@ export default {
 
     // hydrate the <div/> with id 'svelte' in src/app.html
     target: `#svelte`,
+
+    package: {
+      // exclude icon files from package.json "exports" field
+      exports: (filepath) =>
+        [`Toc.svelte`, `index.ts`, `package.json`].includes(filepath),
+    },
   },
 }

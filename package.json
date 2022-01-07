@@ -8,9 +8,7 @@
   "version": "0.2.0",
   "type": "module",
   "svelte": "Toc.svelte",
-  "bugs": {
-    "url": "https://github.com/janosh/svelte-toc/issues"
-  },
+  "bugs": "https://github.com/janosh/svelte-toc/issues",
   "scripts": {
     "dev": "svelte-kit dev",
     "build": "svelte-kit build",

@@ -10,36 +10,23 @@
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
     Number(node.nodeName[1]) // get the number from H1, H2, ...
-  export let activeHeading: Heading | null = null
+  export let activeHeading: HTMLHeadingElement | null = null
   export let open = false
   export let title = `On this page`
   export let openButtonLabel = `Open table of contents`
   export let breakpoint = 1000
   export let flashClickedHeadingsFor = 1000
 
-  type Heading = {
-    title: string
-    level: number
-    node: HTMLHeadingElement
-    visible?: boolean
-  }
-
   let windowWidth: number
   let windowHeight: number
   let scrollY: number
-  let headings: Heading[] = []
+  let headings: HTMLHeadingElement[] = []
+  let visibleHeadings: HTMLHeadingElement[] = []
+  $: levels = headings.map(getHeadingLevels)
+  $: minLevel = Math.min(...levels)
 
   function handleRouteChange() {
-    const nodes = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
-
-    const levels = nodes.map(getHeadingLevels)
-    const minLevel = Math.min(...levels)
-
-    headings = nodes.map((node, idx) => ({
-      title: getHeadingTitles(node),
-      level: levels[idx] - minLevel,
-      node,
-    }))
+    headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
 
     // set first heading as active if null on page load
     if (activeHeading === null) activeHeading = headings[0]
@@ -55,27 +42,23 @@
     const observer = new IntersectionObserver(
       (entries) => {
         // callback receives only observed nodes whose intersection changed
-        for (const { target, isIntersecting } of entries) {
-          const hdn = headings.find(({ node }) => node === target)
-          if (hdn) hdn.visible = isIntersecting
-        }
+        entries = entries.filter((en) => en.isIntersecting)
+        visibleHeadings = entries.map((en) => en.target) as HTMLHeadingElement[]
       },
       { threshold: 1 } // only consider headings intersecting once they fully entered viewport
     )
 
-    headings.map(({ node }) => observer.observe(node))
+    headings.map((hdn) => observer.observe(hdn))
     return () => observer.disconnect() // clean up function to run when component unmounts
   })
 
   function setActiveHeading() {
-    const visibleHeadings = headings.filter((hd) => hd.visible)
-
     if (visibleHeadings.length > 0) {
       // if any heading is visible, set the top one as active
       activeHeading = visibleHeadings[0]
     } else {
       // if no headings are visible, set active heading to the last one we scrolled past
-      const nextHdnIdx = headings.findIndex((hd) => hd.node.offsetTop > scrollY)
+      const nextHdnIdx = headings.findIndex((hdn) => hdn.offsetTop > scrollY)
       activeHeading = headings[nextHdnIdx > 0 ? nextHdnIdx - 1 : 0]
     }
     const pageHeight = document.body.scrollHeight
@@ -84,6 +67,7 @@
       activeHeading = headings[headings.length - 1]
     }
 
+    // get the currently active ToC list item
     const activeTocLi = document.querySelector(`aside > nav > ul > li.active`)
     activeTocLi?.scrollIntoViewIfNeeded?.()
   }
@@ -127,14 +111,15 @@
         <h2>{title}</h2>
       {/if}
       <ul>
-        {#each headings as { title, level, node }, idx}
+        {#each headings as hdn, idx}
           <li
             tabindex={idx + 1}
-            style="margin-left: {level}em; font-size: {2 - 0.2 * level}ex"
-            class:active={activeHeading?.node === node}
-            on:click={clickHandler(node)}
+            style="margin-left: {levels[idx] - minLevel}em; font-size: {2 -
+              0.2 * (levels[idx] - minLevel)}ex"
+            class:active={activeHeading === hdn}
+            on:click={clickHandler(hdn)}
           >
-            {title}
+            {getHeadingTitles(hdn)}
           </li>
         {/each}
       </ul>
