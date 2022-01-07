@@ -29,7 +29,9 @@ In a SvelteKit project:
 
 <Toc />
 
-<main>My content</main>
+<main>
+  <h1>Top Heading</h1>
+</main>
 ```
 
 Note: `Toc.svelte` is for SvelteKit projects only since it needs access to the `page` store to be able to update the ToC on route changes.
@@ -42,7 +44,7 @@ Full list of props and bindable variables for this component (all of them option
 - `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
 - `getHeadingIds` (`function`, default: `(node) => node.id`): Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 - `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
-- `title` (`str`, default: `'Contents'`): ToC title to display above the list of headings. Set empty string to hide.
+- `title` (`str`, default: `'Contents'`): ToC title to display above the list of headings. Set `title=''` to hide.
 - `openButtonLabel` (`str`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 - `breakpoint` (`int`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
 - `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.

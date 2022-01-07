@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import GitHubCorner from '../components/GitHubCorner.svelte'
 </script>
 
