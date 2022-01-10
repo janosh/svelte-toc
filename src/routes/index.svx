@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Docs from '../docs.svx'
+  import Readme from '../../readme.md'
   import Toc from '../lib/Toc.svelte'
 </script>
 
@@ -10,9 +10,7 @@
 
 <main>
 
-# ![Logo](https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg) &nbsp;Svelte-ToC
-
-  <Docs />
+<Readme />
 
 ## Test Page Navigation
 
@@ -22,21 +20,20 @@
 </main>
 
 <style>
-  h1 {
+  :global(h1) {
     display: flex;
-    align-items: center;
+    place-items: center;
+    place-content: center;
     font-size: clamp(2rem, 2rem + 2vw, 3rem);
   }
+  :global(h1 br) {
+    display: none;
+  }
   @media (max-width: 500px) {
-    h1 {
+    :global(h1) {
       flex-direction: column;
-      gap: 2rem;
+      gap: 1ex;
       margin-bottom: 3rem;
     }
-  }
-  h1 img {
-    height: 1.2em;
-    vertical-align: -10pt;
-    padding-right: 4pt;
   }
 </style>

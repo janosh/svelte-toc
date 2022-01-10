@@ -1,5 +1,5 @@
 <script lang="ts">
-  import GitHubCorner from '../components/GitHubCorner.svelte'
+  import GitHubCorner from 'svelte-github-corner'
 </script>
 
 <GitHubCorner href="https://github.com/janosh/svelte-toc" />
