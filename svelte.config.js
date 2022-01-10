@@ -42,8 +42,7 @@ export default {
 
     vite: {
       server: {
-        // needed to import readme.md in src/routes/index.svelte
-        fs: { allow: [`..`] },
+        fs: { allow: [`..`] }, // needed to import readme.md
       },
     },
   },
