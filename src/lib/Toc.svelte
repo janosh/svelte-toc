@@ -16,6 +16,7 @@
   export let openButtonLabel = `Open table of contents`
   export let breakpoint = 1000
   export let flashClickedHeadingsFor = 1000
+  export let keepActiveTocItemInView = true
 
   let windowWidth: number
   let windowHeight: number
@@ -67,9 +68,11 @@
       activeHeading = headings[headings.length - 1]
     }
 
-    // get the currently active ToC list item
-    const activeTocLi = document.querySelector(`aside > nav > ul > li.active`)
-    activeTocLi?.scrollIntoViewIfNeeded?.()
+    if (keepActiveTocItemInView) {
+      // get the currently active ToC list item
+      const activeTocLi = document.querySelector(`aside > nav > ul > li.active`)
+      activeTocLi?.scrollIntoViewIfNeeded()
+    }
   }
 
   const clickHandler = (node: HTMLHeadingElement) => () => {

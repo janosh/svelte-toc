@@ -1,14 +1,15 @@
-<p align="center">
-  <img src="static/favicon.svg" alt="Svelte ToC" height=150>
-</p>
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/janosh/svelte-toc/main/static/favicon.svg" alt="Svelte ToC" height=60>
+  <br>&ensp;Svelte ToC
+</h1>
 
-# Svelte ToC
-
-<!-- remove above in docs -->
+<h4 align="center">
 
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/0238699e-17a8-4423-85de-a5ca30baff0d/deploy-status)](https://app.netlify.com/sites/svelte-toc/deploys)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/svelte-toc/main.svg)](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
+
+</h4>
 
 [Sticky Active Smooth Responsive ToC](https://janosh.dev/blog/sticky-active-smooth-responsive-toc) for SvelteKit projects.
 
@@ -48,8 +49,9 @@ Full list of props and bindable variables for this component (all of them option
 - `openButtonLabel` (`str`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 - `breakpoint` (`int`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
 - `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
-- `activeHeading` (`DOMNode`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
-- `flashClickedHeadingsFor` (`int`, default: `1000`): How long a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC finished scrolling them into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
+- `activeHeading` (`HTMLHeadingElement | null`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
+- `keepActiveTocItemInView` (`boolean`, default `false`): Whether to scroll the ToC along with the page.
+- `flashClickedHeadingsFor` (`int`, default: `1000`): How long a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
 
   ```css
   :is(h2, h3, h4, h5, h6) {
