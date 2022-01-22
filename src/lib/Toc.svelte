@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { page } from '$app/stores'
-  import { onMount } from 'svelte'
+  import { afterNavigate } from '$app/navigation'
   import { blur } from 'svelte/transition'
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
@@ -26,20 +25,13 @@
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
 
-  function handleRouteChange() {
+  // (re-)query headings on mount and on route changes
+  afterNavigate(() => {
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
 
     // set first heading as active if null on page load
     if (activeHeading === null) activeHeading = headings[0]
-  }
 
-  // (re-)compute list of HTML headings on mount and on route changes
-  if (typeof window !== `undefined`) {
-    page.subscribe(handleRouteChange)
-  }
-
-  onMount(() => {
-    handleRouteChange()
     const observer = new IntersectionObserver(
       (entries) => {
         // callback receives only observed nodes whose intersection changed
@@ -148,6 +140,7 @@
   :where(nav > ul > li) {
     margin-top: 5pt;
     cursor: pointer;
+    scroll-margin: var(--toc-li-scroll-margin, 20pt 0);
   }
   :where(nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
@@ -192,12 +185,12 @@
   }
 
   :where(aside.toc.desktop) {
-    margin: var(--toc-desktop-margin, 0);
+    margin: var(--toc-desktop-aside-margin, 0);
   }
   :where(aside.toc.desktop > nav) {
     position: sticky;
     padding: 12pt 14pt 0;
-    margin: 0 2ex 0 0;
+    margin: var(--toc-desktop-nav-margin, 0 2ex 0 0);
     top: var(--toc-desktop-sticky-top, 2em);
     background-color: var(--toc-desktop-bg-color);
     border-radius: 5pt;

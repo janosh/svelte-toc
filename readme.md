@@ -98,17 +98,19 @@ The HTML structure of this component is
 - `var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
 - `var(--toc-active-color, orange)`: Text color of the currently active heading. The active heading is the one closest to current scroll position.
 - `var(--toc-mobile-btn-color, black)`: Color of the menu icon used as ToC opener button on mobile screen sizes.
+- `var(--toc-li-scroll-margin, 20pt 0)`: scroll margin of ToC list items (determines distance from window edge when keeping active ToC item scrolled in view as page scrolls)
 - `var(--toc-mobile-btn-bg-color, rgba(255, 255, 255, 0.2))`: Background color of the padding area around the menu icon button.
 - `var(--toc-mobile-bg-color, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
 - `var(--toc-desktop-bg-color)`: Background color of the `nav` element on desktop screens.
 - `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
-- `var(--toc-desktop-margin, 0)`: Margin of the outer-most `aside.toc` element.
+- `var(--toc-desktop-aside-margin, 0)`: Margin of the outer-most `aside.toc` element on desktops.
+- `var(--toc-desktop-nav-margin, 0 2ex 0 0)`: Margin of the `aside.toc > nav` element on desktops.
 
 Example:
 
 ```svelte
 <Toc
-  --toc-desktop-margin="10em 0 0 0"
+  --toc-desktop-aside-margin="10em 0 0 0"
   --toc-desktop-sticky-top="3em"
   --toc-desktop-width="15em"
 />
