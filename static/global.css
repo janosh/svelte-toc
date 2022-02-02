@@ -13,7 +13,8 @@ body {
 * {
   scroll-margin-top: 100px;
 }
-div#svelte {
+/* outer div = hydration target */
+body > div {
   display: flex;
   max-width: 1000px;
   margin: auto;
