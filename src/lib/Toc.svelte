@@ -1,5 +1,6 @@
 <script lang="ts">
   import { afterNavigate } from '$app/navigation'
+  import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
@@ -26,6 +27,11 @@
 
   // (re-)query headings on mount and on route changes
   afterNavigate(() => {
+    headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
+    setActiveHeading()
+  })
+
+  onMount(() => {
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     setActiveHeading()
   })
@@ -125,13 +131,18 @@
   :where(aside.toc > nav > ul > li) {
     margin-top: 5pt;
     cursor: pointer;
-    scroll-margin: var(--toc-li-scroll-margin, 20pt 0);
+    scroll-margin: var(--toc-li-scroll-margin, 50pt 0);
   }
   :where(aside.toc > nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
   }
   :where(aside.toc > nav > ul > li.active) {
-    color: var(--toc-active-color, orange);
+    color: var(--toc-active-color, smokewhite);
+    background: var(--toc-active-bg, cornflowerblue);
+    font-weight: var(--toc-active-font-weight);
+    padding: 2pt 4pt;
+    margin: -2pt -4pt;
+    border-radius: 3pt;
   }
   :where(aside.toc > button) {
     position: absolute;
@@ -175,7 +186,7 @@
   :where(aside.toc.desktop > nav) {
     position: sticky;
     padding: 12pt 14pt 0;
-    margin: var(--toc-desktop-nav-margin, 0 2ex 0 0);
+    margin: var(--toc-desktop-nav-margin, 0 2em 0 0);
     top: var(--toc-desktop-sticky-top, 2em);
     background-color: var(--toc-desktop-bg);
     border-radius: 5pt;
