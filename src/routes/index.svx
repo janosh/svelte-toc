@@ -4,7 +4,7 @@
 </script>
 
 <Toc
-  headingSelector="main :where(h2, h3, h4)"
+  headingSelector="main :where(h2, h3)"
   --toc-desktop-aside-margin="14em 0 0 0"
 />
 
