@@ -170,7 +170,7 @@
   }
 
   :where(aside.toc.desktop) {
-    margin: var(--toc-desktop-aside-margin, 0);
+    margin: var(--toc-desktop-aside-margin);
   }
   :where(aside.toc.desktop > nav) {
     position: sticky;
