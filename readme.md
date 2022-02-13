@@ -11,7 +11,7 @@
 
 </h4>
 
-[Sticky Active Smooth Responsive ToC](https://janosh.dev/blog/sticky-active-smooth-responsive-toc) for SvelteKit projects.
+Sticky responsive table of contents component for SvelteKit.
 
 ## Installation
 
@@ -114,7 +114,9 @@ The HTML structure of this component is
 - `aside.toc > nav > ul > li:hover`
   - `color: var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
 - `aside.toc > nav > ul > li.active`
-  - `color: var(--toc-active-color, orange)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
+  - `color: var(--toc-active-color, whitesmoke)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
+  - `background: var(--toc-active-bg, cornflowerblue)`
+  - `font-weight: var(--toc-active-font-weight)`
 - `aside.toc > button`
   - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
   - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
