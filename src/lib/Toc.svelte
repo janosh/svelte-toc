@@ -16,54 +16,36 @@
   export let breakpoint = 1000
   export let flashClickedHeadingsFor = 1000
   export let keepActiveTocItemInView = true
+  export let activeTopOffset = 100
 
   let windowWidth: number
   let windowHeight: number
-  let scrollY: number
   let headings: HTMLHeadingElement[] = []
-  let visibleHeadings: HTMLHeadingElement[] = []
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
 
   // (re-)query headings on mount and on route changes
   afterNavigate(() => {
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
-
-    // set first heading as active if null on page load
-    if (activeHeading === null) activeHeading = headings[0]
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        // callback receives only observed nodes whose intersection changed
-        entries = entries.filter((en) => en.isIntersecting)
-        visibleHeadings = entries.map((en) => en.target) as HTMLHeadingElement[]
-      },
-      { threshold: 1 } // only consider headings intersecting once they fully entered viewport
-    )
-
-    headings.map((hdn) => observer.observe(hdn))
-    return () => observer.disconnect() // clean up function to run when component unmounts
+    setActiveHeading()
   })
 
   function setActiveHeading() {
-    if (visibleHeadings.length > 0) {
-      // if any heading is visible, set the top one as active
-      activeHeading = visibleHeadings[0]
-    } else {
-      // if no headings are visible, set active heading to the last one we scrolled past
-      const nextHdnIdx = headings.findIndex((hdn) => hdn.offsetTop > scrollY)
-      activeHeading = headings[nextHdnIdx > 0 ? nextHdnIdx - 1 : 0]
-    }
-    const pageHeight = document.body.scrollHeight
-    const scrollProgress = (scrollY + windowHeight) / pageHeight
-    if (scrollProgress > 0.99) {
-      activeHeading = headings[headings.length - 1]
-    }
+    let idx = headings.length
+    while (idx--) {
+      const { top } = headings[idx].getBoundingClientRect()
 
-    if (keepActiveTocItemInView) {
-      // get the currently active ToC list item
-      const activeTocLi = document.querySelector(`aside > nav > ul > li.active`)
-      activeTocLi?.scrollIntoViewIfNeeded()
+      // loop through headings from last to first until we find one that the viewport already
+      // scrolled past. if none is found, set make first heading active
+      if (top < activeTopOffset || idx === 0) {
+        activeHeading = headings[idx]
+        if (keepActiveTocItemInView) {
+          // get the currently active ToC list item
+          const activeTocLi = document.querySelector(`aside.toc > nav > ul > li.active`)
+          activeTocLi?.scrollIntoViewIfNeeded()
+        }
+        return
+      }
     }
   }
 
@@ -83,7 +65,6 @@
 </script>
 
 <svelte:window
-  bind:scrollY
   bind:innerWidth={windowWidth}
   bind:innerHeight={windowHeight}
   on:scroll={setActiveHeading}
@@ -95,7 +76,7 @@
   class:desktop={windowWidth > breakpoint}
   class:mobile={windowWidth < breakpoint}
 >
-  {#if !open}
+  {#if !open && windowWidth < breakpoint}
     <button on:click|preventDefault={() => (open = !open)} aria-label={openButtonLabel}>
       <MenuIcon width="1em" />
     </button>
@@ -106,15 +87,17 @@
         <h2>{title}</h2>
       {/if}
       <ul>
-        {#each headings as hdn, idx}
+        {#each headings as heading, idx}
           <li
             tabindex={idx + 1}
             style="margin-left: {levels[idx] - minLevel}em; font-size: {2 -
               0.2 * (levels[idx] - minLevel)}ex"
-            class:active={activeHeading === hdn}
-            on:click={clickHandler(hdn)}
+            class:active={activeHeading === heading}
+            on:click={clickHandler(heading)}
           >
-            {getHeadingTitles(hdn)}
+            <slot name="tocItem" {heading} {idx}>
+              {getHeadingTitles(heading)}
+            </slot>
           </li>
         {/each}
       </ul>
@@ -123,32 +106,34 @@
 </aside>
 
 <style>
-  :where(aside) {
+  :where(aside.toc) {
     z-index: var(--toc-z-index, 1);
-    width: var(--toc-width);
   }
-  :where(nav) {
+  :where(aside.toc > nav) {
+    min-width: var(--toc-min-width);
+    max-width: var(--toc-max-width);
+    width: var(--toc-width);
     list-style: none;
     max-height: var(--toc-max-height, 90vh);
     overflow: auto;
     overscroll-behavior: contain;
   }
-  :where(nav > ul) {
+  :where(aside.toc > nav > ul) {
     list-style: none;
     padding: 0;
   }
-  :where(nav > ul > li) {
+  :where(aside.toc > nav > ul > li) {
     margin-top: 5pt;
     cursor: pointer;
     scroll-margin: var(--toc-li-scroll-margin, 20pt 0);
   }
-  :where(nav > ul > li:hover) {
+  :where(aside.toc > nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
   }
-  :where(nav > ul > li.active) {
+  :where(aside.toc > nav > ul > li.active) {
     color: var(--toc-active-color, orange);
   }
-  :where(button) {
+  :where(aside.toc > button) {
     position: absolute;
     bottom: 0;
     right: 0;
@@ -156,17 +141,17 @@
     cursor: pointer;
     font-size: 2em;
     line-height: 0;
-    background: var(--toc-mobile-btn-bg-color, rgba(255, 255, 255, 0.2));
     border-radius: 5pt;
     padding: 2pt 4pt;
     border: none;
     color: var(--toc-mobile-btn-color, black);
+    background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
   }
-  :where(nav) {
+  :where(aside.toc > nav) {
     margin: 1em 0;
     padding: 1em 1em 1ex;
   }
-  :where(nav > h2) {
+  :where(aside.toc > nav > h2) {
     margin-top: 0;
   }
 
@@ -181,7 +166,7 @@
     bottom: -1em;
     right: 0;
     z-index: -1;
-    background-color: var(--toc-mobile-bg-color, white);
+    background-color: var(--toc-mobile-bg, white);
   }
 
   :where(aside.toc.desktop) {
@@ -192,10 +177,7 @@
     padding: 12pt 14pt 0;
     margin: var(--toc-desktop-nav-margin, 0 2ex 0 0);
     top: var(--toc-desktop-sticky-top, 2em);
-    background-color: var(--toc-desktop-bg-color);
+    background-color: var(--toc-desktop-bg);
     border-radius: 5pt;
-  }
-  :where(aside.toc.desktop > button) {
-    display: none;
   }
 </style>

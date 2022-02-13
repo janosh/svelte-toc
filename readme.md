@@ -35,14 +35,6 @@ In a SvelteKit project:
 </main>
 ```
 
-Note: `Toc.svelte` is for SvelteKit projects only since it uses
-
-```js
-import { afterNavigate } from '$app/navigation'
-```
-
-to update the ToC on route changes.
-
 ## Props
 
 Full list of props and bindable variables for this component (all of them optional):
@@ -54,6 +46,7 @@ Full list of props and bindable variables for this component (all of them option
 - `title` (`str`, default: `'Contents'`): ToC title to display above the list of headings. Set `title=''` to hide.
 - `openButtonLabel` (`str`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 - `breakpoint` (`int`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
+- `activeTopOffset` (`integer`, default: `100`): Distance to top edge of screen (in pixels) at which a heading jumps from inactive to active. Increase this value if you have a header that makes headings disappear earlier than the viewport's top edge.
 - `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
 - `activeHeading` (`HTMLHeadingElement | null`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
 - `keepActiveTocItemInView` (`boolean`, default `false`): Whether to scroll the ToC along with the page.
@@ -77,13 +70,25 @@ To control how far from the viewport top headings come to rest when scrolled int
 }
 ```
 
+## Slots
+
+`Toc.svelte` accepts a slot named `"tocItem"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+
+```svelte
+<Toc>
+  <span let:idx let:heading slot="tocItem">
+    {idx + 1}. {heading.innerText}
+  </span>
+</Toc>
+```
+
 ## Styling
 
 The HTML structure of this component is
 
 ```html
 <aside>
-  <button>open/close (only visible on mobile)</button>
+  <button>open/close (only present on mobile)</button>
   <nav>
     <h2>{title}</h2>
     <ul>
@@ -97,20 +102,29 @@ The HTML structure of this component is
 
 `Toc.svelte` offers the following CSS variables listed here with their defaults that can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
 
-- `var(--toc-z-index, 1)`: Controls `z-index` of the top-level ToC `aside` element on both mobile and desktop.
-- `var(--toc-width)`: Width of the `aside` element.
-- `var(--toc-mobile-width, 12em)`: Width of the ToC component's `aside.mobile > nav` element.
-- `var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
-- `var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
-- `var(--toc-active-color, orange)`: Text color of the currently active heading. The active heading is the one closest to current scroll position.
-- `var(--toc-mobile-btn-color, black)`: Color of the menu icon used as ToC opener button on mobile screen sizes.
-- `var(--toc-li-scroll-margin, 20pt 0)`: scroll margin of ToC list items (determines distance from window edge when keeping active ToC item scrolled in view as page scrolls)
-- `var(--toc-mobile-btn-bg-color, rgba(255, 255, 255, 0.2))`: Background color of the padding area around the menu icon button.
-- `var(--toc-mobile-bg-color, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
-- `var(--toc-desktop-bg-color)`: Background color of the `nav` element on desktop screens.
-- `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
-- `var(--toc-desktop-aside-margin, 0)`: Margin of the outer-most `aside.toc` element on desktops.
-- `var(--toc-desktop-nav-margin, 0 2ex 0 0)`: Margin of the `aside.toc > nav` element on desktops.
+- `aside.toc`
+  - `var(--toc-z-index, 1)`: Controls `z-index` of the top-level ToC `aside` element on both mobile and desktop.
+- `aside.toc > nav`
+  - `var(--toc-width)`: Width of the `nav` element.
+  - `var(--toc-min-width)`: Minimum `nav` width.
+  - `var(--toc-mobile-width, 12em)`: Width of the ToC component's `aside.mobile > nav` element.
+  - `var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
+- `aside.toc > nav > ul > li:hover`
+  - `var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
+- `aside.toc > nav > ul > li.active`
+  - `var(--toc-active-color, orange)`: Text color of the currently active heading. The active heading is the one closest to current scroll position.
+- `aside.toc > button`
+  - `var(--toc-mobile-btn-color, black)`: Color of the menu icon used as ToC opener button on mobile screen sizes.
+  - `var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background color of the padding area around the menu icon button.
+  - `var(--toc-li-scroll-margin, 20pt 0)`: scroll margin of ToC list items (determines distance from window edge when keeping active ToC item scrolled in view as page scrolls)
+- `aside.toc.mobile`
+  - `var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+- `aside.toc.desktop`
+  - `var(--toc-desktop-aside-margin, 0)`: Margin of the outer-most `aside.toc` element on desktops.
+- `aside.toc.desktop > nav`
+  - `var(--toc-desktop-bg)`: Background color of the `nav` element on desktop screens.
+  - `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
+  - `var(--toc-desktop-nav-margin, 0 2ex 0 0)`: Margin of the `aside.toc > nav` element on desktops.
 
 Example:
 
