@@ -100,31 +100,33 @@ The HTML structure of this component is
 </aside>
 ```
 
-`Toc.svelte` offers the following CSS variables listed here with their defaults that can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
+`Toc.svelte` offers the following CSS variables which can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
 
 - `aside.toc`
-  - `var(--toc-z-index, 1)`: Controls `z-index` of the top-level ToC `aside` element on both mobile and desktop.
+  - `z-index: var(--toc-z-index, 1)`: Applies on both mobile and desktop.
 - `aside.toc > nav`
-  - `var(--toc-width)`: Width of the `nav` element.
-  - `var(--toc-min-width)`: Minimum `nav` width.
-  - `var(--toc-mobile-width, 12em)`: Width of the ToC component's `aside.mobile > nav` element.
-  - `var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
+  - `min-width: var(--toc-min-width)`
+  - `max-width: var(--toc-max-width)`
+  - `width: var(--toc-width)`
+  - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
+- `aside.toc > nav > ul > li`
+  - `scroll-margin: var(--toc-li-scroll-margin, 20pt 0)`: Scroll margin of ToC list items (determines distance from viewport edge (top or bottom) when keeping active ToC item scrolled in view as page scrolls).
 - `aside.toc > nav > ul > li:hover`
-  - `var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
+  - `color: var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
 - `aside.toc > nav > ul > li.active`
-  - `var(--toc-active-color, orange)`: Text color of the currently active heading. The active heading is the one closest to current scroll position.
+  - `color: var(--toc-active-color, orange)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
 - `aside.toc > button`
-  - `var(--toc-mobile-btn-color, black)`: Color of the menu icon used as ToC opener button on mobile screen sizes.
-  - `var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background color of the padding area around the menu icon button.
-  - `var(--toc-li-scroll-margin, 20pt 0)`: scroll margin of ToC list items (determines distance from window edge when keeping active ToC item scrolled in view as page scrolls)
-- `aside.toc.mobile`
-  - `var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+  - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
+  - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
+- `aside.toc.mobile > nav`
+  - `width: var(--toc-mobile-width, 12em)`
+  - `background-color: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
 - `aside.toc.desktop`
-  - `var(--toc-desktop-aside-margin, 0)`: Margin of the outer-most `aside.toc` element on desktops.
+  - `margin: var(--toc-desktop-aside-margin)`: Margin of the outer-most `aside.toc` element on desktops.
 - `aside.toc.desktop > nav`
-  - `var(--toc-desktop-bg)`: Background color of the `nav` element on desktop screens.
-  - `var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
-  - `var(--toc-desktop-nav-margin, 0 2ex 0 0)`: Margin of the `aside.toc > nav` element on desktops.
+  - `margin: var(--toc-desktop-nav-margin, 0 2ex 0 0)`
+  - `top: var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
+  - `background-color: var(--toc-desktop-bg)`
 
 Example:
 
