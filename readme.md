@@ -50,7 +50,7 @@ Full list of props and bindable variables for this component (all of them option
 - `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
 - `activeHeading` (`HTMLHeadingElement | null`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
 - `keepActiveTocItemInView` (`boolean`, default `false`): Whether to scroll the ToC along with the page.
-- `flashClickedHeadingsFor` (`int`, default: `1000`): How long a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
+- `flashClickedHeadingsFor` (`int`, default: `1500`): How long (in milliseconds) a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
 
   ```css
   :is(h2, h3, h4, h5, h6) {
