@@ -15,7 +15,7 @@
   export let title = `On this page`
   export let openButtonLabel = `Open table of contents`
   export let breakpoint = 1000
-  export let flashClickedHeadingsFor = 1000
+  export let flashClickedHeadingsFor = 1500
   export let keepActiveTocItemInView = true
   export let activeTopOffset = 100
 
@@ -57,11 +57,13 @@
 
   const clickHandler = (node: HTMLHeadingElement) => () => {
     open = false
-    // Chrome doesn't yet support multiple simulatneous smooth scrolls (https://stackoverflow.com/q/49318497)
-    // with node.scrollIntoView({ behavior: `smooth` }) so we use window.scrollTo() instead
-    window.scrollTo({ top: node.offsetTop, behavior: `smooth` })
+    // Chrome doesn't yet support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
+    // with node.scrollIntoView({ behavior: `smooth` }). Could use window.scrollTo() instead
+    // or jump to heading.
+    node.scrollIntoView()
 
-    if (getHeadingIds) history.replaceState({}, ``, `#${getHeadingIds(node)}`)
+    const id = getHeadingIds && getHeadingIds(node)
+    if (id) history.replaceState({}, ``, `#${id}`)
 
     if (flashClickedHeadingsFor) {
       node.classList.add(`toc-clicked`)
