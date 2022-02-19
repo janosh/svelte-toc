@@ -5,7 +5,7 @@
   import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector = `main :where(h1, h2, h3, h4, h5, h6)`
+  export let headingSelector = `main :where(h1, h2, h3, h4)`
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
@@ -57,10 +57,10 @@
 
   const clickHandler = (node: HTMLHeadingElement) => () => {
     open = false
-    // Chrome doesn't yet support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
-    // with node.scrollIntoView({ behavior: `smooth` }). Could use window.scrollTo() instead
-    // or jump to heading.
-    node.scrollIntoView()
+    // Chrome doesn't (yet?) support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
+    // with node.scrollIntoView(). Use window.scrollTo() instead.
+    const scrollMargin = Number(getComputedStyle(node).scrollMarginTop.replace(`px`, ``))
+    window.scrollTo({ top: node.offsetTop - scrollMargin, behavior: `smooth` })
 
     const id = getHeadingIds && getHeadingIds(node)
     if (id) history.replaceState({}, ``, `#${id}`)

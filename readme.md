@@ -39,7 +39,7 @@ In a SvelteKit project:
 
 Full list of props and bindable variables for this component (all of them optional):
 
-- `headingSelector` (`string`, default: `'main :where(h1, h2, h3, h4, h5, h6)'`): CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
+- `headingSelector` (`string`, default: `'main :where(h1, h2, h3, h4)'`): CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
 - `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
 - `getHeadingIds` (`function`, default: `(node) => node.id`): Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 - `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
@@ -53,7 +53,7 @@ Full list of props and bindable variables for this component (all of them option
 - `flashClickedHeadingsFor` (`int`, default: `1500`): How long (in milliseconds) a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
 
   ```css
-  :is(h2, h3, h4, h5, h6) {
+  :is(h2, h3, h4) {
     transition: 0.3s;
   }
   .toc-clicked {
@@ -65,7 +65,7 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 ```css
 * {
-  /* or main :where(h1, h2, h3, h4, h5, h6) or whatever */
+  /* or main :where(h1, h2, h3, h4) or whatever */
   scroll-margin-top: 100px;
 }
 ```
