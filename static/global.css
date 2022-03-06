@@ -23,9 +23,6 @@ main {
   max-width: 50em;
   margin-bottom: 3em;
 }
-ul li {
-  margin: 1ex 0;
-}
 a {
   color: cornflowerblue;
   text-decoration: none;
