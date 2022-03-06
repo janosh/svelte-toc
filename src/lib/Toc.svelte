@@ -2,7 +2,6 @@
   import { afterNavigate } from '$app/navigation'
   import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
-  import { onClickOutside } from './actions'
   import MenuIcon from './MenuIcon.svelte'
 
   export let headingSelector = `main :where(h1, h2, h3, h4)`
@@ -22,19 +21,21 @@
   let windowWidth: number
   let windowHeight: number
   let headings: HTMLHeadingElement[] = []
+  let aside: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
 
-  // (re-)query headings on mount and on route changes
-  afterNavigate(() => {
-    headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
-    setActiveHeading()
-  })
+  function close(event: MouseEvent) {
+    if (!aside.contains(event.target as Node)) open = false
+  }
 
-  onMount(() => {
+  // (re-)query headings on mount and on route changes
+  function requery_headings() {
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     setActiveHeading()
-  })
+  }
+  afterNavigate(requery_headings)
+  onMount(requery_headings)
 
   function setActiveHeading() {
     let idx = headings.length
@@ -76,16 +77,20 @@
   bind:innerWidth={windowWidth}
   bind:innerHeight={windowHeight}
   on:scroll={setActiveHeading}
+  on:click={close}
 />
 
 <aside
-  use:onClickOutside={() => (open = false)}
   class="toc"
   class:desktop={windowWidth > breakpoint}
   class:mobile={windowWidth < breakpoint}
+  bind:this={aside}
 >
   {#if !open && windowWidth < breakpoint}
-    <button on:click|preventDefault={() => (open = !open)} aria-label={openButtonLabel}>
+    <button
+      on:click|preventDefault|stopPropagation={() => (open = true)}
+      aria-label={openButtonLabel}
+    >
       <MenuIcon width="1em" />
     </button>
   {/if}
@@ -142,8 +147,7 @@
     color: var(--toc-active-color, smokewhite);
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
-    padding: 2pt 4pt;
-    margin: -2pt -4pt;
+    padding: 0 4pt;
     border-radius: 3pt;
   }
   :where(aside.toc > button) {
