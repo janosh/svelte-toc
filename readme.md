@@ -11,7 +11,7 @@
 
 </h4>
 
-Sticky responsive table of contents component for SvelteKit.
+Sticky responsive table of contents component for SvelteKit. <strong class="hide-in-docs"><a href="https://svelte-toc.netlify.app">Live demo</a></strong>
 
 ## Installation
 
@@ -126,7 +126,7 @@ The HTML structure of this component is
 - `aside.toc.desktop`
   - `margin: var(--toc-desktop-aside-margin)`: Margin of the outer-most `aside.toc` element on desktops.
 - `aside.toc.desktop > nav`
-  - `margin: var(--toc-desktop-nav-margin, 0 2ex 0 0)`
+  - `margin: var(--toc-desktop-nav-margin)`
   - `top: var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
   - `background-color: var(--toc-desktop-bg)`
 
