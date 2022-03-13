@@ -147,8 +147,8 @@
     color: var(--toc-active-color, smokewhite);
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
-    padding: 0 4pt;
-    border-radius: 3pt;
+    padding: var(--toc-active-padding);
+    border-radius: 2pt;
   }
   :where(aside.toc > button) {
     position: absolute;
@@ -192,7 +192,7 @@
   :where(aside.toc.desktop > nav) {
     position: sticky;
     padding: 12pt 14pt 0;
-    margin: var(--toc-desktop-nav-margin, 0 2em 0 0);
+    margin: var(--toc-desktop-nav-margin);
     top: var(--toc-desktop-sticky-top, 2em);
     background-color: var(--toc-desktop-bg);
     border-radius: 5pt;

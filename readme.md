@@ -117,6 +117,7 @@ The HTML structure of this component is
   - `color: var(--toc-active-color, whitesmoke)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
   - `font-weight: var(--toc-active-font-weight)`
+  - `padding: var(--toc-active-padding)`
 - `aside.toc > button`
   - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
   - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
