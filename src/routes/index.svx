@@ -3,8 +3,6 @@
   import Toc from '../lib/Toc.svelte'
 </script>
 
-<Toc headingSelector="main :where(h2, h3)" />
-
 <main>
 
 <Readme />
@@ -15,6 +13,8 @@
 - [Page without ToC](/no-toc-page)
 
 </main>
+
+<Toc headingSelector="main :where(h2, h3):not(.toc-exclude)" />
 
 <style>
   :global(h1) {
@@ -32,5 +32,8 @@
       gap: 1ex;
       margin-bottom: 3rem;
     }
+  }
+  :global(.hide-in-docs) {
+    display: none;
   }
 </style>
