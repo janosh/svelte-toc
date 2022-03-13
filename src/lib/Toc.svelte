@@ -4,7 +4,7 @@
   import { blur } from 'svelte/transition'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector = `main :where(h1, h2, h3, h4)`
+  export let headingSelector = `main :where(h1, h2, h3, h4):not(.toc-exclude)`
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
@@ -103,8 +103,8 @@
         {#each headings as heading, idx}
           <li
             tabindex={idx + 1}
-            style="margin-left: {levels[idx] - minLevel}em; font-size: {2 -
-              0.2 * (levels[idx] - minLevel)}ex"
+            style:margin-left="{levels[idx] - minLevel}em"
+            style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
             class:active={activeHeading === heading}
             on:click={clickHandler(heading)}
           >
