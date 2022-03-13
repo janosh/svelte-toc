@@ -1,6 +1,13 @@
 :root {
   --bg: #090019;
-  --toc-desktop-bg: rgba(255, 255, 255, 0.05);
+  --toc-mobile-bg: #484452;
+  --toc-mobile-btn-color: white;
+  --toc-max-width: 15em;
+  --toc-active-padding: 2pt 4pt;
+  --toc-active-margin: 0 0 0 -4pt;
+
+  --ghc-color: var(--bg);
+  --ghc-bg: white;
 }
 body {
   background: var(--bg);
@@ -9,9 +16,6 @@ body {
   margin: auto;
   color: #eee;
   overflow-x: hidden;
-}
-* {
-  scroll-margin-top: 100px;
 }
 /* outer div = hydration target */
 body > div {
@@ -54,8 +58,9 @@ blockquote {
   margin: 1em 0;
 }
 :is(h2, h3, h4, h5, h6) {
-  margin-top: 2em;
+  margin-top: 1.2em;
   transition: 0.3s;
+  scroll-margin-top: 100px;
 }
 .toc-clicked {
   color: cornflowerblue;

@@ -1,9 +1,8 @@
 name: Publish
 
 on:
-  push:
-    tags:
-      - v*.*.* # only trigger on version tags
+  release:
+    types: [published]
 
 jobs:
   build:

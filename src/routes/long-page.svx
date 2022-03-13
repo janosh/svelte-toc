@@ -2,8 +2,6 @@
   import Toc from '../lib/Toc.svelte'
 </script>
 
-<Toc />
-
 <main>
 
 # VS Code November 2021 Release Notes (v1.63)
@@ -539,3 +537,5 @@ Last but certainly not least, a big _**Thank You**_ to the contributors of VS Co
 [Back to landing page](/)
 
 </main>
+
+<Toc />
