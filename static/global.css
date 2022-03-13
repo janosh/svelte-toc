@@ -4,6 +4,7 @@
   --toc-mobile-btn-color: white;
   --toc-max-width: 15em;
   --toc-active-padding: 2pt 4pt;
+  --toc-active-margin: 0 0 0 -4pt;
 
   --ghc-color: var(--bg);
   --ghc-bg: white;

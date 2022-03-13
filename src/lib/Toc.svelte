@@ -103,7 +103,7 @@
         {#each headings as heading, idx}
           <li
             tabindex={idx + 1}
-            style:margin-left="{levels[idx] - minLevel}em"
+            style:transform="translateX({levels[idx] - minLevel}em)"
             style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
             class:active={activeHeading === heading}
             on:click={clickHandler(heading)}
@@ -148,6 +148,7 @@
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
     padding: var(--toc-active-padding);
+    margin: var(--toc-active-margin);
     border-radius: 2pt;
   }
   :where(aside.toc > button) {
