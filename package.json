@@ -5,9 +5,10 @@
   "homepage": "https://svelte-toc.netlify.app",
   "repository": "https://github.com/janosh/svelte-toc",
   "license": "MIT",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "type": "module",
-  "svelte": "Toc.svelte",
+  "main": "./index.js",
+  "svelte": "./index.js",
   "bugs": "https://github.com/janosh/svelte-toc/issues",
   "scripts": {
     "dev": "svelte-kit dev",
