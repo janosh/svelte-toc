@@ -4,7 +4,7 @@
   import { blur } from 'svelte/transition'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector = `main :where(h1, h2, h3, h4)`
+  export let headingSelector = `main :where(h1, h2, h3, h4):not(.toc-exclude)`
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
@@ -103,8 +103,8 @@
         {#each headings as heading, idx}
           <li
             tabindex={idx + 1}
-            style="margin-left: {levels[idx] - minLevel}em; font-size: {2 -
-              0.2 * (levels[idx] - minLevel)}ex"
+            style:transform="translateX({levels[idx] - minLevel}em)"
+            style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
             class:active={activeHeading === heading}
             on:click={clickHandler(heading)}
           >
@@ -147,8 +147,9 @@
     color: var(--toc-active-color, smokewhite);
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
-    padding: 0 4pt;
-    border-radius: 3pt;
+    padding: var(--toc-active-padding);
+    margin: var(--toc-active-margin);
+    border-radius: 2pt;
   }
   :where(aside.toc > button) {
     position: absolute;
@@ -192,7 +193,7 @@
   :where(aside.toc.desktop > nav) {
     position: sticky;
     padding: 12pt 14pt 0;
-    margin: var(--toc-desktop-nav-margin, 0 2em 0 0);
+    margin: var(--toc-desktop-nav-margin);
     top: var(--toc-desktop-sticky-top, 2em);
     background-color: var(--toc-desktop-bg);
     border-radius: 5pt;
