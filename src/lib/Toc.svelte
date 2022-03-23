@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { afterNavigate } from '$app/navigation'
+  import { page } from '$app/stores'
   import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
   import MenuIcon from './MenuIcon.svelte'
@@ -34,8 +34,10 @@
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     setActiveHeading()
   }
-  afterNavigate(requery_headings)
-  onMount(requery_headings)
+  onMount(() => {
+    requery_headings()
+    page.subscribe(requery_headings)
+  })
 
   function setActiveHeading() {
     let idx = headings.length
