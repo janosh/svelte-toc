@@ -31,13 +31,12 @@
 
   // (re-)query headings on mount and on route changes
   function requery_headings() {
+    if (typeof document === `undefined`) return // for SSR safety
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     setActiveHeading()
   }
-  onMount(() => {
-    requery_headings()
-    page.subscribe(requery_headings)
-  })
+  page.subscribe(requery_headings)
+  onMount(requery_headings)
 
   function setActiveHeading() {
     let idx = headings.length
