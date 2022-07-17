@@ -50,7 +50,7 @@
         if (keepActiveTocItemInView) {
           // get the currently active ToC list item
           const activeTocLi = document.querySelector(`aside.toc > nav > ul > li.active`)
-          activeTocLi?.scrollIntoViewIfNeeded()
+          activeTocLi?.scrollIntoView({ block: `nearest` })
         }
         return
       }
