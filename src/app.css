@@ -62,6 +62,9 @@ blockquote {
 .toc-clicked {
   color: cornflowerblue;
 }
+ul li {
+  line-height: 3ex;
+}
 
 /* style heading anchors added by rehype-autolink-headings, see svelte.config.js */
 :where(h2, h3, h4, h5, h6) a[aria-hidden='true'] {

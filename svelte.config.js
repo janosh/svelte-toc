@@ -40,11 +40,5 @@ export default {
       exports: (filepath) =>
         [`Toc.svelte`, `index.ts`, `package.json`].includes(filepath),
     },
-
-    vite: {
-      server: {
-        fs: { allow: [`..`] }, // needed to import readme.md
-      },
-    },
   },
 }
