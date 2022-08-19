@@ -1,6 +1,6 @@
 <script lang="ts">
   import Readme from '../../readme.md'
-  import Toc from '../lib/Toc.svelte'
+  import Toc from '$lib/Toc.svelte'
 </script>
 
 <main>

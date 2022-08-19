@@ -34,11 +34,5 @@ export default {
     adapter: adapter(),
 
     prerender: { default: true },
-
-    package: {
-      // exclude auxiliary files from package.json "exports"
-      exports: (filepath) =>
-        [`Toc.svelte`, `index.ts`, `package.json`].includes(filepath),
-    },
   },
 }
