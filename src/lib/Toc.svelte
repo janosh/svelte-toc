@@ -27,7 +27,7 @@
   let aside: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
-  $: desktop = (windowWidth > breakpoint)
+  $: desktop = windowWidth > breakpoint
 
   function close(event: MouseEvent) {
     if (!aside.contains(event.target as Node)) open = false
@@ -85,43 +85,38 @@
   on:click={close}
 />
 {#if visible}
-<aside
-  class="toc"
-  class:desktop
-  class:mobile={!desktop}
-  bind:this={aside}
->
-  {#if !open && !desktop}
-    <button
-      on:click|preventDefault|stopPropagation={() => (open = true)}
-      aria-label={openButtonLabel}
-    >
-      <MenuIcon width="1em" />
-    </button>
-  {/if}
-  {#if open || desktop}
-    <nav transition:blur|local>
-      {#if title}
-        <h2>{title}</h2>
-      {/if}
-      <ul>
-        {#each headings as heading, idx}
-          <li
-            tabindex={idx + 1}
-            style:transform="translateX({levels[idx] - minLevel}em)"
-            style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
-            class:active={activeHeading === heading}
-            on:click={clickHandler(heading)}
-          >
-            <slot name="tocItem" {heading} {idx}>
-              {getHeadingTitles(heading)}
-            </slot>
-          </li>
-        {/each}
-      </ul>
-    </nav>
-  {/if}
-</aside>
+  <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
+    {#if !open && !desktop}
+      <button
+        on:click|preventDefault|stopPropagation={() => (open = true)}
+        aria-label={openButtonLabel}
+      >
+        <MenuIcon width="1em" />
+      </button>
+    {/if}
+    {#if open || desktop}
+      <nav transition:blur|local>
+        {#if title}
+          <h2>{title}</h2>
+        {/if}
+        <ul>
+          {#each headings as heading, idx}
+            <li
+              tabindex={idx + 1}
+              style:transform="translateX({levels[idx] - minLevel}em)"
+              style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
+              class:active={activeHeading === heading}
+              on:click={clickHandler(heading)}
+            >
+              <slot name="tocItem" {heading} {idx}>
+                {getHeadingTitles(heading)}
+              </slot>
+            </li>
+          {/each}
+        </ul>
+      </nav>
+    {/if}
+  </aside>
 {/if}
 
 <style>
