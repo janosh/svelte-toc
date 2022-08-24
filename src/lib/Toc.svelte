@@ -85,7 +85,12 @@
   on:click={close}
 />
 {#if !hide}
-  <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
+   <aside
+    class="toc"
+    class:desktop
+    class:mobile={!desktop}
+    bind:this={aside}
+  >
     {#if !open && !desktop}
       <button
         on:click|preventDefault|stopPropagation={() => (open = true)}
@@ -94,7 +99,7 @@
         <MenuIcon width="1em" />
       </button>
     {/if}
-    {#if open || desktop}
+    {#if open || windowWidth > breakpoint}
       <nav transition:blur|local>
         {#if title}
           <h2>{title}</h2>
