@@ -19,7 +19,7 @@
   export let activeTopOffset = 100
   export let headings: HTMLHeadingElement[] = []
   export let desktop = true
-  export let visible = true
+  export let hide = false
 
   let windowWidth: number
   let windowHeight: number
@@ -84,7 +84,7 @@
   on:scroll={setActiveHeading}
   on:click={close}
 />
-{#if visible}
+{#if !hide}
   <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
     {#if !open && !desktop}
       <button
