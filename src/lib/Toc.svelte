@@ -17,13 +17,17 @@
   export let flashClickedHeadingsFor = 1500
   export let keepActiveTocItemInView = true
   export let activeTopOffset = 100
+  export let headings: HTMLHeadingElement[] = []
+  export let desktop = true
+  export let visible = true
 
   let windowWidth: number
   let windowHeight: number
-  let headings: HTMLHeadingElement[] = []
+
   let aside: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
+  $: desktop = (windowWidth > breakpoint)
 
   function close(event: MouseEvent) {
     if (!aside.contains(event.target as Node)) open = false
@@ -80,14 +84,14 @@
   on:scroll={setActiveHeading}
   on:click={close}
 />
-
+{#if visible}
 <aside
   class="toc"
-  class:desktop={windowWidth > breakpoint}
-  class:mobile={windowWidth < breakpoint}
+  class:desktop
+  class:mobile={!desktop}
   bind:this={aside}
 >
-  {#if !open && windowWidth < breakpoint}
+  {#if !open && !desktop}
     <button
       on:click|preventDefault|stopPropagation={() => (open = true)}
       aria-label={openButtonLabel}
@@ -95,7 +99,7 @@
       <MenuIcon width="1em" />
     </button>
   {/if}
-  {#if open || windowWidth > breakpoint}
+  {#if open || desktop}
     <nav transition:blur|local>
       {#if title}
         <h2>{title}</h2>
@@ -118,6 +122,7 @@
     </nav>
   {/if}
 </aside>
+{/if}
 
 <style>
   :where(aside.toc) {
