@@ -85,12 +85,7 @@
   on:click={close}
 />
 {#if !hide}
-   <aside
-    class="toc"
-    class:desktop
-    class:mobile={!desktop}
-    bind:this={aside}
-  >
+  <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
     {#if !open && !desktop}
       <button
         on:click|preventDefault|stopPropagation={() => (open = true)}
