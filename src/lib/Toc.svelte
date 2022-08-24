@@ -94,7 +94,7 @@
         <MenuIcon width="1em" />
       </button>
     {/if}
-    {#if open || windowWidth > breakpoint}
+    {#if open || desktop}
       <nav transition:blur|local>
         {#if title}
           <h2>{title}</h2>
