@@ -60,9 +60,9 @@
       }
     }
   }
-  
+
   function getOffsetTop(element) {
-    return element ? (element.offsetTop + getOffsetTop(element.offsetParent)) : 0;
+    return element ? element.offsetTop + getOffsetTop(element.offsetParent) : 0
   }
 
   const clickHandler = (node: HTMLHeadingElement) => () => {
