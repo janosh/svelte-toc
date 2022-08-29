@@ -61,12 +61,18 @@
     }
   }
 
+  function get_offset_top(element: HTMLElement | null): number {
+    // added in https://github.com/janosh/svelte-toc/pull/16
+    if (!element?.offsetParent) return 0
+    return element.offsetTop + get_offset_top(element.offsetParent as HTMLElement)
+  }
+
   const clickHandler = (node: HTMLHeadingElement) => () => {
     open = false
     // Chrome doesn't (yet?) support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
     // with node.scrollIntoView(). Use window.scrollTo() instead.
     const scrollMargin = Number(getComputedStyle(node).scrollMarginTop.replace(`px`, ``))
-    window.scrollTo({ top: node.offsetTop - scrollMargin, behavior: `smooth` })
+    window.scrollTo({ top: get_offset_top(node) - scrollMargin, behavior: `smooth` })
 
     const id = getHeadingIds && getHeadingIds(node)
     if (id) history.replaceState({}, ``, `#${id}`)
