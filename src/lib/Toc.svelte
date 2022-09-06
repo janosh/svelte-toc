@@ -63,7 +63,7 @@
 
   function get_offset_top(element: HTMLElement | null): number {
     // added in https://github.com/janosh/svelte-toc/pull/16
-    if (!element?.offsetParent) return 0
+    if (!element) return 0
     return element.offsetTop + get_offset_top(element.offsetParent as HTMLElement)
   }
 
