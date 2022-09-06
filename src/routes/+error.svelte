@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { dev } from '$app/env'
+  import { dev } from '$app/environment'
   import { page } from '$app/stores'
 </script>
 
@@ -12,7 +12,7 @@
 
   {#if $page.status === 404}
     <p>
-      Page not found. Back to <a sveltekit:prefetch href="/">landing page</a>. 🤦
+      Page not found. Back to <a data-sveltekit-prefetch href="/">landing page</a>. 🤦
     </p>
   {/if}
 
