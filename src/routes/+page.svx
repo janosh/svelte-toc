@@ -14,7 +14,7 @@
 
 </main>
 
-<Toc headingSelector="main :where(h2, h3):not(.toc-exclude)" />
+<Toc headingSelector="main :where(h2, h3):not(.toc-exclude)" activeTopOffset={200} />
 
 <style>
   :global(h1) {
