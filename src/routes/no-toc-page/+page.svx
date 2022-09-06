@@ -1,18 +1,8 @@
 <main>
 
-# Some Title
+# Page without ToC
 
-Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere, mollitia officia dolores
-earum dolorem autem ut, provident nihil maxime veniam ullam consequatur. Repudiandae,
-dolore repellendus totam esse excepturi ipsum corporis.
-
-## Some Subtitle
-
-Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ab in, quos obcaecati, nam vitae officiis accusamus velit nobis atque fuga quam corrupti quod excepturi ipsa alias dolore qui distinctio consectetur.
-
-## Another Subtitle
-
-Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ab in, quos obcaecati, nam vitae officiis accusamus velit nobis atque fuga quam corrupti quod excepturi ipsa alias dolore qui distinctio consectetur.
+This page is used mainly for testing to ensure `Toc.svelte` correctly unmounts when navigating to a page without ToC.
 
 [Back to landing page](/)
 
