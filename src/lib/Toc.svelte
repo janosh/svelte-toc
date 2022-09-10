@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { page } from '$app/stores'
   import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
   import MenuIcon from './MenuIcon.svelte'
 
-  export let headingSelector = `main :where(h1, h2, h3, h4):not(.toc-exclude)`
+  export let headingSelector = `:where(h1, h2, h3, h4):not(.toc-exclude)`
+  export let page_body: HTMLElement | string = `body`
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
@@ -35,12 +35,23 @@
 
   // (re-)query headings on mount and on route changes
   function requery_headings() {
-    if (typeof document === `undefined`) return // for SSR safety
+    if (typeof document === `undefined`) return // for SSR
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     setActiveHeading()
   }
-  page.subscribe(requery_headings)
-  onMount(requery_headings)
+
+  onMount(() => {
+    if (typeof page_body === `string`) {
+      const page_node = document.querySelector(page_body)
+      if (!page_node) {
+        throw new Error(`Could not find page body element: ${page_body}`)
+      }
+      page_body = page_node as HTMLElement
+    }
+    const mutation_observer = new MutationObserver(requery_headings)
+    mutation_observer.observe(page_body, { childList: true, subtree: true })
+    return () => mutation_observer.disconnect()
+  })
 
   function setActiveHeading() {
     let idx = headings.length
