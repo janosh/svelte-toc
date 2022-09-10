@@ -13,7 +13,7 @@
 
 </h4>
 
-Sticky responsive table of contents component for SvelteKit. <strong class="hide-in-docs"><a href="https://svelte-toc.netlify.app">Live demo</a></strong>
+Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://svelte-toc.netlify.app">Live demo</a></strong>
 
 ## Installation
 
@@ -22,8 +22,6 @@ yarn add -D svelte-toc
 ```
 
 ## Usage
-
-In a SvelteKit project:
 
 ```svelte
 <script>
