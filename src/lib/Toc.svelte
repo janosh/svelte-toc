@@ -114,7 +114,7 @@
     {#if open || desktop}
       <nav transition:blur|local>
         {#if title}
-          <h2>{title}</h2>
+          <h2 class="toc-exclude">{title}</h2>
         {/if}
         <ul>
           {#each headings as heading, idx}
