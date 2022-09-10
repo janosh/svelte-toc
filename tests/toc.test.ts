@@ -38,4 +38,33 @@ test.describe(`Toc`, () => {
     )
     expect(active_toc_li).toBe(`Styling`)
   })
+
+  test(`updates when headings are added/removed from the page after load`, async ({
+    page,
+  }) => {
+    await page.goto(`/`, { waitUntil: `networkidle` })
+
+    const add_heading = () => {
+      const newHeading = document.createElement(`h2`)
+      newHeading.textContent = `New Heading`
+      document.querySelector(`main`)?.appendChild(newHeading)
+    }
+    const remove_heading = () => {
+      const headingToRemove = document.querySelector(`h2`)
+      headingToRemove?.remove()
+    }
+    for (const mutation of [add_heading, remove_heading]) {
+      await page.evaluate(mutation)
+
+      const page_headings = await page
+        .locator(`main :where(h2, h3):not(.toc-exclude)`)
+        .allTextContents()
+
+      const toc_headings = (
+        await page.locator(`aside.toc > nav > ul > li`).allTextContents()
+      ).map((li_text) => li_text.trim())
+
+      expect(toc_headings).toEqual(page_headings)
+    }
+  })
 })
