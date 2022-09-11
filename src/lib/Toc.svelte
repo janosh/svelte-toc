@@ -43,11 +43,11 @@
 
   onMount(() => {
     if (typeof pageBody === `string`) {
-      const page_node = document.querySelector(pageBody)
-      if (!page_node) {
+      const node = document.querySelector(pageBody)
+      if (!node) {
         throw new Error(`Could not find page body element: ${pageBody}`)
       }
-      pageBody = page_node as HTMLElement
+      pageBody = node as HTMLElement
     }
     const mutation_observer = new MutationObserver(requery_headings)
     mutation_observer.observe(pageBody, { childList: true, subtree: true })

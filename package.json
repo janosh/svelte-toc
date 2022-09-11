@@ -16,7 +16,7 @@
     "preview": "vite preview",
     "package": "svelte-package",
     "serve": "yarn build && yarn preview",
-    "test": "playwright test",
+    "test": "vitest --run tests/unit && playwright test tests/*.test.ts",
     "check": "svelte-check --ignore package"
   },
   "devDependencies": {
