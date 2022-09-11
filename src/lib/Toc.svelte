@@ -20,6 +20,7 @@
   export let headings: HTMLHeadingElement[] = []
   export let desktop = true
   export let hide = false
+  export let title_tag = `h2`
 
   let windowWidth: number
   let windowHeight: number
@@ -114,7 +115,7 @@
     {#if open || desktop}
       <nav transition:blur|local>
         {#if title}
-          <h2 class="toc-exclude">{title}</h2>
+          <svelte:element this={title_tag} class='toc-title toc-exclude'>{title}</svelte:element>
         {/if}
         <ul>
           {#each headings as heading, idx}
@@ -187,7 +188,7 @@
     margin: 1em 0;
     padding: 1em 1em 1ex;
   }
-  :where(aside.toc > nav > h2) {
+  :where(aside.toc > nav > .toc-title) {
     margin-top: 0;
   }
 

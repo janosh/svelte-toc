@@ -45,6 +45,7 @@ Full list of props and bindable variables for this component (all of them option
 - `getHeadingIds` (`function`, default: `(node) => node.id`): Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 - `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 - `title` (`string`, default: `'Contents'`): ToC title to display above the list of headings. Set `title=''` to hide.
+- `title_tag` (`string`, default: `'h2'`): Change the html tag to be used for the ToC title. For example: to use `span`, set `title_tag='span'`
 - `openButtonLabel` (`string`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 - `breakpoint` (`integer`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
 - `desktop` (`boolean`, default: `true`): `true` if current window width > `breakpoint` else `false`.
