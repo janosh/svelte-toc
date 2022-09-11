@@ -4,7 +4,7 @@
   import MenuIcon from './MenuIcon.svelte'
 
   export let headingSelector = `:where(h1, h2, h3, h4):not(.toc-exclude)`
-  export let page_body: HTMLElement | string = `body`
+  export let pageBody: HTMLElement | string = `body`
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
@@ -20,6 +20,7 @@
   export let headings: HTMLHeadingElement[] = []
   export let desktop = true
   export let hide = false
+  export let titleTag = `h2`
 
   let windowWidth: number
   let windowHeight: number
@@ -41,15 +42,15 @@
   }
 
   onMount(() => {
-    if (typeof page_body === `string`) {
-      const page_node = document.querySelector(page_body)
-      if (!page_node) {
-        throw new Error(`Could not find page body element: ${page_body}`)
+    if (typeof pageBody === `string`) {
+      const node = document.querySelector(pageBody)
+      if (!node) {
+        throw new Error(`Could not find page body element: ${pageBody}`)
       }
-      page_body = page_node as HTMLElement
+      pageBody = node as HTMLElement
     }
     const mutation_observer = new MutationObserver(requery_headings)
-    mutation_observer.observe(page_body, { childList: true, subtree: true })
+    mutation_observer.observe(pageBody, { childList: true, subtree: true })
     return () => mutation_observer.disconnect()
   })
 
@@ -114,7 +115,9 @@
     {#if open || desktop}
       <nav transition:blur|local>
         {#if title}
-          <h2 class="toc-exclude">{title}</h2>
+          <svelte:element this={titleTag} class="toc-title toc-exclude"
+            >{title}</svelte:element
+          >
         {/if}
         <ul>
           {#each headings as heading, idx}
@@ -187,7 +190,7 @@
     margin: 1em 0;
     padding: 1em 1em 1ex;
   }
-  :where(aside.toc > nav > h2) {
+  :where(aside.toc > nav > .toc-title) {
     margin-top: 0;
   }
 
