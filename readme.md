@@ -40,12 +40,13 @@ yarn add -D svelte-toc
 Full list of props and bindable variables for this component (all of them optional):
 
 - `headingSelector` (`string`, default: `'main :where(h1, h2, h3, h4):not(.toc-exclude)'`): CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
-- `headings` (`HTMLHeadingElement[]`, `[]`): Array if DOM heading nodes currently listed and tracked by the ToC.
+- `pageBody` (`string | HTMLElement`, `'body'`): Which DOM node to use as the page body root. All headings to list should be children of this root node. Use the closest parent node containing all headings for efficiency.
+- `headings` (`HTMLHeadingElement[]`, `[]`): Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
 - `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
 - `getHeadingIds` (`function`, default: `(node) => node.id`): Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 - `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 - `title` (`string`, default: `'Contents'`): ToC title to display above the list of headings. Set `title=''` to hide.
-- `title_tag` (`string`, default: `'h2'`): Change the html tag to be used for the ToC title. For example: to use `span`, set `title_tag='span'`
+- `titleTag` (`string`, default: `'h2'`): Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`
 - `openButtonLabel` (`string`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 - `breakpoint` (`integer`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
 - `desktop` (`boolean`, default: `true`): `true` if current window width > `breakpoint` else `false`.
