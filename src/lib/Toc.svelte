@@ -133,7 +133,7 @@
               on:click={click_handler(heading)}
               bind:this={tocItems[idx]}
             >
-              <slot name="tocItem" {heading} {idx}>
+              <slot name="toc-item" {heading} {idx}>
                 {getHeadingTitles(heading)}
               </slot>
             </li>
