@@ -113,7 +113,9 @@
         on:click|preventDefault|stopPropagation={() => (open = true)}
         aria-label={openButtonLabel}
       >
-        <MenuIcon width="1em" />
+        <slot name="open-toc-icon">
+          <MenuIcon width="1em" />
+        </slot>
       </button>
     {/if}
     {#if open || desktop}
