@@ -24,14 +24,13 @@
   export let hide = false
   export let titleTag = `h2`
 
-  let windowWidth: number
-  let windowHeight: number
+  let window_width: number
 
   let aside: HTMLElement
   let nav: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
-  $: desktop = windowWidth > breakpoint
+  $: desktop = window_width > breakpoint
 
   function close(event: MouseEvent) {
     if (!aside.contains(event.target as Node)) open = false
@@ -102,8 +101,7 @@
 </script>
 
 <svelte:window
-  bind:innerWidth={windowWidth}
-  bind:innerHeight={windowHeight}
+  bind:innerWidth={window_width}
   on:scroll={set_active_heading}
   on:click={close}
 />
