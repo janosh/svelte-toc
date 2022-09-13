@@ -2,20 +2,17 @@
   --bg: #090019;
   --toc-mobile-bg: #484452;
   --toc-mobile-btn-color: white;
-  --toc-max-width: 15em;
-  --toc-active-padding: 2pt 4pt;
-  --toc-active-margin: 0 0 0 -4pt;
+  --toc-desktop-max-width: 15em;
 
   --ghc-color: var(--bg);
   --ghc-bg: white;
 }
 body {
   background: var(--bg);
-  padding: min(2em, 5vw);
+  padding: min(3em, 5vw);
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   margin: auto;
   color: #eee;
-  overflow-x: hidden;
 }
 /* outer div = hydration target */
 body > div {
