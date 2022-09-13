@@ -79,15 +79,19 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 ## Slots
 
-`Toc.svelte` accepts a slot named `"tocItem"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+`Toc.svelte` has 2 named slots:
 
-```svelte
-<Toc>
-  <span let:idx let:heading slot="tocItem">
-    {idx + 1}. {heading.innerText}
-  </span>
-</Toc>
-```
+- `slot="toc-item"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents via `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+
+  ```svelte
+  <Toc>
+    <span let:idx let:heading slot="toc-item">
+      {idx + 1}. {heading.innerText}
+    </span>
+  </Toc>
+  ```
+
+- `slot="open-toc-icon"`: Customize icon shown on mobile screens which opens the ToC on clicks.
 
 ## Styling
 
