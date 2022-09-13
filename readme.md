@@ -39,25 +39,25 @@ yarn add -D svelte-toc
 
 Full list of props and bindable variables for this component (all of them optional):
 
-- `headingSelector` (`string`, default: `'main :where(h1, h2, h3, h4):not(.toc-exclude)'`): CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
-- `pageBody` (`string | HTMLElement`, `'body'`): Which DOM node to use as the page body root. All headings to list should be children of this root node. Use the closest parent node containing all headings for efficiency.
-- `headings` (`HTMLHeadingElement[]`, `[]`): Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
-- `tocItems` (`HTMLLIElement[]`, `[]`): Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ul > li` to `document.querySelectorAll()`.
-- `getHeadingTitles` (`function`, default: `(node) => node.innerText`): Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
-- `getHeadingIds` (`function`, default: `(node) => node.id`): Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
-- `getHeadingLevels` (`function`, default: `(node) => Number(node.nodeName[1])`): Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
-- `title` (`string`, default: `'Contents'`): ToC title to display above the list of headings. Set `title=''` to hide.
-- `titleTag` (`string`, default: `'h2'`): Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`
-- `openButtonLabel` (`string`, default: `'Open table of contents'`): What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
-- `breakpoint` (`integer`, default: `1000`): At what screen width in pixels to break from mobile to desktop styles.
-- `desktop` (`boolean`, default: `true`): `true` if current window width > `breakpoint` else `false`.
-- `activeHeadingScrollOffset` (`integer`, default: `100`): Distance in pixels to top edge of screen at which a heading jumps from inactive to active. Increase this value if you have a header that makes headings disappear earlier than the viewport's top edge.
-- `open` (`bool`, default: `false`): Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
-- `activeHeading` (`HTMLHeadingElement | null`, default: `null`): The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
-- `activeTocLi` (`HTMLLIElement | null`, default: `null`): The DOM node of the currently active (highlighted) ToC item (based on the users scroll position on the page).
-- `keepActiveTocItemInView` (`boolean`, default `false`): Whether to scroll the ToC along with the page.
-- `flashClickedHeadingsFor` (`integer`, default: `1500`): How long (in milliseconds) a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
-- `hide` (`boolean`, default: `false`): Whether to render or hide the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings={myHeadings} />`.
+- `headingSelector: string = ':where(h1, h2, h3, h4):not(.toc-exclude)'`: CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
+- `pageBody: string | HTMLElement = 'body'`: Which DOM node to use as the page body root. All headings to list should be children of this root node. Use the closest parent node containing all headings for efficiency.
+- `headings: HTMLHeadingElement[] = []`: Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
+- `tocItems: HTMLLIElement[] = []`: Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ul > li` to `document.querySelectorAll()`.
+- `getHeadingTitles: function = (node) => node.innerText`: Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
+- `getHeadingIds: function = (node) => node.id`: Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
+- `getHeadingLevels: function = (node) => Number(node.nodeName[1])`: Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
+- `title: string = 'On this page'`: ToC title to display above the list of headings. Set `title=''` to hide.
+- `titleTag: string = 'h2'`: Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`
+- `openButtonLabel: string = 'Open table of contents'`: What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
+- `breakpoint: integer = 1000`: At what screen width in pixels to break from mobile to desktop styles.
+- `desktop: boolean = true`: `true` if current window width > `breakpoint` else `false`.
+- `activeHeadingScrollOffset: integer = 100`: Distance in pixels to top edge of screen at which a heading jumps from inactive to active. Increase this value if you have a header that makes headings disappear earlier than the viewport's top edge.
+- `open: boolean = false`: Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
+- `activeHeading: HTMLHeadingElement | null = null`: The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
+- `activeTocLi: HTMLLIElement | null = null`: The DOM node of the currently active (highlighted) ToC item (based on the users scroll position on the page).
+- `keepActiveTocItemInView: boolean = true`: Whether to scroll the ToC along with the page.
+- `flashClickedHeadingsFor: integer = 1500`: How long (in milliseconds) a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
+- `hide: boolean = false`: Whether to render or hide the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings={myHeadings} />`.
 
   ```css
   :is(h2, h3, h4) {
@@ -79,15 +79,19 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 ## Slots
 
-`Toc.svelte` accepts a slot named `"tocItem"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+`Toc.svelte` has 2 named slots:
 
-```svelte
-<Toc>
-  <span let:idx let:heading slot="tocItem">
-    {idx + 1}. {heading.innerText}
-  </span>
-</Toc>
-```
+- `slot="toc-item"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents via `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+
+  ```svelte
+  <Toc>
+    <span let:idx let:heading slot="toc-item">
+      {idx + 1}. {heading.innerText}
+    </span>
+  </Toc>
+  ```
+
+- `slot="open-toc-icon"`: Customize icon shown on mobile screens which opens the ToC on clicks.
 
 ## Styling
 
