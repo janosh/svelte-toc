@@ -16,11 +16,11 @@ test(`readme documents all props and their correct types and defaults`, () => {
     if (type === `number` && Number.isInteger(default_val)) type = `integer`
 
     if ([`string`, `number`, `boolean`, `integer`].includes(type)) {
-      const expected = `- \`${prop}: ${type} = ${default_val}\`: `
+      const expected = `1. \`\`\`ts\n   ${prop}: ${type} = ${default_val}`
 
       expect(readme).to.contain(expected)
     } else {
-      expect(readme).to.contain(`- \`${prop}: `)
+      expect(readme).to.contain(`1. \`\`\`ts\n   ${prop}: `)
     }
   }
 })
