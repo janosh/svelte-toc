@@ -14,7 +14,7 @@
 
 </main>
 
-<Toc headingSelector="main :where(h2, h3)" activeTopOffset={200} />
+<Toc headingSelector="main :where(h2, h3)" activeHeadingScrollOffset={200} />
 
 <style>
   :global(h1) {

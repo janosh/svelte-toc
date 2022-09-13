@@ -10,14 +10,16 @@
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
     Number(node.nodeName[1]) // get the number from H1, H2, ...
   export let activeHeading: HTMLHeadingElement | null = null
+  export let activeTocLi: HTMLLIElement | null = null
   export let open = false
   export let title = `On this page`
   export let openButtonLabel = `Open table of contents`
   export let breakpoint = 1000
   export let flashClickedHeadingsFor = 1500
   export let keepActiveTocItemInView = true
-  export let activeTopOffset = 100
+  export let activeHeadingScrollOffset = 100
   export let headings: HTMLHeadingElement[] = []
+  export let tocItems: HTMLLIElement[] = []
   export let desktop = true
   export let hide = false
   export let titleTag = `h2`
@@ -26,6 +28,7 @@
   let windowHeight: number
 
   let aside: HTMLElement
+  let nav: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = windowWidth > breakpoint
@@ -38,7 +41,7 @@
   function requery_headings() {
     if (typeof document === `undefined`) return // for SSR
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
-    setActiveHeading()
+    set_active_heading()
   }
 
   onMount(() => {
@@ -54,21 +57,23 @@
     return () => mutation_observer.disconnect()
   })
 
-  function setActiveHeading() {
+  function set_active_heading() {
     let idx = headings.length
     while (idx--) {
       const { top } = headings[idx].getBoundingClientRect()
 
       // loop through headings from last to first until we find one that the viewport already
       // scrolled past. if none is found, set make first heading active
-      if (top < activeTopOffset || idx === 0) {
+      if (top < activeHeadingScrollOffset || idx === 0) {
         activeHeading = headings[idx]
-        if (keepActiveTocItemInView) {
+        activeTocLi = tocItems[idx]
+        if (keepActiveTocItemInView && activeTocLi) {
           // get the currently active ToC list item
-          const activeTocLi = document.querySelector(`aside.toc > nav > ul > li.active`)
-          activeTocLi?.scrollIntoView({ block: `nearest` })
+
+          // scroll the active ToC item into the middle of the ToC container
+          nav.scrollTo({ top: activeTocLi?.offsetTop - nav.offsetHeight / 2 })
         }
-        return
+        return // exit while loop if updated active heading
       }
     }
   }
@@ -79,7 +84,7 @@
     return element.offsetTop + get_offset_top(element.offsetParent as HTMLElement)
   }
 
-  const clickHandler = (node: HTMLHeadingElement) => () => {
+  const click_handler = (node: HTMLHeadingElement) => () => {
     open = false
     // Chrome doesn't (yet?) support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
     // with node.scrollIntoView(). Use window.scrollTo() instead.
@@ -99,9 +104,10 @@
 <svelte:window
   bind:innerWidth={windowWidth}
   bind:innerHeight={windowHeight}
-  on:scroll={setActiveHeading}
+  on:scroll={set_active_heading}
   on:click={close}
 />
+
 {#if !hide}
   <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
     {#if !open && !desktop}
@@ -113,11 +119,11 @@
       </button>
     {/if}
     {#if open || desktop}
-      <nav transition:blur|local>
+      <nav transition:blur|local bind:this={nav}>
         {#if title}
-          <svelte:element this={titleTag} class="toc-title toc-exclude"
-            >{title}</svelte:element
-          >
+          <svelte:element this={titleTag} class="toc-title toc-exclude">
+            {title}
+          </svelte:element>
         {/if}
         <ul>
           {#each headings as heading, idx}
@@ -126,7 +132,8 @@
               style:transform="translateX({levels[idx] - minLevel}em)"
               style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
               class:active={activeHeading === heading}
-              on:click={clickHandler(heading)}
+              on:click={click_handler(heading)}
+              bind:this={tocItems[idx]}
             >
               <slot name="tocItem" {heading} {idx}>
                 {getHeadingTitles(heading)}
@@ -142,14 +149,15 @@
 <style>
   :where(aside.toc) {
     z-index: var(--toc-z-index, 1);
+    height: max-content;
+    min-width: var(--toc-min-width);
+    width: var(--toc-width);
+    box-sizing: border-box;
   }
   :where(aside.toc > nav) {
-    min-width: var(--toc-min-width);
-    max-width: var(--toc-max-width);
-    width: var(--toc-width);
-    list-style: none;
     max-height: var(--toc-max-height, 90vh);
-    overflow: auto;
+    padding: var(--toc-padding, 1em 1em 0);
+    overflow-y: scroll;
     overscroll-behavior: contain;
   }
   :where(aside.toc > nav > ul) {
@@ -157,9 +165,10 @@
     padding: 0;
   }
   :where(aside.toc > nav > ul > li) {
-    margin-top: 5pt;
     cursor: pointer;
     scroll-margin: var(--toc-li-scroll-margin, 50pt 0);
+    padding: var(--toc-li-padding, 2pt 4pt);
+    border-radius: var(--toc-li-border-radius, 2pt);
   }
   :where(aside.toc > nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
@@ -168,9 +177,6 @@
     color: var(--toc-active-color, smokewhite);
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
-    padding: var(--toc-active-padding);
-    margin: var(--toc-active-margin);
-    border-radius: 2pt;
   }
   :where(aside.toc > button) {
     position: absolute;
@@ -187,8 +193,7 @@
     background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
   }
   :where(aside.toc > nav) {
-    margin: 1em 0;
-    padding: 1em 1em 1ex;
+    position: relative;
   }
   :where(aside.toc > nav > .toc-title) {
     margin-top: 0;
@@ -196,13 +201,12 @@
 
   :where(aside.toc.mobile) {
     position: fixed;
-    bottom: 1em;
-    right: 1em;
+    bottom: var(--toc-mobile-bottom, 1em);
+    right: var(--toc-mobile-right, 1em);
   }
   :where(aside.toc.mobile > nav) {
     border-radius: 3pt;
-    width: var(--toc-mobile-width, 12em);
-    bottom: -1em;
+    width: var(--toc-mobile-width, 18em);
     right: 0;
     z-index: -1;
     background-color: var(--toc-mobile-bg, white);
@@ -211,12 +215,11 @@
   :where(aside.toc.desktop) {
     margin: var(--toc-desktop-aside-margin);
   }
-  :where(aside.toc.desktop > nav) {
+  :where(aside.toc.desktop) {
     position: sticky;
-    padding: 12pt 14pt 0;
     margin: var(--toc-desktop-nav-margin);
     top: var(--toc-desktop-sticky-top, 2em);
     background-color: var(--toc-desktop-bg);
-    border-radius: 5pt;
+    max-width: var(--toc-desktop-max-width);
   }
 </style>
