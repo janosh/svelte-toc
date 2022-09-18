@@ -1,5 +1,9 @@
 import Toc from '$lib'
-import { describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test } from 'vitest'
+
+beforeEach(() => {
+  document.body.innerHTML = ``
+})
 
 describe(`Toc`, () => {
   test(`renders custom title`, async () => {
