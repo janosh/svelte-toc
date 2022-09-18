@@ -54,7 +54,7 @@ blockquote {
 :is(h2, h3, h4, h5, h6) {
   margin-top: 1.2em;
   transition: 0.3s;
-  scroll-margin-top: 100px;
+  scroll-margin-top: 20px;
 }
 .toc-clicked {
   color: cornflowerblue;

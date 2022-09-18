@@ -4,24 +4,24 @@
   import MenuIcon from './MenuIcon.svelte'
 
   export let activeHeading: HTMLHeadingElement | null = null
-  export let activeHeadingScrollOffset = 100
+  export let activeHeadingScrollOffset: number = 100
   export let activeTocLi: HTMLLIElement | null = null
-  export let breakpoint = 1000
-  export let desktop = true
-  export let flashClickedHeadingsFor = 1500
+  export let breakpoint: number = 1000
+  export let desktop: boolean = true
+  export let flashClickedHeadingsFor: number = 1500
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
     Number(node.nodeName[1]) // get the number from H1, H2, ...
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let headings: HTMLHeadingElement[] = []
-  export let headingSelector = `:where(h1, h2, h3, h4):not(.toc-exclude)`
-  export let hide = false
-  export let keepActiveTocItemInView = true
-  export let open = false
-  export let openButtonLabel = `Open table of contents`
-  export let pageBody: HTMLElement | string = `body`
-  export let title = `On this page`
-  export let titleTag = `h2`
+  export let headingSelector: string = `:where(h1, h2, h3, h4):not(.toc-exclude)`
+  export let hide: boolean = false
+  export let keepActiveTocItemInView: boolean = true
+  export let open: boolean = false
+  export let openButtonLabel: string = `Open table of contents`
+  export let pageBody: string | HTMLElement = `body`
+  export let title: string = `On this page`
+  export let titleTag: string = `h2`
   export let tocItems: HTMLLIElement[] = []
 
   let window_width: number
@@ -166,15 +166,15 @@
   }
   :where(aside.toc > nav > ul > li) {
     cursor: pointer;
-    scroll-margin: var(--toc-li-scroll-margin, 50pt 0);
     padding: var(--toc-li-padding, 2pt 4pt);
+    margin: var(--toc-li-margin);
     border-radius: var(--toc-li-border-radius, 2pt);
   }
   :where(aside.toc > nav > ul > li:hover) {
     color: var(--toc-hover-color, cornflowerblue);
   }
   :where(aside.toc > nav > ul > li.active) {
-    color: var(--toc-active-color, smokewhite);
+    color: var(--toc-active-color, white);
     background: var(--toc-active-bg, cornflowerblue);
     font-weight: var(--toc-active-font-weight);
   }

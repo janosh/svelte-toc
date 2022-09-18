@@ -1,6 +1,8 @@
 import { sveltekit } from '@sveltejs/kit/vite'
+import type { UserConfig } from 'vite'
+import type { UserConfig as VitestConfig } from 'vitest/config'
 
-export default {
+const vite_config: UserConfig & { test: VitestConfig } = {
   plugins: [sveltekit()],
 
   server: {
@@ -16,3 +18,5 @@ export default {
     environment: `jsdom`,
   },
 }
+
+export default vite_config

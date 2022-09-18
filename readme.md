@@ -46,7 +46,7 @@ Full list of props and bindable variables for this component (all of them option
    The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
 
 1. ```ts
-   activeHeadingScrollOffset: integer = 100
+   activeHeadingScrollOffset: number = 100
    ```
 
    Distance in pixels to top edge of screen at which a heading jumps from inactive to active. Increase this value if you have a header that makes headings disappear earlier than the viewport's top edge.
@@ -58,7 +58,7 @@ Full list of props and bindable variables for this component (all of them option
    The DOM node of the currently active (highlighted) ToC item (based on the users scroll position on the page).
 
 1. ```ts
-   breakpoint: integer = 1000
+   breakpoint: number = 1000
    ```
 
    At what screen width in pixels to break from mobile to desktop styles.
@@ -70,7 +70,7 @@ Full list of props and bindable variables for this component (all of them option
    `true` if current window width > `breakpoint` else `false`.
 
 1. ```ts
-   flashClickedHeadingsFor: integer = 1500
+   flashClickedHeadingsFor: number = 1500
    ```
 
    How long (in milliseconds) a heading clicked in the ToC should receive a class of `.toc-clicked` in the main document. This can be used to help users immediately spot the heading they clicked on after the ToC scrolled it into view. Flash duration is in milliseconds. Set to 0 to disable this behavior. Style `.toc-clicked` however you like, though less is usually more. For example, the demo site uses
@@ -85,19 +85,20 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
 1. ```ts
-   getHeadingIds: (HTMLHeadingElement): number = (node) => node.id
+   getHeadingIds = (node: HTMLHeadingElement): string => node.id
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 
 1. ```ts
-   getHeadingLevels: (HTMLHeadingElement): string = (node) => Number(node.nodeName[1])
+   getHeadingLevels = (node: HTMLHeadingElement): number =>
+     Number(node.nodeName[1]) // get the number from H1, H2, ...
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 
 1. ```ts
-   getHeadingTitles: (HTMLHeadingElement): string = (node) => node.innerText
+   getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
@@ -109,7 +110,7 @@ Full list of props and bindable variables for this component (all of them option
    Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
 
 1. ```ts
-   headingSelector: string = ':where(h1, h2, h3, h4):not(.toc-exclude)'
+   headingSelector: string = `:where(h1, h2, h3, h4):not(.toc-exclude)`
    ```
 
    CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
@@ -133,25 +134,25 @@ Full list of props and bindable variables for this component (all of them option
    Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
 
 1. ```ts
-   openButtonLabel: string = 'Open table of contents'
+   openButtonLabel: string = `Open table of contents`
    ```
 
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
-   pageBody: string | HTMLElement = 'body'
+   pageBody: string | HTMLElement = `body`
    ```
 
    Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency.
 
 1. ```ts
-   title: string = 'On this page'
+   title: string = `On this page`
    ```
 
    ToC title to display above the list of headings. Set `title=''` to hide.
 
 1. ```ts
-   titleTag: string = 'h2'
+   titleTag: string = `h2`
    ```
 
    Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`
@@ -165,9 +166,9 @@ Full list of props and bindable variables for this component (all of them option
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
-/* or whatever selector targets your headings */
+/* replace next line with appropriate CSS selector for all your headings */
 :where(h1, h2, h3, h4) {
-  scroll-margin-top: 100px;
+  scroll-margin-top: 50px;
 }
 ```
 
@@ -214,14 +215,15 @@ The HTML structure of this component is
   - `max-width: var(--toc-desktop-max-width)`
   - `width: var(--toc-width)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
+  - `padding: var(--toc-padding, 1em 1em 0)`
 - `aside.toc > nav > ul > li`
-  - `scroll-margin: var(--toc-li-scroll-margin, 20pt 0)`: Scroll margin of ToC list items (determines distance from viewport edge (top or bottom) when keeping active ToC item scrolled in view as page scrolls).
   - `border-radius: var(--toc-li-border-radius, 2pt)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
+  - `margin: var(--toc-li-margin)`
 - `aside.toc > nav > ul > li:hover`
   - `color: var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
 - `aside.toc > nav > ul > li.active`
-  - `color: var(--toc-active-color, whitesmoke)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
+  - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
   - `font-weight: var(--toc-active-font-weight)`
 - `aside.toc > button`
@@ -231,7 +233,7 @@ The HTML structure of this component is
   - `bottom: var(--toc-mobile-bottom, 1em)`
   - `right: var(--toc-mobile-right, 1em)`
 - `aside.toc.mobile > nav`
-  - `width: var(--toc-mobile-width, 12em)`
+  - `width: var(--toc-mobile-width, 18em)`
   - `background-color: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
 - `aside.toc.desktop`
   - `margin: var(--toc-desktop-aside-margin)`: Margin of the outer-most `aside.toc` element on desktops.
