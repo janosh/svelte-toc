@@ -5,6 +5,11 @@ const config: PlaywrightTestConfig = {
     command: `vite dev --port 3005`,
     port: 3005,
   },
+  use: {
+    launchOptions: {
+      slowMo: Number(process.env.SLOWMO),
+    },
+  },
 }
 
 export default config

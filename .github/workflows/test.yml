@@ -40,6 +40,6 @@ jobs:
         if: github.event_name == 'release' && steps.tests.outcome == 'success' && runner.os == 'Linux'
         run: |
           pnpm package
-          pnpm publish package
+          npm publish ./package
         env:
           NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
