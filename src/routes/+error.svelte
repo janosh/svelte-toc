@@ -12,7 +12,7 @@
 
   {#if $page.status === 404}
     <p>
-      Page not found. Back to <a data-sveltekit-prefetch href="/">landing page</a>. 🤦
+      Page not found. Back to <a href="/">landing page</a>. 🤦
     </p>
   {/if}
 

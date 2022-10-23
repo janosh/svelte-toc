@@ -45,11 +45,11 @@
 
   onMount(() => {
     if (typeof pageBody === `string`) {
-      const node = document.querySelector(pageBody)
-      if (!node) {
+      pageBody = document.querySelector(pageBody) as HTMLElement
+
+      if (!pageBody) {
         throw new Error(`Could not find page body element: ${pageBody}`)
       }
-      pageBody = node as HTMLElement
     }
     const mutation_observer = new MutationObserver(requery_headings)
     mutation_observer.observe(pageBody, { childList: true, subtree: true })
@@ -70,7 +70,7 @@
           // get the currently active ToC list item
 
           // scroll the active ToC item into the middle of the ToC container
-          nav.scrollTo({ top: activeTocLi?.offsetTop - nav.offsetHeight / 2 })
+          nav.scrollTo?.({ top: activeTocLi?.offsetTop - nav.offsetHeight / 2 })
         }
         return // exit while loop if updated active heading
       }
@@ -128,7 +128,8 @@
         <ul>
           {#each headings as heading, idx}
             <li
-              tabindex={idx + 1}
+              tabindex="0"
+              role="link"
               style:transform="translateX({levels[idx] - minLevel}em)"
               style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
               class:active={activeHeading === heading}

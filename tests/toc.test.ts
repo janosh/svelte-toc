@@ -1,19 +1,24 @@
 import { expect, test } from '@playwright/test'
 
+test.describe.configure({ mode: `parallel` })
+
 test.describe(`Toc`, () => {
   test(`lists the right page headings`, async ({ page }) => {
     for (const slug of [`/`, `/long-page`]) {
       await page.goto(slug, { waitUntil: `networkidle` })
 
-      const page_headings = await page
+      const expected_headings = await page
         .locator(`main :where(h2, h3):not(.toc-exclude)`)
         .allTextContents()
+
+      // wait for ToC to render headings
+      await page.waitForSelector(`aside.toc > nav > ul > li`)
 
       const toc_headings = (
         await page.locator(`aside.toc > nav > ul > li`).allTextContents()
       ).map((h) => h.trim())
 
-      expect(toc_headings).toEqual(page_headings)
+      expect(toc_headings).toEqual(expected_headings)
     }
   })
 

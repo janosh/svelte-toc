@@ -18,7 +18,8 @@ Sticky responsive table of contents component. <strong class="hide-in-docs"><a h
 ## Installation
 
 ```sh
-yarn add -D svelte-toc
+npm add -D svelte-toc
+pnpm add -D svelte-toc
 ```
 
 ## Usage
@@ -259,6 +260,6 @@ To submit a PR, clone the repo, install dependencies and start the dev server to
 ```sh
 git clone https://github.com/janosh/svelte-toc
 cd svelte-toc
-yarn
-yarn dev
+pnpm install
+pnpm dev
 ```
