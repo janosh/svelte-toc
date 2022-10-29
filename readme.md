@@ -111,10 +111,10 @@ Full list of props and bindable variables for this component (all of them option
    Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
 
 1. ```ts
-   headingSelector: string = `:where(h1, h2, h3, h4):not(.toc-exclude)`
+   headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
    ```
 
-   CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`.
+   CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h1, h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h1 class="toc-exclude">Page Title</h1>` will not be listed.
 
 1. ```ts
    hide: boolean = false
