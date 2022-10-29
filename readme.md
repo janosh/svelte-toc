@@ -99,7 +99,8 @@ Full list of props and bindable variables for this component (all of them option
    Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 
 1. ```ts
-   getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
+   getHeadingTitles = (node: HTMLHeadingElement): string =>
+     node.textContent ?? ``
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
