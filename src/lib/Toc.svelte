@@ -14,7 +14,7 @@
     Number(node.nodeName[1]) // get the number from H1, H2, ...
   export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
   export let headings: HTMLHeadingElement[] = []
-  export let headingSelector: string = `:where(h1, h2, h3, h4):not(.toc-exclude)`
+  export let headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
   export let keepActiveTocItemInView: boolean = true
   export let open: boolean = false
@@ -104,6 +104,7 @@
   bind:innerWidth={window_width}
   on:scroll={set_active_heading}
   on:click={close}
+  on:keyup={close}
 />
 
 {#if !hide}
@@ -111,6 +112,7 @@
     {#if !open && !desktop}
       <button
         on:click|preventDefault|stopPropagation={() => (open = true)}
+        on:keyup|preventDefault|stopPropagation={() => (open = true)}
         aria-label={openButtonLabel}
       >
         <slot name="open-toc-icon">
@@ -134,6 +136,7 @@
               style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
               class:active={activeHeading === heading}
               on:click={click_handler(heading)}
+              on:keyup={click_handler(heading)}
               bind:this={tocItems[idx]}
             >
               <slot name="toc-item" {heading} {idx}>
