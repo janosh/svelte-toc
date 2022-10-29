@@ -12,7 +12,8 @@
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
   export let getHeadingLevels = (node: HTMLHeadingElement): number =>
     Number(node.nodeName[1]) // get the number from H1, H2, ...
-  export let getHeadingTitles = (node: HTMLHeadingElement): string => node.innerText
+  export let getHeadingTitles = (node: HTMLHeadingElement): string =>
+    node.textContent ?? ``
   export let headings: HTMLHeadingElement[] = []
   export let headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
