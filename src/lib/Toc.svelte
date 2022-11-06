@@ -84,7 +84,8 @@
     return element.offsetTop + get_offset_top(element.offsetParent as HTMLElement)
   }
 
-  const click_handler = (node: HTMLHeadingElement) => () => {
+  const handler = (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
+    if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
     open = false
     // Chrome doesn't (yet?) support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
     // with node.scrollIntoView(). Use window.scrollTo() instead.
@@ -105,7 +106,6 @@
   bind:innerWidth={window_width}
   on:scroll={set_active_heading}
   on:click={close}
-  on:keyup={close}
 />
 
 {#if !hide}
@@ -113,7 +113,6 @@
     {#if !open && !desktop}
       <button
         on:click|preventDefault|stopPropagation={() => (open = true)}
-        on:keyup|preventDefault|stopPropagation={() => (open = true)}
         aria-label={openButtonLabel}
       >
         <slot name="open-toc-icon">
@@ -136,8 +135,8 @@
               style:transform="translateX({levels[idx] - minLevel}em)"
               style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
               class:active={activeHeading === heading}
-              on:click={click_handler(heading)}
-              on:keyup={click_handler(heading)}
+              on:click={handler(heading)}
+              on:keyup={handler(heading)}
               bind:this={tocItems[idx]}
             >
               <slot name="toc-item" {heading} {idx}>
