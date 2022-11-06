@@ -152,11 +152,12 @@
 
 <style>
   :where(aside.toc) {
-    z-index: var(--toc-z-index, 1);
     height: max-content;
+    box-sizing: border-box;
+    z-index: var(--toc-z-index, 1);
     min-width: var(--toc-min-width);
     width: var(--toc-width);
-    box-sizing: border-box;
+    font-size: var(--toc-font-size);
   }
   :where(aside.toc > nav) {
     max-height: var(--toc-max-height, 90vh);
