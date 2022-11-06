@@ -218,6 +218,7 @@ The HTML structure of this component is
   - `width: var(--toc-width)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
   - `padding: var(--toc-padding, 1em 1em 0)`
+  - `font-size: var(--toc-font-size)`
 - `aside.toc > nav > ul > li`
   - `border-radius: var(--toc-li-border-radius, 2pt)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`

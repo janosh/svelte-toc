@@ -43,7 +43,7 @@ describe(`Toc`, () => {
     ],
     [`h1:not(.toc-exclude)`, 0, []],
   ])(
-    `ToC lists expected headings`,
+    `ToC lists expected headings for headingSelector='%s'`,
     async (headingSelector, expected_lis, expected_text) => {
       document.body.innerHTML = `
       <h1 class="toc-exclude">Heading 1</h1>
@@ -56,10 +56,7 @@ describe(`Toc`, () => {
       let props = {}
       if (headingSelector) props = { headingSelector }
 
-      const toc = new Toc({
-        target: document.body,
-        props,
-      })
+      const toc = new Toc({ target: document.body, props })
       expect(toc).toBeTruthy()
       await sleep()
 

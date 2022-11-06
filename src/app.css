@@ -2,7 +2,9 @@
   --bg: #090019;
   --toc-mobile-bg: #484452;
   --toc-mobile-btn-color: white;
+  --toc-min-width: 12em;
   --toc-desktop-max-width: 15em;
+  --toc-font-size: 11pt;
 
   --ghc-color: var(--bg);
   --ghc-bg: white;
@@ -40,6 +42,7 @@ code {
 }
 pre code {
   background-color: transparent;
+  display: inline-block;
 }
 pre {
   border-radius: 1ex;
