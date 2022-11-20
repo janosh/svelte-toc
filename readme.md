@@ -7,13 +7,13 @@
 
 [![Tests](https://github.com/janosh/svelte-toc/actions/workflows/test.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/test.yml)
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/0238699e-17a8-4423-85de-a5ca30baff0d/deploy-status)](https://app.netlify.com/sites/svelte-toc/deploys)
+[![Docs](https://github.com/janosh/svelte-toc/actions/workflows/docs.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/docs.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/svelte-toc/main.svg)](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
 [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-darkblue?logo=stackblitz)](https://stackblitz.com/github/janosh/svelte-toc)
 
 </h4>
 
-Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://svelte-toc.netlify.app">Live demo</a></strong>
+Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://janosh.github.io/svelte-toc">Live demo</a></strong>
 
 ## Installation
 
