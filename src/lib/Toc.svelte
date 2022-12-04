@@ -15,7 +15,7 @@
   export let getHeadingTitles = (node: HTMLHeadingElement): string =>
     node.textContent ?? ``
   export let headings: HTMLHeadingElement[] = []
-  export let headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
+  export let headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
   export let keepActiveTocItemInView: boolean = true
   export let open: boolean = false
