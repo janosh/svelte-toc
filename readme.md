@@ -7,7 +7,7 @@
 
 [![Tests](https://github.com/janosh/svelte-toc/actions/workflows/test.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/test.yml)
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
-[![Docs](https://github.com/janosh/svelte-toc/actions/workflows/docs.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/docs.yml)
+[![GitHub Pages](https://github.com/janosh/svelte-toc/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/gh-pages.yml)
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/svelte-toc/main.svg)](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
 [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-darkblue?logo=stackblitz)](https://stackblitz.com/github/janosh/svelte-toc)
 
@@ -112,7 +112,7 @@ Full list of props and bindable variables for this component (all of them option
    Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
 
 1. ```ts
-   headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
+   headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
    ```
 
    CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h1, h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h1 class="toc-exclude">Page Title</h1>` will not be listed.
@@ -122,6 +122,12 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
    Whether to render or hide the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings={myHeadings} />`.
+
+1. ```ts
+   autoHide: boolean = true
+   ```
+
+   Whether to automatically hide the ToC when its empty, i.e. when no headings match `headingSelector`. If true, ToC also automatically un-hide itself if re-querying for headings yields a non-empty list of headings later.
 
 1. ```ts
    keepActiveTocItemInView: boolean = true
@@ -165,6 +171,12 @@ Full list of props and bindable variables for this component (all of them option
 
    Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ul > li` to `document.querySelectorAll()`.
 
+1. ```ts
+   warnOnEmpty: boolean = true
+   ```
+
+   Whether to issue a console warning if the ToC is empty.
+
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
@@ -176,7 +188,7 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 ## Slots
 
-`Toc.svelte` has 2 named slots:
+`Toc.svelte` has 3 named slots:
 
 - `slot="toc-item"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents via `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
 
@@ -188,7 +200,8 @@ To control how far from the viewport top headings come to rest when scrolled int
   </Toc>
   ```
 
-- `slot="open-toc-icon"`: Customize icon shown on mobile screens which opens the ToC on clicks.
+- `slot="title"`: Title shown above the list of ToC entries. Props `title` and `titleTag` have no effect when filling this slot.
+- `slot="open-toc-icon"`: Icon shown on mobile screens which opens the ToC on clicks.
 
 ## Styling
 

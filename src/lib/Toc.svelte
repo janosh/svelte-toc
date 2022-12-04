@@ -15,8 +15,9 @@
   export let getHeadingTitles = (node: HTMLHeadingElement): string =>
     node.textContent ?? ``
   export let headings: HTMLHeadingElement[] = []
-  export let headingSelector: string = `:is(h1, h2, h3, h4):not(.toc-exclude)`
+  export let headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
+  export let autoHide: boolean = true
   export let keepActiveTocItemInView: boolean = true
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
@@ -24,6 +25,7 @@
   export let title: string = `On this page`
   export let titleTag: string = `h2`
   export let tocItems: HTMLLIElement[] = []
+  export let warnOnEmpty: boolean = true
 
   let window_width: number
 
@@ -42,6 +44,18 @@
     if (typeof document === `undefined`) return // for SSR
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     set_active_heading()
+    if (headings.length === 0) {
+      if (warnOnEmpty) {
+        console.warn(
+          `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
+            autoHide ? `Hiding` : `Showing empty`
+          } table of contents.`
+        )
+      }
+      if (autoHide) hide = true
+    } else if (hide && autoHide) {
+      hide = false
+    }
   }
 
   onMount(() => {
@@ -108,47 +122,55 @@
   on:click={close}
 />
 
-{#if !hide}
-  <aside class="toc" class:desktop class:mobile={!desktop} bind:this={aside}>
-    {#if !open && !desktop}
-      <button
-        on:click|preventDefault|stopPropagation={() => (open = true)}
-        aria-label={openButtonLabel}
-      >
-        <slot name="open-toc-icon">
-          <MenuIcon width="1em" />
-        </slot>
-      </button>
-    {/if}
-    {#if open || desktop}
-      <nav transition:blur|local bind:this={nav}>
-        {#if title}
+<aside
+  class="toc"
+  class:desktop
+  class:hidden={hide}
+  class:mobile={!desktop}
+  bind:this={aside}
+  hidden={hide}
+  aria-hidden={hide}
+>
+  {#if !open && !desktop}
+    <button
+      on:click|preventDefault|stopPropagation={() => (open = true)}
+      aria-label={openButtonLabel}
+    >
+      <slot name="open-toc-icon">
+        <MenuIcon width="1em" />
+      </slot>
+    </button>
+  {/if}
+  {#if open || desktop}
+    <nav transition:blur|local bind:this={nav}>
+      {#if title}
+        <slot name="title">
           <svelte:element this={titleTag} class="toc-title toc-exclude">
             {title}
           </svelte:element>
-        {/if}
-        <ul>
-          {#each headings as heading, idx}
-            <li
-              tabindex="0"
-              role="link"
-              style:transform="translateX({levels[idx] - minLevel}em)"
-              style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
-              class:active={activeHeading === heading}
-              on:click={handler(heading)}
-              on:keyup={handler(heading)}
-              bind:this={tocItems[idx]}
-            >
-              <slot name="toc-item" {heading} {idx}>
-                {getHeadingTitles(heading)}
-              </slot>
-            </li>
-          {/each}
-        </ul>
-      </nav>
-    {/if}
-  </aside>
-{/if}
+        </slot>
+      {/if}
+      <ul>
+        {#each headings as heading, idx}
+          <li
+            tabindex="0"
+            role="link"
+            style:transform="translateX({levels[idx] - minLevel}em)"
+            style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
+            class:active={activeHeading === heading}
+            on:click={handler(heading)}
+            on:keyup={handler(heading)}
+            bind:this={tocItems[idx]}
+          >
+            <slot name="toc-item" {heading} {idx}>
+              {getHeadingTitles(heading)}
+            </slot>
+          </li>
+        {/each}
+      </ul>
+    </nav>
+  {/if}
+</aside>
 
 <style>
   :where(aside.toc) {
