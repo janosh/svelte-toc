@@ -124,6 +124,12 @@ Full list of props and bindable variables for this component (all of them option
    Whether to render or hide the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings={myHeadings} />`.
 
 1. ```ts
+   autoHide: boolean = true
+   ```
+
+   Whether to automatically hide the ToC when its empty, i.e. when no headings match `headingSelector`. If true, ToC also automatically un-hide itself if re-querying for headings yields a non-empty list of headings later.
+
+1. ```ts
    keepActiveTocItemInView: boolean = true
    ```
 
@@ -164,6 +170,12 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
    Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ul > li` to `document.querySelectorAll()`.
+
+1. ```ts
+   warnOnEmpty: boolean = true
+   ```
+
+   Whether to issue a console warning if the ToC is empty.
 
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
