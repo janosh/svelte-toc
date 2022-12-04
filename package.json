@@ -15,10 +15,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "package": "svelte-package",
-    "serve": "pnpm build && pnpm preview",
+    "serve": "vite build && vite preview",
     "test:unit": "vitest tests/unit",
     "test:e2e": "playwright test tests/*.test.ts",
-    "test": "pnpm test:unit --run && pnpm test:e2e",
+    "test": "npm run test:unit --run && npm run test:e2e",
     "check": "svelte-check --ignore package"
   },
   "devDependencies": {
