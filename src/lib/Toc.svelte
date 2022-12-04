@@ -144,9 +144,11 @@
   {#if open || desktop}
     <nav transition:blur|local bind:this={nav}>
       {#if title}
-        <svelte:element this={titleTag} class="toc-title toc-exclude">
-          {title}
-        </svelte:element>
+        <slot name="title">
+          <svelte:element this={titleTag} class="toc-title toc-exclude">
+            {title}
+          </svelte:element>
+        </slot>
       {/if}
       <ul>
         {#each headings as heading, idx}
