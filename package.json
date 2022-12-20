@@ -5,7 +5,7 @@
   "homepage": "https://janosh.github.io/svelte-toc",
   "repository": "https://github.com/janosh/svelte-toc",
   "license": "MIT",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "type": "module",
   "main": "./index.js",
   "svelte": "./index.js",
