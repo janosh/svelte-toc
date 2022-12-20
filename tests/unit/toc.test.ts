@@ -101,7 +101,7 @@ describe(`Toc`, () => {
   })
 
   test.each([true, false])(
-    `console.warns if empty and warnOnEmpty=%s`,
+    `console.warns if empty (i.e. no headings found) and warnOnEmpty=%s`,
     async (warnOnEmpty) => {
       console.warn = vi.fn()
 
