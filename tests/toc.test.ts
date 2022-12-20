@@ -41,7 +41,7 @@ test.describe(`Toc`, () => {
     const active_toc_li = await page.innerText(
       `aside.toc > nav > ul > li.active`
     )
-    expect(active_toc_li).toBe(`Styling`)
+    expect(active_toc_li).toBe(`Want to contribute?`)
   })
 
   test(`updates when headings are added/removed from the page after load`, async ({
