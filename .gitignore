@@ -5,3 +5,6 @@ node_modules
 .svelte-kit
 build
 package
+
+# coverage reports
+coverage
