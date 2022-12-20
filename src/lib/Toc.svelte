@@ -155,7 +155,7 @@
           <li
             tabindex="0"
             role="link"
-            style:transform="translateX({levels[idx] - minLevel}em)"
+            style:margin="0 0 0 {levels[idx] - minLevel}em"
             style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
             class:active={activeHeading === heading}
             on:click={handler(heading)}
