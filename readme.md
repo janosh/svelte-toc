@@ -15,14 +15,14 @@
 
 Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://janosh.github.io/svelte-toc">Live demo</a></strong>
 
-## Installation
+## 🔨 &nbsp; Installation
 
 ```sh
 npm add -D svelte-toc
 pnpm add -D svelte-toc
 ```
 
-## Usage
+## 📙 &nbsp; Usage
 
 ```svelte
 <script>
@@ -36,7 +36,7 @@ pnpm add -D svelte-toc
 </main>
 ```
 
-## Props
+## 🔣 &nbsp; Props
 
 Full list of props and bindable variables for this component (all of them optional):
 
@@ -186,7 +186,7 @@ To control how far from the viewport top headings come to rest when scrolled int
 }
 ```
 
-## Slots
+## 🎰 &nbsp; Slots
 
 `Toc.svelte` has 3 named slots:
 
@@ -203,7 +203,7 @@ To control how far from the viewport top headings come to rest when scrolled int
 - `slot="title"`: Title shown above the list of ToC entries. Props `title` and `titleTag` have no effect when filling this slot.
 - `slot="open-toc-icon"`: Icon shown on mobile screens which opens the ToC on clicks.
 
-## Styling
+## ✨ &nbsp; Styling
 
 The HTML structure of this component is
 
@@ -268,17 +268,10 @@ Example:
 />
 ```
 
-## Want to contribute?
-
-To submit a PR, clone the repo, install dependencies and start the dev server to try out your changes.
-
-```sh
-git clone https://github.com/janosh/svelte-toc
-cd svelte-toc
-pnpm install
-pnpm dev
-```
-
 ## 🆕 &nbsp; Changelog
 
 [View the changelog](changelog.md).
+
+## 🙏 &nbsp; Contributing
+
+Here are some steps to [get you started](contributing.md) if you'd like to contribute to this project!
