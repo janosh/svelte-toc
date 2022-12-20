@@ -19,7 +19,8 @@
     "test:unit": "vitest tests/unit",
     "test:e2e": "playwright test tests/*.test.ts",
     "test": "vitest tests/unit --run --coverage && playwright test tests/*.test.ts",
-    "check": "svelte-check --ignore package"
+    "check": "svelte-check --ignore package",
+    "changelog": "npx auto-changelog --package --output changelog.md --hide-credit --commit-limit false --unreleased-only"
   },
   "devDependencies": {
     "@playwright/test": "1.29.0",

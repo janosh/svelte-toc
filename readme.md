@@ -278,3 +278,7 @@ cd svelte-toc
 pnpm install
 pnpm dev
 ```
+
+## 🆕 &nbsp; Changelog
+
+[View the changelog](changelog.md).
