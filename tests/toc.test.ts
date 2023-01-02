@@ -35,13 +35,16 @@ test.describe(`Toc`, () => {
   test(`correctly highlights the closest heading in the ToC when scrolling manually`, async ({
     page,
   }) => {
-    await page.goto(`/`, { waitUntil: `networkidle` })
+    await page.goto(`/contributing`, { waitUntil: `networkidle` })
+    let active_toc_li = await page.innerText(`aside.toc > nav > ul > li.active`)
+    expect(active_toc_li).toContain(`🙋 How can I help?`)
+
+    // scroll to the bottom of the page
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await page.waitForTimeout(1000)
-    const active_toc_li = await page.innerText(
-      `aside.toc > nav > ul > li.active`
-    )
-    expect(active_toc_li).toContain(`Styling`)
+
+    active_toc_li = await page.innerText(`aside.toc > nav > ul > li.active`)
+    expect(active_toc_li).toContain(`🆕 New release`)
   })
 
   test(`updates when headings are added/removed from the page after load`, async ({

@@ -1,6 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite'
 import type { UserConfig } from 'vite'
-import type { UserConfig as VitestConfig } from 'vitest/config'
+import type { UserConfig as VitestConfig } from 'vitest'
 
 const vite_config: UserConfig & { test: VitestConfig } = {
   plugins: [sveltekit()],
@@ -16,6 +16,10 @@ const vite_config: UserConfig & { test: VitestConfig } = {
 
   test: {
     environment: `jsdom`,
+    css: true,
+    coverage: {
+      reporter: [`text`, `json-summary`],
+    },
   },
 }
 

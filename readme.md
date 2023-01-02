@@ -268,6 +268,12 @@ Example:
 />
 ```
 
+## 🧪 &thinsp; Coverage
+
+| Statements                                                                         | Branches                                                                             | Lines                                                                    |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| ![Statements](https://img.shields.io/badge/statements-78.57%25-red.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-100%25-brightgreen.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-78.57%25-red.svg?style=flat) |
+
 ## 🆕 &nbsp; Changelog
 
 [View the changelog](changelog.md).
