@@ -1,6 +1,6 @@
 <script lang="ts">
   import Toc from '$lib'
-  import Contributing from '../../../contributing.md'
+  import Contributing from '$root/contributing.md'
 </script>
 
 <main>
