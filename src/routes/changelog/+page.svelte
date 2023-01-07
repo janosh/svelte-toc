@@ -1,6 +1,6 @@
 <script lang="ts">
   import Toc from '$lib'
-  import Changelog from '../../../changelog.md'
+  import Changelog from '$root/changelog.md'
 </script>
 
 <main>
