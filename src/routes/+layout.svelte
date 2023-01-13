@@ -1,10 +1,11 @@
 <script lang="ts">
   import { page } from '$app/stores'
-  import GitHubCorner from 'svelte-github-corner'
+  import { repository } from '$root/package.json'
+  import { GitHubCorner } from 'svelte-zoo'
   import '../app.css'
 </script>
 
-<GitHubCorner href="https://github.com/janosh/svelte-toc" />
+<GitHubCorner href={repository} />
 
 {#if !$page.error && $page.url.pathname !== `/`}
   <a href="." aria-label="Back to index page">&laquo; home</a>

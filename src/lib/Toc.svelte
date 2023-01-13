@@ -175,30 +175,36 @@
 <style>
   :where(aside.toc) {
     box-sizing: border-box;
-    font-size: var(--toc-font-size);
     height: max-content;
+    font-size: var(--toc-font-size);
     min-width: var(--toc-min-width);
     width: var(--toc-width);
     z-index: var(--toc-z-index, 1);
   }
   :where(aside.toc > nav) {
-    max-height: var(--toc-max-height, 90vh);
     overflow-y: scroll;
     overscroll-behavior: contain;
+    max-height: var(--toc-max-height, 90vh);
     padding: var(--toc-padding, 1em 1em 0);
   }
   :where(aside.toc > nav > ul) {
     list-style: none;
     padding: 0;
   }
+  :where(.toc-title) {
+    padding: var(--toc-title-padding);
+    margin: var(--toc-title-margin);
+  }
   :where(aside.toc > nav > ul > li) {
-    border-radius: var(--toc-li-border-radius, 2pt);
     cursor: pointer;
+    border: var(--toc-li-border);
+    border-radius: var(--toc-li-border-radius, 2pt);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
   }
   :where(aside.toc > nav > ul > li:hover) {
-    color: var(--toc-hover-color, cornflowerblue);
+    color: var(--toc-li-hover-color, cornflowerblue);
+    background: var(--toc-li-hover-bg);
   }
   :where(aside.toc > nav > ul > li.active) {
     background: var(--toc-active-bg, cornflowerblue);
@@ -206,18 +212,18 @@
     font-weight: var(--toc-active-font-weight);
   }
   :where(aside.toc > button) {
-    background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
-    border-radius: 5pt;
     border: none;
     bottom: 0;
-    color: var(--toc-mobile-btn-color, black);
     cursor: pointer;
     font-size: 2em;
     line-height: 0;
-    padding: 2pt 4pt;
     position: absolute;
     right: 0;
     z-index: 2;
+    padding: var(--toc-mobile-btn-padding, 2pt 3pt);
+    border-radius: var(--toc-mobile-btn-border-radius, 4pt);
+    background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
+    color: var(--toc-mobile-btn-color, black);
   }
   :where(aside.toc > nav) {
     position: relative;
@@ -227,26 +233,29 @@
   }
 
   :where(aside.toc.mobile) {
-    bottom: var(--toc-mobile-bottom, 1em);
     position: fixed;
+    bottom: var(--toc-mobile-bottom, 1em);
     right: var(--toc-mobile-right, 1em);
   }
   :where(aside.toc.mobile > nav) {
-    background-color: var(--toc-mobile-bg, white);
     border-radius: 3pt;
     right: 0;
-    width: var(--toc-mobile-width, 18em);
     z-index: -1;
+    box-sizing: border-box;
+    background: var(--toc-mobile-bg, white);
+    width: var(--toc-mobile-width, 18em);
+    box-shadow: var(--toc-mobile-shadow);
+    border: var(--toc-mobile-border);
   }
 
   :where(aside.toc.desktop) {
     margin: var(--toc-desktop-aside-margin);
   }
   :where(aside.toc.desktop) {
-    background-color: var(--toc-desktop-bg);
+    position: sticky;
+    background: var(--toc-desktop-bg);
     margin: var(--toc-desktop-nav-margin);
     max-width: var(--toc-desktop-max-width);
-    position: sticky;
     top: var(--toc-desktop-sticky-top, 2em);
   }
 </style>

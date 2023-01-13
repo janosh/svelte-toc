@@ -232,12 +232,17 @@ The HTML structure of this component is
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
   - `padding: var(--toc-padding, 1em 1em 0)`
   - `font-size: var(--toc-font-size)`
+- `aside.toc > nav > ul > .toc-title`
+  - `padding: var(--toc-title-padding)`
+  - `margin: var(--toc-title-margin)`
 - `aside.toc > nav > ul > li`
   - `border-radius: var(--toc-li-border-radius, 2pt)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
   - `margin: var(--toc-li-margin)`
+  - `border: var(--toc-li-border)`
 - `aside.toc > nav > ul > li:hover`
-  - `color: var(--toc-hover-color, cornflowerblue)`: Text color of hovered headings.
+  - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
+  - `background: var(--toc-li-hover-bg)`
 - `aside.toc > nav > ul > li.active`
   - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
@@ -245,18 +250,22 @@ The HTML structure of this component is
 - `aside.toc > button`
   - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
   - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
+  - `padding: var(--toc-mobile-btn-padding, 2pt 3pt)`
+  - `border-radius: var(--toc-mobile-btn-border-radius, 4pt)`
 - `aside.toc.mobile`
   - `bottom: var(--toc-mobile-bottom, 1em)`
   - `right: var(--toc-mobile-right, 1em)`
 - `aside.toc.mobile > nav`
   - `width: var(--toc-mobile-width, 18em)`
-  - `background-color: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+  - `background: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+  - `box-shadow: var(--toc-mobile-shadow)`
+  - `border: var(--toc-mobile-border)`
 - `aside.toc.desktop`
   - `margin: var(--toc-desktop-aside-margin)`: Margin of the outer-most `aside.toc` element on desktops.
 - `aside.toc.desktop > nav`
   - `margin: var(--toc-desktop-nav-margin)`
   - `top: var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
-  - `background-color: var(--toc-desktop-bg)`
+  - `background: var(--toc-desktop-bg)`
 
 Example:
 
