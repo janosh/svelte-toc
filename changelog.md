@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file. Dates are d
 
 <!-- auto-changelog-above -->
 
+#### [v0.5.2](https://github.com/janosh/svelte-toc/compare/v0.5.2...v0.5.2)
+
+> 12 January 2023
+
+- add many new CSS variables in Toc.svelte [badbe2f](https://github.com/janosh/svelte-toc/commit/badbe2f)
+- add vite alias $root to clean up package.json, readme|contributing|changelog.md imports [76427ee](https://github.com/janosh/svelte-toc/commit/76427ee)
+- add coverage badges to readme [8a24e2b](https://github.com/janosh/svelte-toc/commit/8a24e2b)
+- add contributing.md [a313e7b](https://github.com/janosh/svelte-toc/commit/a313e7b)
+- add auto changelog [d7eaeea](https://github.com/janosh/svelte-toc/commit/d7eaeea)
+
 #### [v0.5.1](https://github.com/janosh/svelte-toc/compare/v0.5.0...v0.5.1)
 
 > 20 December 2022
