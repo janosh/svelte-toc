@@ -13,7 +13,7 @@
 
 </h4>
 
-Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://janosh.github.io/svelte-toc">Live demo</a></strong>
+Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://janosh.github.io/svelte-toc">Live Demo</a></strong>
 
 ## 🔨 &nbsp; Installation
 
@@ -32,6 +32,10 @@ npm install --dev svelte-toc
 
 <main>
   <h1>Top Heading</h1>
+  <h2>Intro</h2>
+  <h3>Subsection</h3>
+  <h2>Next Section</h2>
+  <h3 class="toc-exclude">Another Subsection</h3>
 </main>
 ```
 
@@ -43,7 +47,7 @@ Full list of props and bindable variables for this component (all of them option
    activeHeading: HTMLHeadingElement | null = null
    ```
 
-   The DOM node of the currently active (highlighted) heading (based on the users scroll position on the page).
+   The DOM node of the currently active (highlighted) heading (based on user's scroll position on the page).
 
 1. ```ts
    activeHeadingScrollOffset: number = 100
@@ -55,7 +59,7 @@ Full list of props and bindable variables for this component (all of them option
    activeTocLi: HTMLLIElement | null = null
    ```
 
-   The DOM node of the currently active (highlighted) ToC item (based on the users scroll position on the page).
+   The DOM node of the currently active (highlighted) ToC item (based on user's scroll position on the page).
 
 1. ```ts
    breakpoint: number = 1000
@@ -114,19 +118,19 @@ Full list of props and bindable variables for this component (all of them option
    headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
    ```
 
-   CSS selector string that should return all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h1, h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h1 class="toc-exclude">Page Title</h1>` will not be listed.
+   CSS selector that matches all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h2 class="toc-exclude">Section Title</h2>` will not be listed.
 
 1. ```ts
    hide: boolean = false
    ```
 
-   Whether to render or hide the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings={myHeadings} />`.
+   Whether to render the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings />`.
 
 1. ```ts
    autoHide: boolean = true
    ```
 
-   Whether to automatically hide the ToC when its empty, i.e. when no headings match `headingSelector`. If true, ToC also automatically un-hide itself if re-querying for headings yields a non-empty list of headings later.
+   Whether to automatically hide the ToC when it's empty, i.e. when no headings match `headingSelector`. If true, ToC also automatically un-hides itself when re-querying for headings (e.g. on scroll) and finding some.
 
 1. ```ts
    keepActiveTocItemInView: boolean = true
@@ -138,7 +142,7 @@ Full list of props and bindable variables for this component (all of them option
    open: boolean = false
    ```
 
-   Whether the ToC is currently in an open state on mobile screens. This value is ignored on desktops.
+   Whether the ToC is currently in an open state on mobile screens. Can be used to externally control the `open` state through 2-way binding. This value is ignored on desktop.
 
 1. ```ts
    openButtonLabel: string = `Open table of contents`
@@ -150,7 +154,7 @@ Full list of props and bindable variables for this component (all of them option
    pageBody: string | HTMLElement = `body`
    ```
 
-   Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency.
+   Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency, especially if you have a lot of elements on the page that are on a separate branch of the DOM tree from the headings you want to list.
 
 1. ```ts
    title: string = `On this page`

@@ -1,1 +1,1 @@
-export { default } from './Toc.svelte'
+export { default, default as Toc } from './Toc.svelte'
