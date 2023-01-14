@@ -1,13 +1,6 @@
 import Toc from '$lib'
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
-beforeEach(() => {
-  document.body.innerHTML = ``
-})
-
-function sleep(ms: number = 1) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
+import { describe, expect, test, vi } from 'vitest'
+import { doc_query, sleep } from '.'
 
 describe(`Toc`, () => {
   test(`renders custom title`, async () => {
@@ -18,7 +11,7 @@ describe(`Toc`, () => {
 
     expect(toc).toBeTruthy()
 
-    expect(document.querySelector(`h2`)?.textContent).toBe(`Custom title`)
+    expect(doc_query(`h2`)?.textContent).toBe(`Custom title`)
   })
 
   test(`renders custom title`, async () => {
@@ -29,9 +22,7 @@ describe(`Toc`, () => {
 
     expect(toc).toBeTruthy()
 
-    expect(document.querySelector(`strong`)?.textContent).toBe(
-      `Another custom title`
-    )
+    expect(doc_query(`strong`).textContent).toBe(`Another custom title`)
   })
 
   test.each([
@@ -60,9 +51,9 @@ describe(`Toc`, () => {
       expect(toc).toBeTruthy()
       await sleep()
 
-      const toc_ul = document.querySelector(`aside.toc ul`)
-      expect(toc_ul?.children.length).toBe(expected_lis)
-      expect(toc_ul?.textContent?.trim()).toBe(expected_text?.join(` `))
+      const toc_ul = doc_query(`aside.toc ul`)
+      expect(toc_ul.children.length).toBe(expected_lis)
+      expect(toc_ul.textContent?.trim()).toBe(expected_text?.join(` `))
     }
   )
 
@@ -85,16 +76,16 @@ describe(`Toc`, () => {
         expect(toc).toBeTruthy()
         await sleep()
 
-        const node = document.querySelector(`aside.toc`)
+        const node = doc_query(`aside.toc`)
         expect(node).toBeInstanceOf(HTMLElement)
         if (autoHide) {
-          expect(node?.getAttribute(`aria-hidden`)).toBe(`true`)
-          expect(node?.className).toContain(`hidden`)
-          expect(node?.getAttribute(`hidden`)).toBe(``)
+          expect(node.getAttribute(`aria-hidden`)).toBe(`true`)
+          expect(node.className).toContain(`hidden`)
+          expect(node.getAttribute(`hidden`)).toBe(``)
         } else {
-          expect(node?.className).not.toContain(`hidden`)
-          expect(node?.getAttribute(`aria-hidden`)).toBe(`false`)
-          expect(node?.getAttribute(`hidden`)).toBe(null)
+          expect(node.className).not.toContain(`hidden`)
+          expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
+          expect(node.getAttribute(`hidden`)).toBe(null)
         }
       }
     )
