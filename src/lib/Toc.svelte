@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
-  import MenuIcon from './MenuIcon.svelte'
+  import { MenuIcon } from '.'
 
   export let activeHeading: HTMLHeadingElement | null = null
   export let activeHeadingScrollOffset: number = 100

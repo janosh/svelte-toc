@@ -1,6 +1,6 @@
 <script lang="ts">
   import Readme from '$root/readme.md'
-  import Toc from '$lib/Toc.svelte'
+  import { Toc } from '$lib'
 </script>
 
 <main>
@@ -23,7 +23,7 @@
     place-content: center;
     font-size: clamp(2rem, 2rem + 2vw, 3rem);
   }
-  :global(h1 br) {
+  :global(h1 > br) {
     display: none;
   }
   @media (max-width: 500px) {
