@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Toc from '$lib/Toc.svelte'
+  import { Toc } from '$lib'
 </script>
 
 <main>
