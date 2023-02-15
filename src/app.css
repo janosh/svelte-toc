@@ -63,7 +63,7 @@ blockquote {
 .toc-clicked {
   color: cornflowerblue;
 }
-ul li {
+:is(ul, ol) > li {
   line-height: 3ex;
 }
 

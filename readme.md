@@ -172,7 +172,7 @@ Full list of props and bindable variables for this component (all of them option
    tocItems: HTMLLIElement[] = []
    ```
 
-   Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ul > li` to `document.querySelectorAll()`.
+   Array of rendered Toc list items DOM nodes. Essentially the result of passing `aside.toc > nav > ol > li` to `document.querySelectorAll()`.
 
 1. ```ts
    warnOnEmpty: boolean = true
@@ -215,11 +215,11 @@ The HTML structure of this component is
   <button>open/close (only present on mobile)</button>
   <nav>
     <h2>{title}</h2>
-    <ul>
+    <ol>
       <li>{heading1}</li>
       <li>{heading2}</li>
       ...
-    </ul>
+    </ol>
   </nav>
 </aside>
 ```
@@ -236,18 +236,18 @@ The HTML structure of this component is
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
   - `padding: var(--toc-padding, 1em 1em 0)`
   - `font-size: var(--toc-font-size)`
-- `aside.toc > nav > ul > .toc-title`
+- `aside.toc > nav > ol > .toc-title`
   - `padding: var(--toc-title-padding)`
   - `margin: var(--toc-title-margin)`
-- `aside.toc > nav > ul > li`
+- `aside.toc > nav > ol > li`
   - `border-radius: var(--toc-li-border-radius, 2pt)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
   - `margin: var(--toc-li-margin)`
   - `border: var(--toc-li-border)`
-- `aside.toc > nav > ul > li:hover`
+- `aside.toc > nav > ol > li:hover`
   - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`
-- `aside.toc > nav > ul > li.active`
+- `aside.toc > nav > ol > li.active`
   - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
   - `font-weight: var(--toc-active-font-weight)`

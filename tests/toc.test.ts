@@ -12,10 +12,10 @@ test.describe(`Toc`, () => {
         .allTextContents()
 
       // wait for ToC to render headings
-      await page.waitForSelector(`aside.toc > nav > ul > li`)
+      await page.waitForSelector(`aside.toc > nav > ol > li`)
 
       const toc_headings = (
-        await page.locator(`aside.toc > nav > ul > li`).allTextContents()
+        await page.locator(`aside.toc > nav > ol > li`).allTextContents()
       ).map((h) => h.trim())
 
       expect(toc_headings).toEqual(expected_headings)
@@ -27,7 +27,7 @@ test.describe(`Toc`, () => {
 
     expect(await page.evaluate(() => window.pageYOffset)).toBe(0)
 
-    await page.click(`aside.toc > nav > ul > li:last-child`)
+    await page.click(`aside.toc > nav > ol > li:last-child`)
     await page.waitForTimeout(100) // TODO: wait for scroll to finish instead of hard-coding timeout
     expect(await page.evaluate(() => window.pageYOffset)).toBeGreaterThan(0)
   })
@@ -36,14 +36,14 @@ test.describe(`Toc`, () => {
     page,
   }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
-    let active_toc_li = await page.innerText(`aside.toc > nav > ul > li.active`)
+    let active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
     expect(active_toc_li).toContain(`🙋 How can I help?`)
 
     // scroll to the bottom of the page
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
     await page.waitForTimeout(1000)
 
-    active_toc_li = await page.innerText(`aside.toc > nav > ul > li.active`)
+    active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
     expect(active_toc_li).toContain(`🆕 New release`)
   })
 
@@ -69,7 +69,7 @@ test.describe(`Toc`, () => {
         .allTextContents()
 
       const toc_headings = (
-        await page.locator(`aside.toc > nav > ul > li`).allTextContents()
+        await page.locator(`aside.toc > nav > ol > li`).allTextContents()
       ).map((li_text) => li_text.trim())
 
       expect(toc_headings).toEqual(page_headings)
