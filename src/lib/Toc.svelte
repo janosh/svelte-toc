@@ -150,7 +150,7 @@
           </svelte:element>
         </slot>
       {/if}
-      <ul>
+      <ol>
         {#each headings as heading, idx}
           <li
             tabindex="0"
@@ -167,7 +167,7 @@
             </slot>
           </li>
         {/each}
-      </ul>
+      </ol>
     </nav>
   {/if}
 </aside>
@@ -187,26 +187,27 @@
     max-height: var(--toc-max-height, 90vh);
     padding: var(--toc-padding, 1em 1em 0);
   }
-  :where(aside.toc > nav > ul) {
-    list-style: none;
-    padding: 0;
+  :where(aside.toc > nav > ol) {
+    list-style: var(--toc-ol-list-style, none);
+    padding: var(--toc-ol-padding, 0);
   }
   :where(.toc-title) {
     padding: var(--toc-title-padding);
     margin: var(--toc-title-margin);
   }
-  :where(aside.toc > nav > ul > li) {
+  :where(aside.toc > nav > ol > li) {
     cursor: pointer;
+    color: var(--toc-li-color);
     border: var(--toc-li-border);
     border-radius: var(--toc-li-border-radius, 2pt);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
   }
-  :where(aside.toc > nav > ul > li:hover) {
+  :where(aside.toc > nav > ol > li:hover) {
     color: var(--toc-li-hover-color, cornflowerblue);
     background: var(--toc-li-hover-bg);
   }
-  :where(aside.toc > nav > ul > li.active) {
+  :where(aside.toc > nav > ol > li.active) {
     background: var(--toc-active-bg, cornflowerblue);
     color: var(--toc-active-color, white);
     font-weight: var(--toc-active-font-weight);

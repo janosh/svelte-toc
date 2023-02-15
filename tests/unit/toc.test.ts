@@ -51,7 +51,7 @@ describe(`Toc`, () => {
       expect(toc).toBeTruthy()
       await sleep()
 
-      const toc_ul = doc_query(`aside.toc ul`)
+      const toc_ul = doc_query(`aside.toc ol`)
       expect(toc_ul.children.length).toBe(expected_lis)
       expect(toc_ul.textContent?.trim()).toBe(expected_text?.join(` `))
     }
@@ -122,7 +122,7 @@ describe(`Toc`, () => {
     new Toc({ target: document.body })
     await sleep()
 
-    const toc_ul = doc_query(`aside.toc > nav > ul`)
+    const toc_ul = doc_query(`aside.toc > nav > ol`)
     expect(toc_ul.children.length).toBe(3)
 
     const lis = [...toc_ul.children] as HTMLLIElement[]
