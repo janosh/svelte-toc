@@ -199,7 +199,7 @@
     cursor: pointer;
     color: var(--toc-li-color);
     border: var(--toc-li-border);
-    border-radius: var(--toc-li-border-radius, 2pt);
+    border-radius: var(--toc-li-border-radius);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
   }
@@ -211,6 +211,9 @@
     background: var(--toc-active-bg, cornflowerblue);
     color: var(--toc-active-color, white);
     font-weight: var(--toc-active-font-weight);
+    border: var(--toc-active-border);
+    border-width: var(--toc-active-border-width);
+    border-radius: var(--toc-active-border-radius, 2pt);
   }
   :where(aside.toc > button) {
     border: none;

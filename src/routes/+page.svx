@@ -1,20 +1,20 @@
 <script lang="ts">
   import Readme from '$root/readme.md'
-  import { Toc } from '$lib'
+  import { DemoNav } from '$site'
 </script>
 
-<main>
-
-<Readme />
+<Readme>
+  <svelte:fragment slot="demo-nav">
+    <h2>📝 &thinsp; Examples</h2>
+    <p>Demos of specific features of <code>svelte-toc</code>.</p>
+    <DemoNav />
+  </svelte:fragment>
+</Readme>
 
 ## 🧪 &nbsp; Test Page Navigation
 
 - [Long Page with ToC](/long-page)
 - [Page without ToC](/no-toc-page)
-
-</main>
-
-<Toc headingSelector="main :where(h2, h3)" activeHeadingScrollOffset={200} />
 
 <style>
   :global(h1) {

@@ -1,6 +1,7 @@
 import adapter from '@sveltejs/adapter-static'
 import { s } from 'hastscript'
 import { mdsvex } from 'mdsvex'
+import mdsvexamples from 'mdsvexamples'
 import link_headings from 'rehype-autolink-headings'
 import heading_slugs from 'rehype-slug'
 import preprocess from 'svelte-preprocess'
@@ -22,13 +23,23 @@ const rehypePlugins = [
   ],
 ]
 
+const { default: pkg } = await import(`./package.json`, {
+  assert: { type: `json` },
+})
+const defaults = {
+  Wrapper: `svelte-zoo/CodeExample.svelte`,
+  pkg: pkg.name,
+  repo: pkg.repository,
+}
+const remarkPlugins = [[mdsvexamples, { defaults }]]
+
 /** @type {import('@sveltejs/kit').Config} */
 export default {
   extensions: [`.svelte`, `.svx`, `.md`],
 
   preprocess: [
     preprocess(),
-    mdsvex({ rehypePlugins, extensions: [`.svx`, `.md`] }),
+    mdsvex({ rehypePlugins, remarkPlugins, extensions: [`.svx`, `.md`] }),
   ],
 
   kit: {
@@ -36,6 +47,7 @@ export default {
 
     alias: {
       $root: `.`,
+      $site: `src/site`,
     },
   },
 }
