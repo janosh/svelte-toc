@@ -3,7 +3,7 @@
 
   --toc-mobile-bg: #484452;
   --toc-mobile-btn-color: white;
-  --toc-min-width: 12em;
+  --toc-min-width: 15em;
   --toc-desktop-max-width: 15em;
   --toc-font-size: 11pt;
 
@@ -17,11 +17,10 @@ body {
   margin: auto;
   color: #eee;
 }
-/* outer div = hydration target */
 body > div {
   display: flex;
   margin: auto;
-  justify-content: center;
+  place-content: center;
 }
 main {
   max-width: 50em;

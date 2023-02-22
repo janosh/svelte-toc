@@ -1,9 +1,10 @@
 import { sveltekit } from '@sveltejs/kit/vite'
+import mdsvexamples from 'mdsvexamples/vite'
 import type { UserConfig } from 'vite'
 import type { UserConfig as VitestConfig } from 'vitest'
 
 const vite_config: UserConfig & { test: VitestConfig } = {
-  plugins: [sveltekit()],
+  plugins: [sveltekit(), mdsvexamples],
 
   server: {
     fs: { allow: [`..`] }, // needed to import from $root

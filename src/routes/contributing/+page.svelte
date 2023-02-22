@@ -1,13 +1,8 @@
 <script lang="ts">
-  import Toc from '$lib'
   import Contributing from '$root/contributing.md'
 </script>
 
-<main>
-  <Contributing />
-</main>
-
-<Toc headingSelector="main > :where(h2)" breakpoint={1250} />
+<Contributing />
 
 <style>
   :global(aside.toc.desktop) {

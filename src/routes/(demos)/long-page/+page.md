@@ -2,8 +2,6 @@
   import { Toc } from '$lib'
 </script>
 
-<main>
-
 # VS Code November 2021 Release Notes (v1.63)
 
 [Back to landing page](/)
@@ -534,7 +532,3 @@ You can provide feedback about this API in [issue #74967](https://github.com/mic
 Last but certainly not least, a big _**Thank You**_ to the contributors of VS Code.
 
 [Back to landing page](/)
-
-</main>
-
-<Toc headingSelector="main :where(h2, h3, h4)" activeHeadingScrollOffset={200} />

@@ -10,6 +10,7 @@
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/svelte-toc/main.svg)](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
 [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-darkblue?logo=stackblitz)](https://stackblitz.com/github/janosh/svelte-toc)
+[![REPL](https://img.shields.io/badge/Svelte-REPL-blue?label=Try%20it!)](https://svelte.dev/repl/e292ff8935dc4f5d97e5373f9f611c1b)
 
 </h4>
 
@@ -20,6 +21,8 @@ Sticky responsive table of contents component. <strong class="hide-in-docs"><a h
 ```sh
 npm install --dev svelte-toc
 ```
+
+<slot name="demo-nav" />
 
 ## 📙 &nbsp; Usage
 
