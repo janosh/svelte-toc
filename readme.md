@@ -242,11 +242,15 @@ The HTML structure of this component is
 - `aside.toc > nav > ol > .toc-title`
   - `padding: var(--toc-title-padding)`
   - `margin: var(--toc-title-margin)`
+- `aside.toc > nav > ol`
+  - `list-style: var(--toc-ol-list-style, none)`
+  - `padding: var(--toc-ol-padding, 0)`
 - `aside.toc > nav > ol > li`
-  - `border-radius: var(--toc-li-border-radius, 2pt)`
+  - `border-radius: var(--toc-li-border-radius)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
   - `margin: var(--toc-li-margin)`
   - `border: var(--toc-li-border)`
+  - `color: var(--toc-li-color)`
 - `aside.toc > nav > ol > li:hover`
   - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`
@@ -254,6 +258,9 @@ The HTML structure of this component is
   - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
   - `font-weight: var(--toc-active-font-weight)`
+  - `border: var(--toc-active-border)`
+  - `border-width: var(--toc-active-border-width)`: Allows setting top, right, bottom, left border widths separately.
+  - `border-radius: var(--toc-active-border-radius, 2pt)`
 - `aside.toc > button`
   - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
   - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.

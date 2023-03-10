@@ -23,17 +23,17 @@
     "update-coverage": "vitest tests/unit --run --coverage && npx istanbul-badges-readme"
   },
   "dependencies": {
-    "svelte": "^3.55.1"
+    "svelte": "^3.56.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.31.0",
+    "@playwright/test": "1.31.2",
     "@sveltejs/adapter-static": "^2.0.1",
-    "@sveltejs/kit": "^1.8.3",
+    "@sveltejs/kit": "^1.11.0",
     "@sveltejs/package": "^2.0.2",
-    "@typescript-eslint/eslint-plugin": "^5.53.0",
-    "@typescript-eslint/parser": "^5.53.0",
-    "@vitest/coverage-c8": "^0.28.5",
-    "eslint": "^8.34.0",
+    "@typescript-eslint/eslint-plugin": "^5.54.1",
+    "@typescript-eslint/parser": "^5.54.1",
+    "@vitest/coverage-c8": "^0.29.2",
+    "eslint": "^8.35.0",
     "eslint-plugin-svelte3": "^4.0.0",
     "hastscript": "^7.2.0",
     "jsdom": "^21.1.0",
@@ -43,13 +43,13 @@
     "prettier-plugin-svelte": "^2.9.0",
     "rehype-autolink-headings": "^6.1.1",
     "rehype-slug": "^5.1.0",
-    "svelte-check": "^3.0.3",
+    "svelte-check": "^3.1.0",
     "svelte-preprocess": "^5.0.1",
     "svelte-zoo": "^0.3.4",
-    "svelte2tsx": "^0.6.1",
+    "svelte2tsx": "^0.6.3",
     "typescript": "^4.9.5",
     "vite": "^4.1.4",
-    "vitest": "^0.28.5"
+    "vitest": "^0.29.2"
   },
   "keywords": [
     "svelte",
