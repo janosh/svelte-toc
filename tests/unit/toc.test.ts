@@ -1,6 +1,7 @@
 import Toc from '$lib'
+import { tick } from 'svelte'
 import { describe, expect, test, vi } from 'vitest'
-import { doc_query, sleep } from '.'
+import { doc_query } from '.'
 
 describe(`Toc`, () => {
   test(`renders custom title`, async () => {
@@ -49,7 +50,7 @@ describe(`Toc`, () => {
 
       const toc = new Toc({ target: document.body, props })
       expect(toc).toBeTruthy()
-      await sleep()
+      await tick()
 
       const toc_ul = doc_query(`aside.toc ol`)
       expect(toc_ul.children.length).toBe(expected_lis)
@@ -74,7 +75,7 @@ describe(`Toc`, () => {
           props: { headingSelector, autoHide },
         })
         expect(toc).toBeTruthy()
-        await sleep()
+        await tick()
 
         const node = doc_query(`aside.toc`)
         expect(node).toBeInstanceOf(HTMLElement)
@@ -99,7 +100,7 @@ describe(`Toc`, () => {
       new Toc({ target: document.body, props: { warnOnEmpty } })
 
       if (warnOnEmpty) {
-        await sleep() // don't move this sleep() outside, seems to cause console.calls
+        await tick() // don't move this sleep() outside, seems to cause console.calls
         //  to pollute the other test if applied to warnOnEmpty=false
         const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
         expect(console.warn).toHaveBeenCalledWith(msg)
@@ -120,7 +121,7 @@ describe(`Toc`, () => {
     `
 
     new Toc({ target: document.body })
-    await sleep()
+    await tick()
 
     const toc_ul = doc_query(`aside.toc > nav > ol`)
     expect(toc_ul.children.length).toBe(3)
