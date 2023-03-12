@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file. Dates are d
 
 <!-- auto-changelog-above -->
 
+#### [v0.5.3](https://github.com/janosh/svelte-toc/compare/v0.5.2...v0.5.3)
+
+> 12 March 2023
+
+- Fix ToC scroll abort [`#37`](https://github.com/janosh/svelte-toc/pull/37)
+- Add var(--toc-overflow, auto scroll) [`#34`](https://github.com/janosh/svelte-toc/pull/34)
+- add src/routes/(demos)/left-border-active-li/+page.md powered by mdsvexamples [`6be66f0`](https://github.com/janosh/svelte-toc/commit/6be66f061145b9ca6635cafff6c20fd687b98c4d)
+- tweak readme prop docs [`84c1854`](https://github.com/janosh/svelte-toc/commit/84c1854f037c214e5d736982b2d834c8f278bf0f)
+- document new CSS variables in readme [`5df7767`](https://github.com/janosh/svelte-toc/commit/5df7767cfe5a9253d0a673b6945bf10d6b024685)
+- add test 'subheadings are indented' [`06da853`](https://github.com/janosh/svelte-toc/commit/06da85303dcbe6bed1e31057447f5348e4220c84)
+- add var(--toc-ol-list-style, none) and var(--toc-ol-padding, 0) [`ade5425`](https://github.com/janosh/svelte-toc/commit/ade54251c2d67f0ac3adc41cfe10e5ce4ef16272)
+
 #### [v0.5.2](https://github.com/janosh/svelte-toc/compare/v0.5.2...v0.5.2)
 
 > 12 January 2023
