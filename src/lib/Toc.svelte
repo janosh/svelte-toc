@@ -22,6 +22,7 @@
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
   export let pageBody: string | HTMLElement = `body`
+  export let scrollBehavior: 'auto' | 'smooth' = `smooth`
   export let title: string = `On this page`
   export let titleTag: string = `h2`
   export let tocItems: HTMLLIElement[] = []
@@ -71,6 +72,7 @@
     return () => mutation_observer.disconnect()
   })
 
+  let scroll_id: number
   function set_active_heading() {
     let idx = headings.length
     while (idx--) {
@@ -81,30 +83,26 @@
       if (top < activeHeadingScrollOffset || idx === 0) {
         activeHeading = headings[idx]
         activeTocLi = tocItems[idx]
-        if (keepActiveTocItemInView && activeTocLi) {
-          // get the currently active ToC list item
-
-          // scroll the active ToC item into the middle of the ToC container
-          nav.scrollTo?.({ top: activeTocLi?.offsetTop - nav.offsetHeight / 2 })
-        }
+        // this annoying hackery to wait for scroll end is necessary because scrollend event only has 2%
+        // browser support https://stackoverflow.com/a/57867348 and Chrome doesn't support multiple
+        // simultaneous scrolls, smooth or otherwise (https://stackoverflow.com/a/63563437)
+        clearTimeout(scroll_id)
+        scroll_id = window.setTimeout(() => {
+          if (keepActiveTocItemInView && activeTocLi) {
+            // get the currently active ToC list item
+            // scroll the active ToC item into the middle of the ToC container
+            activeTocLi.scrollIntoView?.({ behavior: scrollBehavior, block: `center` })
+          }
+        }, 50)
         return // exit while loop if updated active heading
       }
     }
   }
 
-  function get_offset_top(element: HTMLElement | null): number {
-    // added in https://github.com/janosh/svelte-toc/pull/16
-    if (!element) return 0
-    return element.offsetTop + get_offset_top(element.offsetParent as HTMLElement)
-  }
-
   const handler = (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
     if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
     open = false
-    // Chrome doesn't (yet?) support multiple simultaneous smooth scrolls (https://stackoverflow.com/q/49318497)
-    // with node.scrollIntoView(). Use window.scrollTo() instead.
-    const scrollMargin = Number(getComputedStyle(node).scrollMarginTop.replace(`px`, ``))
-    window.scrollTo({ top: get_offset_top(node) - scrollMargin, behavior: `smooth` })
+    node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
 
     const id = getHeadingIds && getHeadingIds(node)
     if (id) history.replaceState({}, ``, `#${id}`)
