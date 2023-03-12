@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  // /internal needed for module resolution pending fix for https://github.com/vitest-dev/vitest/issues/2834
+  import { onMount } from 'svelte/internal'
   import { blur } from 'svelte/transition'
   import { MenuIcon } from '.'
 
