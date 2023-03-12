@@ -160,6 +160,12 @@ Full list of props and bindable variables for this component (all of them option
    Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency, especially if you have a lot of elements on the page that are on a separate branch of the DOM tree from the headings you want to list.
 
 1. ```ts
+   scrollBehavior: 'auto' | 'smooth' = `smooth`
+   ```
+
+   Whether to scroll the page smoothly or instantly when clicking on a ToC item. Set to `'auto'` to use the browser's default behavior.
+
+1. ```ts
    title: string = `On this page`
    ```
 
@@ -169,7 +175,7 @@ Full list of props and bindable variables for this component (all of them option
    titleTag: string = `h2`
    ```
 
-   Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`
+   Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`.
 
 1. ```ts
    tocItems: HTMLLIElement[] = []
