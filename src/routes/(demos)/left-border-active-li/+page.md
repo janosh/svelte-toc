@@ -1,4 +1,4 @@
-Maybe your style is a left border on the active li rather than a background color? Here's an example how to do that:
+Your prefer a left border on the active `<li>` to a full background color? Here's how to do that:
 
 ```svelte example
 <script>
@@ -25,8 +25,8 @@ Maybe your style is a left border on the active li rather than a background colo
   </main>
 
   <Toc
-    --toc-active-border="solid teal"
-    --toc-active-border-width="0 0 0 3pt"
+    --toc-active-border="solid cornflowerblue"
+    --toc-active-border-width="0 0 0 2pt"
     --toc-active-bg="none"
     --toc-active-border-radius="0"
   />
