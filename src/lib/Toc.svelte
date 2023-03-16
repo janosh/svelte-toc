@@ -20,6 +20,7 @@
   export let hide: boolean = false
   export let autoHide: boolean = true
   export let keepActiveTocItemInView: boolean = true
+  export let minItems: number = 0
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
   export let pageBody: string | HTMLElement = `body`
@@ -133,7 +134,7 @@
   hidden={hide}
   aria-hidden={hide}
 >
-  {#if !open && !desktop}
+  {#if !open && !desktop && headings.length >= minItems}
     <button
       on:click|preventDefault|stopPropagation={() => (open = true)}
       aria-label={openButtonLabel}
@@ -143,7 +144,7 @@
       </slot>
     </button>
   {/if}
-  {#if open || desktop}
+  {#if open || (desktop && headings.length >= minItems)}
     <nav transition:blur|local bind:this={nav}>
       {#if title}
         <slot name="title">
@@ -193,6 +194,7 @@
   :where(aside.toc > nav > ol) {
     list-style: var(--toc-ol-list-style, none);
     padding: var(--toc-ol-padding, 0);
+    margin: var(--toc-ol-margin);
   }
   :where(.toc-title) {
     padding: var(--toc-title-padding);
