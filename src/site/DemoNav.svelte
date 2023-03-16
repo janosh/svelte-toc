@@ -9,7 +9,7 @@
   ).map((filename) => filename.split(`/`)[4])
 
   if (routes.length < 3) {
-    throw new Error(`Too few demo routes found: ${routes.length}`)
+    console.error(`Too few demo routes found: ${routes.length}`)
   }
   $: is_current = (path: string) => {
     if (`/${path}` == $page.url.pathname) return `page`

@@ -20,6 +20,7 @@
   export let hide: boolean = false
   export let autoHide: boolean = true
   export let keepActiveTocItemInView: boolean = true
+  export let minItems: number = 0
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
   export let pageBody: string | HTMLElement = `body`
@@ -92,7 +93,10 @@
           if (keepActiveTocItemInView && activeTocLi) {
             // get the currently active ToC list item
             // scroll the active ToC item into the middle of the ToC container
-            activeTocLi.scrollIntoView?.({ behavior: scrollBehavior, block: `center` })
+            nav.scrollTo?.({
+              top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
+              behavior: `smooth`,
+            })
           }
         }, 50)
         return // exit while loop if updated active heading
@@ -130,7 +134,7 @@
   hidden={hide}
   aria-hidden={hide}
 >
-  {#if !open && !desktop}
+  {#if !open && !desktop && headings.length >= minItems}
     <button
       on:click|preventDefault|stopPropagation={() => (open = true)}
       aria-label={openButtonLabel}
@@ -140,7 +144,7 @@
       </slot>
     </button>
   {/if}
-  {#if open || desktop}
+  {#if open || (desktop && headings.length >= minItems)}
     <nav transition:blur|local bind:this={nav}>
       {#if title}
         <slot name="title">
@@ -175,6 +179,7 @@
   :where(aside.toc) {
     box-sizing: border-box;
     height: max-content;
+    overflow-wrap: break-word;
     font-size: var(--toc-font-size);
     min-width: var(--toc-min-width);
     width: var(--toc-width);
@@ -189,6 +194,7 @@
   :where(aside.toc > nav > ol) {
     list-style: var(--toc-ol-list-style, none);
     padding: var(--toc-ol-padding, 0);
+    margin: var(--toc-ol-margin);
   }
   :where(.toc-title) {
     padding: var(--toc-title-padding);

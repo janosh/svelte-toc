@@ -142,6 +142,12 @@ Full list of props and bindable variables for this component (all of them option
    Whether to scroll the ToC along with the page.
 
 1. ```ts
+   minItems: number = 0
+   ```
+
+   Completely prevent the ToC from rendering if it doesn't find at least `minItems` matching headings on the page. The default of 0 means the ToC will always render, even if it's empty.
+
+1. ```ts
    open: boolean = false
    ```
 
@@ -251,6 +257,7 @@ The HTML structure of this component is
 - `aside.toc > nav > ol`
   - `list-style: var(--toc-ol-list-style, none)`
   - `padding: var(--toc-ol-padding, 0)`
+  - `margin: var(--toc-ol-margin)`
 - `aside.toc > nav > ol > li`
   - `border-radius: var(--toc-li-border-radius)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
