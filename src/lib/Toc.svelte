@@ -92,7 +92,10 @@
           if (keepActiveTocItemInView && activeTocLi) {
             // get the currently active ToC list item
             // scroll the active ToC item into the middle of the ToC container
-            activeTocLi.scrollIntoView?.({ behavior: scrollBehavior, block: `center` })
+            nav.scrollTo?.({
+              top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
+              behavior: `smooth`,
+            })
           }
         }, 50)
         return // exit while loop if updated active heading
@@ -175,6 +178,7 @@
   :where(aside.toc) {
     box-sizing: border-box;
     height: max-content;
+    overflow-wrap: break-word;
     font-size: var(--toc-font-size);
     min-width: var(--toc-min-width);
     width: var(--toc-width);
