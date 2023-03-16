@@ -131,4 +131,39 @@ describe(`Toc`, () => {
     expect(lis[1].style.marginLeft).toBe(`1em`)
     expect(lis[2].style.marginLeft).toBe(`2em`)
   })
+
+  describe.each([
+    [
+      [1, 2, 3, 4],
+      [1, 5, 6],
+    ],
+  ])(`minItems`, (headings) => {
+    test.each([[1], [2], [3], [4]])(
+      `only renders TOC when there are more than minItems headings matching the selector`,
+      async (minItems) => {
+        document.body.innerHTML = headings
+          .map((h) => `<h${h}>Heading ${h}</h${h}>`)
+          .join(``)
+
+        new Toc({
+          target: document.body,
+          props: { headingSelector: `:is(h2, h3, h4)`, minItems },
+        })
+        await tick()
+
+        // count the number of headings that match the selector
+        const matches = headings.filter((h) => h >= 2 && h <= 4).length
+        if (matches >= minItems) {
+          const toc_ul = doc_query(`aside.toc ol`)
+          expect(
+            toc_ul.children.length,
+            `headings=${headings}, minItems=${minItems}`
+          ).toBe(matches)
+        } else {
+          const nav = document.querySelector(`aside.toc nav`)
+          expect(nav).toBeNull()
+        }
+      }
+    )
+  })
 })
