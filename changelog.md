@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. Dates are d
 
 <!-- auto-changelog-above -->
 
+#### [v0.5.4](https://github.com/janosh/svelte-toc/compare/v0.5.3...v0.5.4)
+
+> 16 March 2023
+
+- Fix new timeout callback for keepActiveTocItemInView=true breaking page scrolling [`#39`](https://github.com/janosh/svelte-toc/pull/39)
+
 #### [v0.5.3](https://github.com/janosh/svelte-toc/compare/v0.5.2...v0.5.3)
 
 > 12 March 2023
