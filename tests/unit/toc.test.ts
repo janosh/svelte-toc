@@ -167,3 +167,35 @@ describe(`Toc`, () => {
     )
   })
 })
+
+test.each([
+  [400, 500, 600],
+  [700, 800, 900],
+  [999, 1000, 1001],
+])(
+  `ToC should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
+  async (smaller, breakpoint, larger) => {
+    const set_window_width = (width: number) => {
+      window.innerWidth = width
+      window.dispatchEvent(new Event(`resize`))
+    }
+
+    new Toc({
+      target: document.body,
+      props: { breakpoint },
+    })
+
+    set_window_width(larger)
+    await tick()
+
+    const node = doc_query(`aside.toc`)
+    expect(node.className).toContain(`desktop`)
+    expect(node.className).not.toContain(`mobile`)
+
+    set_window_width(smaller)
+    await tick()
+
+    expect(node.className).not.toContain(`desktop`)
+    expect(node.className).toContain(`mobile`)
+  }
+)
