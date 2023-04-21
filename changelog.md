@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. Dates are d
 
 <!-- auto-changelog-above -->
 
+#### [v0.5.5](https://github.com/janosh/svelte-toc/compare/v0.5.4...v0.5.5)
+
+> 20 April 2023
+
+- DRY GitHub Actions [`#40`](https://github.com/janosh/svelte-toc/pull/40)
+- fix svelte a11y warning about &lt;li&gt; tabindex and role [`aa1cd50`](https://github.com/janosh/svelte-toc/commit/aa1cd507e158acdf13048bf158e4f4b3ba0fbba1)
+
 #### [v0.5.4](https://github.com/janosh/svelte-toc/compare/v0.5.3...v0.5.4)
 
 > 16 March 2023
