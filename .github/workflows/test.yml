@@ -10,6 +10,5 @@ on:
     types: [published]
 
 jobs:
-  Tests:
+  tests:
     uses: janosh/workflows/.github/workflows/npm-test-release.yml@main
-    secrets: inherit
