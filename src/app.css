@@ -45,6 +45,7 @@ pre code {
   display: inline-block;
 }
 pre {
+  position: relative;
   border-radius: 1ex;
   font-size: 0.7em;
 }
@@ -85,4 +86,14 @@ table :is(td, th) {
 }
 tbody tr:nth-child(odd) {
   background: black;
+}
+
+button {
+  color: var(--text-color);
+  cursor: pointer;
+  border: none;
+  border-radius: 3pt;
+  background: teal;
+  padding: 2pt 4pt;
+  font-size: 12pt;
 }

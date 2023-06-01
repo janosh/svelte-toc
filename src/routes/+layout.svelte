@@ -1,9 +1,26 @@
 <script lang="ts">
+  import { afterNavigate } from '$app/navigation'
   import { page } from '$app/stores'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
-  import { GitHubCorner } from 'svelte-zoo'
+  import { CopyButton, GitHubCorner } from 'svelte-zoo'
   import '../app.css'
+
+  afterNavigate(() => {
+    for (const node of document.querySelectorAll(`pre > code`)) {
+      // skip if <pre> already contains a button (presumably for copy)
+      const pre = node.parentElement
+      if (!pre || pre.querySelector(`button`)) continue
+
+      new CopyButton({
+        target: pre,
+        props: {
+          content: node.textContent ?? ``,
+          style: `position: absolute; top: 1ex; right: 1ex;`,
+        },
+      })
+    }
+  })
 
   $: headingSelector =
     { '/contributing': `main > h2`, '/changelog': `main > h4` }[$page.url.pathname] ??
