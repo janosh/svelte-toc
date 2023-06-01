@@ -1,6 +1,5 @@
 <script lang="ts">
-  // /internal needed for module resolution pending fix for https://github.com/vitest-dev/vitest/issues/2834
-  import { onMount } from 'svelte/internal'
+  import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -146,7 +145,7 @@
     </button>
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
-    <nav transition:blur|local bind:this={nav}>
+    <nav transition:blur bind:this={nav}>
       {#if title}
         <slot name="title">
           <svelte:element this={titleTag} class="toc-title toc-exclude">
