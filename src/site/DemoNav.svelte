@@ -4,8 +4,7 @@
   export let style: string | null = null
 
   const routes = Object.keys(
-    // eslint-disable-next-line @typescript-eslint/quotes
-    import.meta.glob('/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}')
+    import.meta.glob(`/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}`)
   ).map((filename) => filename.split(`/`)[4])
 
   if (routes.length < 3) {
