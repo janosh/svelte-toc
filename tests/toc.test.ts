@@ -25,11 +25,11 @@ test.describe(`Toc`, () => {
   test(`scrolls to heading on clicking ToC item`, async ({ page }) => {
     await page.goto(`/`, { waitUntil: `networkidle` })
 
-    expect(await page.evaluate(() => window.pageYOffset)).toBe(0)
+    expect(await page.evaluate(() => window.scrollY)).toBe(0)
 
     await page.click(`aside.toc > nav > ol > li:last-child`)
     await page.waitForTimeout(100) // TODO: wait for scroll to finish instead of hard-coding timeout
-    expect(await page.evaluate(() => window.pageYOffset)).toBeGreaterThan(0)
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
   })
 
   test(`correctly highlights the closest heading in the ToC when scrolling manually`, async ({

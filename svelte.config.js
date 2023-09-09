@@ -17,7 +17,7 @@ const rehypePlugins = [
         `svg`,
         { width: 16, height: 16, viewBox: `0 0 16 16` },
         // symbol #octicon-link defined in app.html
-        s(`use`, { 'xlink:href': `#octicon-link` })
+        s(`use`, { 'xlink:href': `#octicon-link` }),
       ),
     },
   ],
@@ -49,5 +49,10 @@ export default {
       $root: `.`,
       $site: `src/site`,
     },
+  },
+
+  compilerOptions: {
+    // enable direct prop access for vitest unit tests
+    accessors: process.env.TEST,
   },
 }
