@@ -34,6 +34,7 @@
 
   let aside: HTMLElement
   let nav: HTMLElement
+  let scroll_id: number
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = window_width > breakpoint
@@ -61,6 +62,8 @@
     }
   }
 
+  requery_headings()
+
   onMount(() => {
     if (typeof pageBody === `string`) {
       pageBody = document.querySelector(pageBody) as HTMLElement
@@ -73,8 +76,6 @@
     mutation_observer.observe(pageBody, { childList: true, subtree: true })
     return () => mutation_observer.disconnect()
   })
-
-  let scroll_id: number
   function set_active_heading() {
     let idx = headings.length
     while (idx--) {
@@ -162,6 +163,7 @@
             on:click={handler(heading)}
             on:keyup={handler(heading)}
             bind:this={tocItems[idx]}
+            role="menuitem"
           >
             <slot name="toc-item" {heading} {idx}>
               {getHeadingTitles(heading)}

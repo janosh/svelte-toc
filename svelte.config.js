@@ -50,4 +50,9 @@ export default {
       $site: `src/site`,
     },
   },
+
+  compilerOptions: {
+    // enable direct prop access for vitest unit tests
+    accessors: process.env.TEST,
+  },
 }
