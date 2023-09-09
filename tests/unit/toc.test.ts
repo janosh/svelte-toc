@@ -55,7 +55,7 @@ describe(`Toc`, () => {
       const toc_ul = doc_query(`aside.toc ol`)
       expect(toc_ul.children.length).toBe(expected_lis)
       expect(toc_ul.textContent?.trim()).toBe(expected_text?.join(` `))
-    }
+    },
   )
 
   describe.each([true, false])(`with autoHide=%s`, (autoHide) => {
@@ -88,7 +88,7 @@ describe(`Toc`, () => {
           expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
           expect(node.getAttribute(`hidden`)).toBe(null)
         }
-      }
+      },
     )
   })
 
@@ -107,7 +107,7 @@ describe(`Toc`, () => {
       } else {
         expect(console.warn).not.toHaveBeenCalled()
       }
-    }
+    },
   )
 
   test(`subheadings are indented`, async () => {
@@ -157,13 +157,13 @@ describe(`Toc`, () => {
           const toc_ul = doc_query(`aside.toc ol`)
           expect(
             toc_ul.children.length,
-            `headings=${headings}, minItems=${minItems}`
+            `headings=${headings}, minItems=${minItems}`,
           ).toBe(matches)
         } else {
           const nav = document.querySelector(`aside.toc nav`)
           expect(nav).toBeNull()
         }
-      }
+      },
     )
   })
 })
@@ -197,5 +197,5 @@ test.each([
 
     expect(node.className).not.toContain(`desktop`)
     expect(node.className).toContain(`mobile`)
-  }
+  },
 )

@@ -113,7 +113,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - [pre-commit.ci] pre-commit autoupdate [`#13`](https://github.com/janosh/svelte-toc/pull/13)
 - [pre-commit.ci] pre-commit autoupdate [`#11`](https://github.com/janosh/svelte-toc/pull/11)
 - update deps [`dd64696`](https://github.com/janosh/svelte-toc/commit/dd64696aa072453c79ccc1e6aeb4ae35bb6f55a8)
-- replace `scrollIntoViewIfNeeded()` with `` scrollIntoView({ block: `nearest` }) `` [`3466e0f`](https://github.com/janosh/svelte-toc/commit/3466e0fa2be40cba2f2c4aca7988c44fb43d613f)
+- replace `scrollIntoViewIfNeeded()` with ``scrollIntoView({ block: `nearest` })`` [`3466e0f`](https://github.com/janosh/svelte-toc/commit/3466e0fa2be40cba2f2c4aca7988c44fb43d613f)
 
 #### [v0.2.9](https://github.com/janosh/svelte-toc/compare/v0.2.8...v0.2.9)
 

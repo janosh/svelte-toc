@@ -1,6 +1,5 @@
 <script lang="ts">
-  // /internal needed for module resolution pending fix for https://github.com/vitest-dev/vitest/issues/2834
-  import { onMount } from 'svelte/internal'
+  import { onMount } from 'svelte'
   import { blur } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -35,6 +34,7 @@
 
   let aside: HTMLElement
   let nav: HTMLElement
+  let scroll_id: number
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = window_width > breakpoint
@@ -62,6 +62,8 @@
     }
   }
 
+  requery_headings()
+
   onMount(() => {
     if (typeof pageBody === `string`) {
       pageBody = document.querySelector(pageBody) as HTMLElement
@@ -74,8 +76,6 @@
     mutation_observer.observe(pageBody, { childList: true, subtree: true })
     return () => mutation_observer.disconnect()
   })
-
-  let scroll_id: number
   function set_active_heading() {
     let idx = headings.length
     while (idx--) {
@@ -146,7 +146,7 @@
     </button>
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
-    <nav transition:blur|local bind:this={nav}>
+    <nav transition:blur bind:this={nav}>
       {#if title}
         <slot name="title">
           <svelte:element this={titleTag} class="toc-title toc-exclude">
@@ -163,6 +163,7 @@
             on:click={handler(heading)}
             on:keyup={handler(heading)}
             bind:this={tocItems[idx]}
+            role="menuitem"
           >
             <slot name="toc-item" {heading} {idx}>
               {getHeadingTitles(heading)}
