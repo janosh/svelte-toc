@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { blur } from 'svelte/transition'
+  import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
   export let activeHeading: HTMLHeadingElement | null = null
@@ -14,6 +14,7 @@
     Number(node.nodeName[1]) // get the number from H1, H2, ...
   export let getHeadingTitles = (node: HTMLHeadingElement): string =>
     node.textContent ?? ``
+  // the result of document.querySelectorAll(headingSelector). can be useful for binding
   export let headings: HTMLHeadingElement[] = []
   export let headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
@@ -26,9 +27,9 @@
   export let scrollBehavior: 'auto' | 'smooth' = `smooth`
   export let title: string = `On this page`
   export let titleTag: string = `h2`
-  // the result of document.querySelectorAll(headingSelector). can be useful for binding
   export let tocItems: HTMLLIElement[] = []
   export let warnOnEmpty: boolean = true
+  export let blurParams: BlurParams | null = { duration: 200 }
 
   let window_width: number
 
@@ -146,7 +147,7 @@
     </button>
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
-    <nav transition:blur bind:this={nav}>
+    <nav transition:blur={blurParams} bind:this={nav}>
       {#if title}
         <slot name="title">
           <svelte:element this={titleTag} class="toc-title toc-exclude">

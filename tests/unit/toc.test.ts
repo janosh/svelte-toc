@@ -27,11 +27,11 @@ describe(`Toc`, () => {
   })
 
   test.each([
-    [null, 3, [...Array(3).keys()].map((idx) => `Heading ${idx + 2}`)],
+    [null, 3, [0, 1, 2].map((lvl) => `Heading ${lvl + 2}`)],
     [
       `body > :is(h1, h2, h3, h4, h5, h6)`,
       6,
-      [...Array(6).keys()].map((idx) => `Heading ${idx + 1}`),
+      [...Array(6).keys()].map((lvl) => `Heading ${lvl + 1}`),
     ],
     [`h1:not(.toc-exclude)`, 0, []],
   ])(
@@ -132,17 +132,12 @@ describe(`Toc`, () => {
     expect(lis[2].style.marginLeft).toBe(`2em`)
   })
 
-  describe.each([
-    [
-      [1, 2, 3, 4],
-      [1, 5, 6],
-    ],
-  ])(`minItems`, (headings) => {
+  describe.each([[[1, 2, 3, 4]], [[1, 5, 6]]])(`minItems`, (heading_levels) => {
     test.each([[1], [2], [3], [4]])(
-      `only renders TOC when there are more than minItems headings matching the selector`,
+      `only renders TOC when there are more than minItems=%s headings matching the selector`,
       async (minItems) => {
-        document.body.innerHTML = headings
-          .map((h) => `<h${h}>Heading ${h}</h${h}>`)
+        document.body.innerHTML = heading_levels
+          .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
           .join(``)
 
         new Toc({
@@ -152,12 +147,15 @@ describe(`Toc`, () => {
         await tick()
 
         // count the number of headings that match the selector
-        const matches = headings.filter((h) => h >= 2 && h <= 4).length
+        const matches = heading_levels.filter(
+          (lvl) => lvl >= 2 && lvl <= 4,
+        ).length
         if (matches >= minItems) {
           const toc_ul = doc_query(`aside.toc ol`)
+
           expect(
             toc_ul.children.length,
-            `headings=${headings}, minItems=${minItems}`,
+            `heading_levels=${heading_levels}, minItems=${minItems}`,
           ).toBe(matches)
         } else {
           const nav = document.querySelector(`aside.toc nav`)
@@ -199,3 +197,12 @@ test.each([
     expect(node.className).toContain(`mobile`)
   },
 )
+
+test(`ToC should have blur effect with duration of 400ms`, async () => {
+  const blurParams = { duration: 400 }
+  const toc = new Toc({
+    target: document.body,
+    props: { blurParams },
+  })
+  expect(toc.blurParams).toEqual(blurParams)
+})
