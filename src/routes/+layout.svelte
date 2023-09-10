@@ -38,7 +38,7 @@
 </main>
 
 {#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes($page.url.pathname)}
-  <Toc {headingSelector} activeHeadingScrollOffset={200} />
+  <Toc {headingSelector} activeHeadingScrollOffset={200} blurParams={{ duration: 400 }} />
 {/if}
 
 <style>
