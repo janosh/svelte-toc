@@ -5,7 +5,7 @@
   "homepage": "https://janosh.github.io/svelte-toc",
   "repository": "https://github.com/janosh/svelte-toc",
   "license": "MIT",
-  "version": "0.5.5",
+  "version": "0.5.6",
   "type": "module",
   "svelte": "./dist/index.js",
   "bugs": "https://github.com/janosh/svelte-toc/issues",
@@ -19,7 +19,7 @@
     "test:e2e": "playwright test tests/*.test.ts",
     "test": "vitest tests/unit --run --coverage && playwright test tests/*.test.ts",
     "check": "svelte-check --ignore dist",
-    "changelog": "npx auto-changelog --package --output changelog.md --hide-credit --commit-limit false --unreleased-only",
+    "changelog": "npx auto-changelog --package --output changelog.md --hide-credit --commit-limit false",
     "update-coverage": "vitest tests/unit --run --coverage && npx istanbul-badges-readme"
   },
   "dependencies": {
