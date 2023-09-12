@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-<!-- auto-changelog-above -->
+#### [v0.5.6](https://github.com/janosh/svelte-toc/compare/v0.5.5...v0.5.6)
+
+> 10 September 2023
+
+- Add prop `blurParams: BlurParams | null = { duration: 200 }` [`#47`](https://github.com/janosh/svelte-toc/pull/47)
+- Copy buttons [`#43`](https://github.com/janosh/svelte-toc/pull/43)
 
 #### [v0.5.5](https://github.com/janosh/svelte-toc/compare/v0.5.4...v0.5.5)
 
@@ -29,15 +34,15 @@ All notable changes to this project will be documented in this file. Dates are d
 - add test 'subheadings are indented' [`06da853`](https://github.com/janosh/svelte-toc/commit/06da85303dcbe6bed1e31057447f5348e4220c84)
 - add var(--toc-ol-list-style, none) and var(--toc-ol-padding, 0) [`ade5425`](https://github.com/janosh/svelte-toc/commit/ade54251c2d67f0ac3adc41cfe10e5ce4ef16272)
 
-#### [v0.5.2](https://github.com/janosh/svelte-toc/compare/v0.5.2...v0.5.2)
+#### [v0.5.2](https://github.com/janosh/svelte-toc/compare/v0.5.1...v0.5.2)
 
 > 12 January 2023
 
-- add many new CSS variables in Toc.svelte [badbe2f](https://github.com/janosh/svelte-toc/commit/badbe2f)
-- add vite alias $root to clean up package.json, readme|contributing|changelog.md imports [76427ee](https://github.com/janosh/svelte-toc/commit/76427ee)
-- add coverage badges to readme [8a24e2b](https://github.com/janosh/svelte-toc/commit/8a24e2b)
-- add contributing.md [a313e7b](https://github.com/janosh/svelte-toc/commit/a313e7b)
-- add auto changelog [d7eaeea](https://github.com/janosh/svelte-toc/commit/d7eaeea)
+- add auto changelog [`d7eaeea`](https://github.com/janosh/svelte-toc/commit/d7eaeeacf3fe5e9de4500413a318bb87ccf2f578)
+- add contributing.md [`a313e7b`](https://github.com/janosh/svelte-toc/commit/a313e7be15ab3d4fdc4e0e056d5cf39a31c6a76a)
+- add many new CSS variables in Toc.svelte [`badbe2f`](https://github.com/janosh/svelte-toc/commit/badbe2f4e39c22970820056003d27b957050629a)
+- add coverage badges to readme [`8a24e2b`](https://github.com/janosh/svelte-toc/commit/8a24e2b920829cde85fb5c27e6e64e94902dacf5)
+- add vite alias $root to clean up package.json, readme|contributing|changelog.md imports [`76427ee`](https://github.com/janosh/svelte-toc/commit/76427ee06bbc5ef1ce5ec23e629ef8dc003b9763)
 
 #### [v0.5.1](https://github.com/janosh/svelte-toc/compare/v0.5.0...v0.5.1)
 
