@@ -187,7 +187,7 @@
     z-index: var(--toc-z-index, 1);
   }
   :where(aside.toc > nav) {
-    overflow: var(--toc-overflow, auto scroll);
+    overflow: var(--toc-overflow, auto);
     overscroll-behavior: contain;
     max-height: var(--toc-max-height, 90vh);
     padding: var(--toc-padding, 1em 1em 0);
