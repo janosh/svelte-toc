@@ -250,7 +250,7 @@ The HTML structure of this component is
 - `aside.toc`
   - `z-index: var(--toc-z-index, 1)`: Applies on both mobile and desktop.
 - `aside.toc > nav`
-  - `overflow: var(--toc-overflow, auto scroll)`
+  - `overflow: var(--toc-overflow, auto)`
   - `min-width: var(--toc-min-width)`
   - `max-width: var(--toc-desktop-max-width)`
   - `width: var(--toc-width)`
