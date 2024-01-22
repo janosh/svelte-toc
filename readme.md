@@ -71,7 +71,7 @@ Full list of props and bindable variables for this component (all of them option
    The DOM node of the outer-most `aside` element. This is the element that gets the `toc` class. Cannot be passed in as a prop, only for external access!
 
 1. ```ts
-   blurParams: BlurParams | null = { duration: 200 }
+   blurParams: BlurParams | undefined = { duration: 200 }
    ```
 
    Parameters to pass to `transition:blur` from `svelte/transition`. Set to `null` or `{ duration: 0 }` to disable blurring.
