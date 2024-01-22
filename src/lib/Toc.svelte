@@ -6,6 +6,7 @@
   export let activeHeading: HTMLHeadingElement | null = null
   export let activeHeadingScrollOffset: number = 100
   export let activeTocLi: HTMLLIElement | null = null
+  export let aside: HTMLElement | undefined = undefined
   export let breakpoint: number = 1000
   export let desktop: boolean = true
   export let flashClickedHeadingsFor: number = 1500
@@ -21,6 +22,7 @@
   export let autoHide: boolean = true
   export let keepActiveTocItemInView: boolean = true // requires scrollend event browser support
   export let minItems: number = 0
+  export let nav: HTMLElement | undefined = undefined
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
   export let pageBody: string | HTMLElement = `body`
@@ -33,8 +35,6 @@
 
   let window_width: number
 
-  let aside: HTMLElement
-  let nav: HTMLElement
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = window_width > breakpoint

@@ -164,45 +164,59 @@ describe(`Toc`, () => {
       },
     )
   })
-})
 
-test.each([
-  [400, 500, 600],
-  [700, 800, 900],
-  [999, 1000, 1001],
-])(
-  `ToC should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
-  async (smaller, breakpoint, larger) => {
-    const set_window_width = (width: number) => {
-      window.innerWidth = width
-      window.dispatchEvent(new Event(`resize`))
-    }
+  test.each([
+    [400, 500, 600],
+    [700, 800, 900],
+    [999, 1000, 1001],
+  ])(
+    `should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
+    async (smaller, breakpoint, larger) => {
+      const set_window_width = (width: number) => {
+        window.innerWidth = width
+        window.dispatchEvent(new Event(`resize`))
+      }
 
-    new Toc({
+      new Toc({
+        target: document.body,
+        props: { breakpoint },
+      })
+
+      set_window_width(larger)
+      await tick()
+
+      const node = doc_query(`aside.toc`)
+      expect(node.className).toContain(`desktop`)
+      expect(node.className).not.toContain(`mobile`)
+
+      set_window_width(smaller)
+      await tick()
+
+      expect(node.className).not.toContain(`desktop`)
+      expect(node.className).toContain(`mobile`)
+    },
+  )
+
+  test(`should have blur effect with duration of 400ms`, async () => {
+    const blurParams = { duration: 400 }
+    const toc = new Toc({
       target: document.body,
-      props: { breakpoint },
+      props: { blurParams },
     })
-
-    set_window_width(larger)
-    await tick()
-
-    const node = doc_query(`aside.toc`)
-    expect(node.className).toContain(`desktop`)
-    expect(node.className).not.toContain(`mobile`)
-
-    set_window_width(smaller)
-    await tick()
-
-    expect(node.className).not.toContain(`desktop`)
-    expect(node.className).toContain(`mobile`)
-  },
-)
-
-test(`ToC should have blur effect with duration of 400ms`, async () => {
-  const blurParams = { duration: 400 }
-  const toc = new Toc({
-    target: document.body,
-    props: { blurParams },
+    expect(toc.blurParams).toEqual(blurParams)
   })
-  expect(toc.blurParams).toEqual(blurParams)
+
+  test(`should expose nav and aside HTMLElements via export let`, async () => {
+    const toc = new Toc({
+      target: document.body,
+      props: { open: true },
+    })
+    await tick()
+
+    expect(toc.aside).toBeInstanceOf(HTMLElement)
+    expect(toc.aside.className).toContain(`toc`)
+    expect(toc.aside.tagName).toBe(`ASIDE`)
+    expect(toc.nav).toBeInstanceOf(HTMLElement)
+    expect(toc.nav.tagName).toBe(`NAV`)
+  })
 })
