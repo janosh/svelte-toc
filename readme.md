@@ -145,7 +145,8 @@ Full list of props and bindable variables for this component (all of them option
    keepActiveTocItemInView: boolean = true
    ```
 
-   Whether to scroll the ToC along with the page.
+   Whether to keep the active ToC item in view when scrolling the page. Only applies to long ToCs that are too high to fit on screen. If true, the ToC container will scroll itself to keep the active item in view and centered (if possible).
+   Requires [`scrollend` event](https://developer.mozilla.org/en-US/docs/Web/API/Document/scrollend_event) browser support ([71% as of 2024-01-22](https://caniuse.com/mdn-api_element_scrollend_event)), with Safari the only major browser lacking support.
 
 1. ```ts
    minItems: number = 0
