@@ -31,7 +31,7 @@
   export let titleTag: string = `h2`
   export let tocItems: HTMLLIElement[] = []
   export let warnOnEmpty: boolean = true
-  export let blurParams: BlurParams | null = { duration: 200 }
+  export let blurParams: BlurParams | undefined = { duration: 200 }
 
   let window_width: number
 

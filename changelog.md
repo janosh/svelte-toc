@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.5.7](https://github.com/janosh/svelte-toc/compare/v0.5.6...v0.5.7)
+
+> 22 January 2024
+
+- Replace hacky `window.setTimeout(50)` callback with `scrollend` event to `keepActiveTocItemInView` [`#53`](https://github.com/janosh/svelte-toc/pull/53)
+- `package.json` add `"types": "./dist/index.d.ts"` and default `--toc-overflow to auto` [`#49`](https://github.com/janosh/svelte-toc/pull/49)
+- expose Toc aside and nav HTMLElements for external access [`fc8806d`](https://github.com/janosh/svelte-toc/commit/fc8806dd53b68cf972e8a07fa5600c6152560693)
+
 #### [v0.5.6](https://github.com/janosh/svelte-toc/compare/v0.5.5...v0.5.6)
 
-> 10 September 2023
+> 12 September 2023
 
 - Add prop `blurParams: BlurParams | null = { duration: 200 }` [`#47`](https://github.com/janosh/svelte-toc/pull/47)
 - Copy buttons [`#43`](https://github.com/janosh/svelte-toc/pull/43)
