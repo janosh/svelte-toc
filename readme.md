@@ -65,6 +65,12 @@ Full list of props and bindable variables for this component (all of them option
    The DOM node of the currently active (highlighted) ToC item (based on user's scroll position on the page).
 
 1. ```ts
+   aside: HTMLElement | undefined = undefined
+   ```
+
+   The DOM node of the outer-most `aside` element. This is the element that gets the `toc` class. Cannot be passed in as a prop, only for external access!
+
+1. ```ts
    blurParams: BlurParams | null = { duration: 200 }
    ```
 
@@ -153,6 +159,12 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
    Completely prevent the ToC from rendering if it doesn't find at least `minItems` matching headings on the page. The default of 0 means the ToC will always render, even if it's empty.
+
+1. ```ts
+   nav: HTMLElement | undefined = undefined
+   ```
+
+   The DOM node of the `nav` element. Cannot be passed in as a prop, only for external access!
 
 1. ```ts
    open: boolean = false
