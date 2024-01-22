@@ -19,7 +19,7 @@
   export let headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
   export let hide: boolean = false
   export let autoHide: boolean = true
-  export let keepActiveTocItemInView: boolean = true
+  export let keepActiveTocItemInView: boolean = true // requires scrollend event browser support
   export let minItems: number = 0
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
@@ -35,7 +35,6 @@
 
   let aside: HTMLElement
   let nav: HTMLElement
-  let scroll_id: number
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = window_width > breakpoint
@@ -54,7 +53,7 @@
         console.warn(
           `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
             autoHide ? `Hiding` : `Showing empty`
-          } table of contents.`
+          } table of contents.`,
         )
       }
       if (autoHide) hide = true
@@ -87,20 +86,6 @@
       if (top < activeHeadingScrollOffset || idx === 0) {
         activeHeading = headings[idx]
         activeTocLi = tocItems[idx]
-        // this annoying hackery to wait for scroll end is necessary because scrollend event only has 2%
-        // browser support https://stackoverflow.com/a/57867348 and Chrome doesn't support multiple
-        // simultaneous scrolls, smooth or otherwise (https://stackoverflow.com/a/63563437)
-        clearTimeout(scroll_id)
-        scroll_id = window.setTimeout(() => {
-          if (keepActiveTocItemInView && activeTocLi) {
-            // get the currently active ToC list item
-            // scroll the active ToC item into the middle of the ToC container
-            nav.scrollTo?.({
-              top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
-              behavior: `smooth`,
-            })
-          }
-        }, 50)
         return // exit while loop if updated active heading
       }
     }
@@ -125,6 +110,17 @@
   bind:innerWidth={window_width}
   on:scroll={set_active_heading}
   on:click={close}
+  on:scrollend={() => {
+    // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
+    // smooth or otherwise (https://stackoverflow.com/a/63563437)
+    if (keepActiveTocItemInView && activeTocLi) {
+      // scroll the active ToC item into the middle of the ToC container
+      nav.scrollTo?.({
+        top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
+        behavior: `smooth`,
+      })
+    }
+  }}
 />
 
 <aside
