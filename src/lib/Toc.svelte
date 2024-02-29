@@ -40,7 +40,7 @@
   $: desktop = window_width > breakpoint
 
   function close(event: MouseEvent) {
-    if (!aside.contains(event.target as Node)) open = false
+    if (!aside?.contains(event.target as Node)) open = false
   }
 
   // (re-)query headings on mount and on route changes
@@ -104,6 +104,22 @@
       setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
     }
   }
+
+  function scroll_to_active_toc_item(smooth: boolean) {
+    if (keepActiveTocItemInView && activeTocLi) {
+      // scroll the active ToC item into the middle of the ToC container
+      nav?.scrollTo?.({
+        top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
+        behavior: smooth ? `smooth` : undefined,
+      })
+    }
+  }
+
+  $: {
+    nav
+    set_active_heading()
+    scroll_to_active_toc_item(false)
+  }
 </script>
 
 <svelte:window
@@ -113,13 +129,7 @@
   on:scrollend={() => {
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
-    if (keepActiveTocItemInView && activeTocLi) {
-      // scroll the active ToC item into the middle of the ToC container
-      nav.scrollTo?.({
-        top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
-        behavior: `smooth`,
-      })
-    }
+    scroll_to_active_toc_item(true)
   }}
 />
 
