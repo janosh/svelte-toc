@@ -4,12 +4,9 @@
   export let style: string | null = null
 
   const routes = Object.keys(
-    import.meta.glob(`/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}`)
+    import.meta.glob(`/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}`),
   ).map((filename) => filename.split(`/`)[4])
 
-  if (routes.length < 3) {
-    console.error(`Too few demo routes found: ${routes.length}`)
-  }
   $: is_current = (path: string) => {
     if (`/${path}` == $page.url.pathname) return `page`
     return undefined

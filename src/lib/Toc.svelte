@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -7,7 +7,7 @@
   export let activeHeadingScrollOffset: number = 100
   export let activeTocLi: HTMLLIElement | null = null
   export let aside: HTMLElement | undefined = undefined
-  export let breakpoint: number = 1000
+  export let breakpoint: number = 1000 // in pixels (smaller window width is considered mobile, larger is desktop)
   export let desktop: boolean = true
   export let flashClickedHeadingsFor: number = 1500
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
@@ -34,13 +34,16 @@
   export let blurParams: BlurParams | undefined = { duration: 200 }
 
   let window_width: number
+  // dispatch open event when open changes
+  const dispatch = createEventDispatcher()
+  $: dispatch(`open`, { open })
 
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
   $: desktop = window_width > breakpoint
 
   function close(event: MouseEvent) {
-    if (!aside.contains(event.target as Node)) open = false
+    if (!aside?.contains(event.target as Node)) open = false
   }
 
   // (re-)query headings on mount and on route changes
@@ -91,18 +94,33 @@
     }
   }
 
-  const handler = (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
-    if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
-    open = false
-    node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
+  const li_click_key_handler =
+    (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
+      open = false
+      node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
 
-    const id = getHeadingIds && getHeadingIds(node)
-    if (id) history.replaceState({}, ``, `#${id}`)
+      const id = getHeadingIds && getHeadingIds(node)
+      if (id) history.replaceState({}, ``, `#${id}`)
 
-    if (flashClickedHeadingsFor) {
-      node.classList.add(`toc-clicked`)
-      setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+      if (flashClickedHeadingsFor) {
+        node.classList.add(`toc-clicked`)
+        setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+      }
     }
+
+  function scroll_to_active_toc_item(behavior: 'auto' | 'smooth' | 'instant' = `smooth`) {
+    if (keepActiveTocItemInView && activeTocLi && nav) {
+      // scroll the active ToC item into the middle of the ToC container
+      const top = activeTocLi?.offsetTop - nav.offsetHeight / 2
+      nav?.scrollTo?.({ top, behavior })
+    }
+  }
+
+  // ensure active ToC is in view when ToC opens on mobile
+  $: if (open && nav) {
+    set_active_heading()
+    scroll_to_active_toc_item(`instant`)
   }
 </script>
 
@@ -113,13 +131,7 @@
   on:scrollend={() => {
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
-    if (keepActiveTocItemInView && activeTocLi) {
-      // scroll the active ToC item into the middle of the ToC container
-      nav.scrollTo?.({
-        top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
-        behavior: `smooth`,
-      })
-    }
+    scroll_to_active_toc_item()
   }}
 />
 
@@ -156,9 +168,9 @@
           <li
             style:margin="0 0 0 {levels[idx] - minLevel}em"
             style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
-            class:active={activeHeading === heading}
-            on:click={handler(heading)}
-            on:keyup={handler(heading)}
+            class:active={activeTocLi === tocItems[idx]}
+            on:click={li_click_key_handler(heading)}
+            on:keyup={li_click_key_handler(heading)}
             bind:this={tocItems[idx]}
             role="menuitem"
           >
