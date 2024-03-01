@@ -52,9 +52,9 @@ describe(`Toc`, () => {
       expect(toc).toBeTruthy()
       await tick()
 
-      const toc_ul = doc_query(`aside.toc ol`)
-      expect(toc_ul.children.length).toBe(expected_lis)
-      expect(toc_ul.textContent?.trim()).toBe(expected_text?.join(` `))
+      const toc_list = doc_query(`aside.toc > nav > ol`)
+      expect(toc_list.children.length).toBe(expected_lis)
+      expect(toc_list.textContent?.trim()).toBe(expected_text?.join(` `))
     },
   )
 
@@ -112,21 +112,19 @@ describe(`Toc`, () => {
 
   test(`subheadings are indented`, async () => {
     document.body.innerHTML = `
-      <main>
-        <h1>Heading 1</h1>
-        <h2>Heading 2</h2>
-        <h3>Heading 3</h3>
-        <h4>Heading 4</h4>
-      </main>
+      <h1>Heading 1</h1>
+      <h2>Heading 2</h2>
+      <h3>Heading 3</h3>
+      <h4>Heading 4</h4>
     `
 
     new Toc({ target: document.body })
     await tick()
 
-    const toc_ul = doc_query(`aside.toc > nav > ol`)
-    expect(toc_ul.children.length).toBe(3)
+    const toc_list = doc_query(`aside.toc > nav > ol`)
+    expect(toc_list.children.length).toBe(3)
 
-    const lis = [...toc_ul.children] as HTMLLIElement[]
+    const lis = [...toc_list.children] as HTMLLIElement[]
     expect(lis[0].style.marginLeft).toBe(`0em`)
     expect(lis[1].style.marginLeft).toBe(`1em`)
     expect(lis[2].style.marginLeft).toBe(`2em`)
@@ -151,10 +149,10 @@ describe(`Toc`, () => {
           (lvl) => lvl >= 2 && lvl <= 4,
         ).length
         if (matches >= minItems) {
-          const toc_ul = doc_query(`aside.toc ol`)
+          const toc_list = doc_query(`aside.toc > nav > ol`)
 
           expect(
-            toc_ul.children.length,
+            toc_list.children.length,
             `heading_levels=${heading_levels}, minItems=${minItems}`,
           ).toBe(matches)
         } else {
@@ -218,5 +216,65 @@ describe(`Toc`, () => {
     expect(toc.aside.tagName).toBe(`ASIDE`)
     expect(toc.nav).toBeInstanceOf(HTMLElement)
     expect(toc.nav.tagName).toBe(`NAV`)
+  })
+
+  test(`open custom event fires whenever open changes`, async () => {
+    const toc = new Toc({ target: document.body })
+
+    const open_handler = vi.fn()
+    toc.$on(`open`, open_handler)
+
+    toc.open = true
+    await tick()
+    expect(open_handler).toHaveBeenCalledOnce()
+    // check event.detail.open == true
+    expect(open_handler.mock.calls[0][0].detail.open).toBe(true)
+
+    toc.open = false
+    await tick()
+    expect(open_handler).toHaveBeenCalledTimes(2)
+    // check event.detail.open == false
+    expect(open_handler.mock.calls[1][0].detail.open).toBe(false)
+  })
+
+  test(`should toggle open state when clicking the button`, async () => {
+    // simulate mobile
+    window.innerWidth = 600
+
+    const toc = new Toc({ target: document.body })
+
+    const button = doc_query(`aside.toc button`)
+    expect(button).toBeTruthy()
+
+    expect(toc.open).toBe(false)
+    button.click()
+    expect(toc.open).toBe(true)
+    // click anywhere else
+    document.body.click()
+    expect(toc.open).toBe(false)
+    button.click()
+    expect(toc.open).toBe(true)
+  })
+
+  test(`active heading is in into view and highlighted when opening ToC on mobile`, async () => {
+    document.body.innerHTML = [...Array(100)]
+      .map((_, idx) => `<h2>Heading ${idx + 1}</h2>`)
+      .join(`\n`)
+
+    // simulate mobile
+    window.innerWidth = 600
+
+    const toc = new Toc({ target: document.body })
+
+    expect(toc.desktop).toBe(false)
+    expect(document.querySelector(`aside.toc ol li.active`)).toBeNull()
+
+    // open the ToC
+    toc.open = true
+
+    // active heading should be one of the last ones and should be scrolled into view
+    const active_li = doc_query(`aside.toc ol li.active`)
+    expect(active_li).toBeTruthy()
+    expect(active_li.textContent?.trim()).toBe(`Heading 100`)
   })
 })
