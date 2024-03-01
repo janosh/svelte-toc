@@ -217,4 +217,23 @@ describe(`Toc`, () => {
     expect(toc.nav).toBeInstanceOf(HTMLElement)
     expect(toc.nav.tagName).toBe(`NAV`)
   })
+
+  test(`open custom event fires whenever open changes`, async () => {
+    const toc = new Toc({ target: document.body })
+
+    const open_handler = vi.fn()
+    toc.$on(`open`, open_handler)
+
+    toc.open = true
+    await tick()
+    expect(open_handler).toHaveBeenCalledOnce()
+    // check event.detail.open == true
+    expect(open_handler.mock.calls[0][0].detail.open).toBe(true)
+
+    toc.open = false
+    await tick()
+    expect(open_handler).toHaveBeenCalledTimes(2)
+    // check event.detail.open == false
+    expect(open_handler.mock.calls[1][0].detail.open).toBe(false)
+  })
 })

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { createEventDispatcher, onMount } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -7,7 +7,7 @@
   export let activeHeadingScrollOffset: number = 100
   export let activeTocLi: HTMLLIElement | null = null
   export let aside: HTMLElement | undefined = undefined
-  export let breakpoint: number = 1000
+  export let breakpoint: number = 1000 // in pixels (smaller window width is considered mobile, larger is desktop)
   export let desktop: boolean = true
   export let flashClickedHeadingsFor: number = 1500
   export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
@@ -34,6 +34,9 @@
   export let blurParams: BlurParams | undefined = { duration: 200 }
 
   let window_width: number
+  // dispatch open event when open changes
+  const dispatch = createEventDispatcher()
+  $: dispatch(`open`, { open })
 
   $: levels = headings.map(getHeadingLevels)
   $: minLevel = Math.min(...levels)
