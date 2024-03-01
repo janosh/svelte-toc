@@ -52,9 +52,9 @@ describe(`Toc`, () => {
       expect(toc).toBeTruthy()
       await tick()
 
-      const toc_ul = doc_query(`aside.toc ol`)
-      expect(toc_ul.children.length).toBe(expected_lis)
-      expect(toc_ul.textContent?.trim()).toBe(expected_text?.join(` `))
+      const toc_list = doc_query(`aside.toc > nav > ol`)
+      expect(toc_list.children.length).toBe(expected_lis)
+      expect(toc_list.textContent?.trim()).toBe(expected_text?.join(` `))
     },
   )
 
@@ -112,21 +112,19 @@ describe(`Toc`, () => {
 
   test(`subheadings are indented`, async () => {
     document.body.innerHTML = `
-      <main>
-        <h1>Heading 1</h1>
-        <h2>Heading 2</h2>
-        <h3>Heading 3</h3>
-        <h4>Heading 4</h4>
-      </main>
+      <h1>Heading 1</h1>
+      <h2>Heading 2</h2>
+      <h3>Heading 3</h3>
+      <h4>Heading 4</h4>
     `
 
     new Toc({ target: document.body })
     await tick()
 
-    const toc_ul = doc_query(`aside.toc > nav > ol`)
-    expect(toc_ul.children.length).toBe(3)
+    const toc_list = doc_query(`aside.toc > nav > ol`)
+    expect(toc_list.children.length).toBe(3)
 
-    const lis = [...toc_ul.children] as HTMLLIElement[]
+    const lis = [...toc_list.children] as HTMLLIElement[]
     expect(lis[0].style.marginLeft).toBe(`0em`)
     expect(lis[1].style.marginLeft).toBe(`1em`)
     expect(lis[2].style.marginLeft).toBe(`2em`)
@@ -151,10 +149,10 @@ describe(`Toc`, () => {
           (lvl) => lvl >= 2 && lvl <= 4,
         ).length
         if (matches >= minItems) {
-          const toc_ul = doc_query(`aside.toc ol`)
+          const toc_list = doc_query(`aside.toc > nav > ol`)
 
           expect(
-            toc_ul.children.length,
+            toc_list.children.length,
             `heading_levels=${heading_levels}, minItems=${minItems}`,
           ).toBe(matches)
         } else {
