@@ -109,22 +109,18 @@
       }
     }
 
-  function scroll_to_active_toc_item(smooth: boolean) {
-    if (keepActiveTocItemInView && activeTocLi) {
+  function scroll_to_active_toc_item(behavior: 'auto' | 'smooth' | 'instant' = `smooth`) {
+    if (keepActiveTocItemInView && activeTocLi && nav) {
       // scroll the active ToC item into the middle of the ToC container
-      nav?.scrollTo?.({
-        top: activeTocLi?.offsetTop - nav.offsetHeight / 2,
-        behavior: smooth ? `smooth` : undefined,
-      })
+      const top = activeTocLi?.offsetTop - nav.offsetHeight / 2
+      nav?.scrollTo?.({ top, behavior })
     }
   }
 
-  // scroll to active toc item as nav element becomes available
-  $: {
-    nav
-    if (!nav) break $
+  // ensure active ToC is in view when ToC opens on mobile
+  $: if (open && nav) {
     set_active_heading()
-    scroll_to_active_toc_item(false)
+    scroll_to_active_toc_item(`instant`)
   }
 </script>
 
@@ -135,7 +131,7 @@
   on:scrollend={() => {
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
-    scroll_to_active_toc_item(true)
+    scroll_to_active_toc_item()
   }}
 />
 
