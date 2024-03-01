@@ -94,19 +94,20 @@
     }
   }
 
-  const handler = (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
-    if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
-    open = false
-    node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
+  const li_click_key_handler =
+    (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
+      if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
+      open = false
+      node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
 
-    const id = getHeadingIds && getHeadingIds(node)
-    if (id) history.replaceState({}, ``, `#${id}`)
+      const id = getHeadingIds && getHeadingIds(node)
+      if (id) history.replaceState({}, ``, `#${id}`)
 
-    if (flashClickedHeadingsFor) {
-      node.classList.add(`toc-clicked`)
-      setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+      if (flashClickedHeadingsFor) {
+        node.classList.add(`toc-clicked`)
+        setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+      }
     }
-  }
 
   function scroll_to_active_toc_item(smooth: boolean) {
     if (keepActiveTocItemInView && activeTocLi) {
@@ -171,9 +172,9 @@
           <li
             style:margin="0 0 0 {levels[idx] - minLevel}em"
             style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
-            class:active={activeHeading === heading}
-            on:click={handler(heading)}
-            on:keyup={handler(heading)}
+            class:active={activeTocLi === tocItems[idx]}
+            on:click={li_click_key_handler(heading)}
+            on:keyup={li_click_key_handler(heading)}
             bind:this={tocItems[idx]}
             role="menuitem"
           >
