@@ -236,4 +236,23 @@ describe(`Toc`, () => {
     // check event.detail.open == false
     expect(open_handler.mock.calls[1][0].detail.open).toBe(false)
   })
+
+  test(`should toggle open state when clicking the button`, async () => {
+    // simulate mobile
+    window.innerWidth = 600
+
+    const toc = new Toc({ target: document.body })
+
+    const button = doc_query(`aside.toc button`)
+    expect(button).toBeTruthy()
+
+    expect(toc.open).toBe(false)
+    button.click()
+    expect(toc.open).toBe(true)
+    // click anywhere else
+    document.body.click()
+    expect(toc.open).toBe(false)
+    button.click()
+    expect(toc.open).toBe(true)
+  })
 })
