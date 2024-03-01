@@ -255,4 +255,26 @@ describe(`Toc`, () => {
     button.click()
     expect(toc.open).toBe(true)
   })
+
+  test(`active heading is in into view and highlighted when opening ToC on mobile`, async () => {
+    document.body.innerHTML = [...Array(100)]
+      .map((_, idx) => `<h2>Heading ${idx + 1}</h2>`)
+      .join(`\n`)
+
+    // simulate mobile
+    window.innerWidth = 600
+
+    const toc = new Toc({ target: document.body })
+
+    expect(toc.desktop).toBe(false)
+    expect(document.querySelector(`aside.toc ol li.active`)).toBeNull()
+
+    // open the ToC
+    toc.open = true
+
+    // active heading should be one of the last ones and should be scrolled into view
+    const active_li = doc_query(`aside.toc ol li.active`)
+    expect(active_li).toBeTruthy()
+    expect(active_li.textContent?.trim()).toBe(`Heading 100`)
+  })
 })
