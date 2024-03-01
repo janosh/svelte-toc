@@ -115,8 +115,10 @@
     }
   }
 
+  // scroll to active toc item as nav element becomes available
   $: {
     nav
+    if (!nav) break $
     set_active_heading()
     scroll_to_active_toc_item(false)
   }
