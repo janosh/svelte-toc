@@ -185,6 +185,12 @@ Full list of props and bindable variables for this component (all of them option
    Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency, especially if you have a lot of elements on the page that are on a separate branch of the DOM tree from the headings you want to list.
 
 1. ```ts
+   reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
+   ```
+
+   Which keyboard events to listen for. The default set of keys closes the ToC on `Escape` and `Tab` out, navigates the ToC list with `ArrowDown`, `ArrowUp`, and scrolls to the active ToC item on `Space`, and `Enter`. Set `reactToKeys = false` or `[]` to disable keyboard support entirely. Remove individual keys from the array to disable specific behaviors.
+
+1. ```ts
    scrollBehavior: 'auto' | 'smooth' = `smooth`
    ```
 
