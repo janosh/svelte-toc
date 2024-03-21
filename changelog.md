@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.5.8](https://github.com/janosh/svelte-toc/compare/v0.5.7...v0.5.8)
+
+> 21 March 2024
+
+- Add `reactToKeys` prop to Toc component and `on_keydown` handler to enable navigating ToC with keyboard [`#55`](https://github.com/janosh/svelte-toc/pull/55)
+- When opening ToC on mobile, ensure active ToC item is scrolled into view [`#54`](https://github.com/janosh/svelte-toc/pull/54)
+
 #### [v0.5.7](https://github.com/janosh/svelte-toc/compare/v0.5.6...v0.5.7)
 
 > 22 January 2024
