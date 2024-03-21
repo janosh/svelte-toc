@@ -25,6 +25,8 @@
   export let nav: HTMLElement | undefined = undefined
   export let open: boolean = false
   export let openButtonLabel: string = `Open table of contents`
+  // prettier-ignore
+  export let reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
   export let pageBody: string | HTMLElement = `body`
   export let scrollBehavior: 'auto' | 'smooth' = `smooth`
   export let title: string = `On this page`
@@ -94,11 +96,12 @@
     }
   }
 
+  // click and key handler for ToC items that scrolls to the heading
   const li_click_key_handler =
     (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
       if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
       open = false
-      node.scrollIntoView({ behavior: scrollBehavior, block: `start` })
+      node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
       const id = getHeadingIds && getHeadingIds(node)
       if (id) history.replaceState({}, ``, `#${id}`)
@@ -122,6 +125,44 @@
     set_active_heading()
     scroll_to_active_toc_item(`instant`)
   }
+
+  // enable keyboard navigation
+  function on_keydown(event: KeyboardEvent) {
+    if (!reactToKeys || !reactToKeys.includes(event.key)) return
+
+    // `:hover`.at(-1) returns the most deeply nested hovered element
+    const hovered = [...document.querySelectorAll(`:hover`)].at(-1)
+    const toc_is_hovered = hovered && nav?.contains(hovered)
+
+    if (
+      // return early if ToC does not have focus
+      (event.key === `Tab` && !nav?.contains(document.activeElement)) ||
+      // ignore keyboard events when ToC is closed on mobile or when ToC is not currently hovered on desktop
+      (!desktop && !open) ||
+      (desktop && !toc_is_hovered)
+    )
+      return
+
+    event.preventDefault()
+
+    if (event.key === `Escape` && open) open = false
+    else if (event.key === `Tab` && !aside?.contains(document.activeElement)) open = false
+    else if (activeTocLi) {
+      if (event.key === `ArrowDown`) {
+        const next = activeTocLi.nextElementSibling
+        if (next) activeTocLi = next as HTMLLIElement
+      }
+      if (event.key === `ArrowUp`) {
+        const prev = activeTocLi.previousElementSibling
+        if (prev) activeTocLi = prev as HTMLLIElement
+      }
+      // update active heading
+      activeHeading = headings[tocItems.indexOf(activeTocLi)]
+    }
+    if (activeTocLi && [` `, `Enter`].includes(event.key)) {
+      activeHeading?.scrollIntoView({ behavior: `instant`, block: `start` })
+    }
+  }
 </script>
 
 <svelte:window
@@ -133,6 +174,11 @@
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
     scroll_to_active_toc_item()
   }}
+  on:resize={() => {
+    desktop = window_width > breakpoint
+    set_active_heading()
+  }}
+  on:keydown={on_keydown}
 />
 
 <aside
