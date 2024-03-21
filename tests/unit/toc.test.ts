@@ -204,7 +204,7 @@ describe(`Toc`, () => {
     expect(toc.blurParams).toEqual(blurParams)
   })
 
-  test(`should expose nav and aside HTMLElements via export let`, async () => {
+  test(`should expose nav and aside HTMLElements as props for external binding`, async () => {
     const toc = new Toc({
       target: document.body,
       props: { open: true },
@@ -218,7 +218,7 @@ describe(`Toc`, () => {
     expect(toc.nav.tagName).toBe(`NAV`)
   })
 
-  test(`open custom event fires whenever open changes`, async () => {
+  test(`custom event 'open' fires whenever Toc.open state changes`, async () => {
     const toc = new Toc({ target: document.body })
 
     const open_handler = vi.fn()
@@ -277,4 +277,67 @@ describe(`Toc`, () => {
     expect(active_li).toBeTruthy()
     expect(active_li.textContent?.trim()).toBe(`Heading 100`)
   })
+
+  test.each([true, false])(
+    `arrow keys navigate the active ToC on mobile item when open=%s`,
+    // TODO also test on desktop when ToC is hovered, JSDOM doesn't seem to support hover
+    async (open) => {
+      document.body.innerHTML = `
+      <h2>Heading 1</h2>
+      <h2>Heading 2</h2>
+      <h2>Heading 3</h2>
+      <h2>Heading 4</h2>
+    `
+
+      const toc = new Toc({ target: document.body, props: { open } })
+      await tick()
+
+      const tocItems = document.querySelectorAll(`aside.toc > nav > ol > li`)
+      expect(tocItems.length).toBe(4)
+
+      if (open) {
+        // check initially active item before pressing arrow keys
+        expect(toc.activeTocLi).toBe(tocItems[3])
+
+        for (const [idx, key] of [
+          [2, `ArrowUp`],
+          [1, `ArrowUp`],
+          [2, `ArrowDown`],
+          [3, `ArrowDown`],
+        ] as const) {
+          // simulate ArrowUp/Down keys
+          window.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
+          expect(toc.activeTocLi).toBe(tocItems[idx])
+        }
+      } else {
+        // if ToC is closed, no item should be active and arrow keys should not navigate
+        expect(toc.activeTocLi).toBe(undefined)
+
+        // simulate pressing ArrowDown key
+        window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+        expect(toc.activeTocLi).toBe(undefined)
+      }
+    },
+  )
+
+  test.each([[[]], [[`Escape`]]])(
+    `Escape key closes ToC on mobile if reactToKeys=%s includes 'Escape'`,
+    async (reactToKeys) => {
+      // simulate mobile
+      window.innerWidth = 600
+
+      const toc = new Toc({
+        target: document.body,
+        props: { open: true, reactToKeys },
+      })
+      await tick()
+
+      expect(toc.open).toBe(true)
+
+      // simulate pressing Escape
+      window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+
+      expect(toc.open).toBe(!reactToKeys.includes(`Escape`))
+    },
+  )
 })
