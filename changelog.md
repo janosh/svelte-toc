@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.5.9](https://github.com/janosh/svelte-toc/compare/v0.5.8...v0.5.9)
+
+> 12 June 2024
+
+- Ignore spurious `scrollend` events on page load before any actual scrolling in Chrome [`#58`](https://github.com/janosh/svelte-toc/pull/58)
+
 #### [v0.5.8](https://github.com/janosh/svelte-toc/compare/v0.5.7...v0.5.8)
 
 > 21 March 2024
