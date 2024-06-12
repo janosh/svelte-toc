@@ -36,6 +36,9 @@
   export let blurParams: BlurParams | undefined = { duration: 200 }
 
   let window_width: number
+  // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
+  // scrolling in chrome. see https://github.com/janosh/svelte-toc/issues/57
+  let page_has_scrolled: boolean = false
   // dispatch open event when open changes
   const dispatch = createEventDispatcher()
   $: dispatch(`open`, { open })
@@ -169,7 +172,10 @@
   bind:innerWidth={window_width}
   on:scroll={set_active_heading}
   on:click={close}
-  on:scrollend={() => {
+  on:scroll|passive={() => (page_has_scrolled = true)}
+  on:scrollend|passive={() => {
+    if (!page_has_scrolled) return
+
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
     scroll_to_active_toc_item()
