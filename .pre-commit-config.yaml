@@ -36,7 +36,7 @@ repos:
         args: [--ignore-words-list, falsy, --check-filenames]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.4.0
+    rev: v9.6.0
     hooks:
       - id: eslint
         types: [file]
