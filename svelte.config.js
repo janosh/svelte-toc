@@ -24,7 +24,7 @@ const rehypePlugins = [
 ]
 
 const { default: pkg } = await import(`./package.json`, {
-  assert: { type: `json` },
+  with: { type: `json` },
 })
 const defaults = {
   Wrapper: `svelte-zoo/CodeExample.svelte`,
@@ -53,6 +53,6 @@ export default {
 
   compilerOptions: {
     // enable direct prop access for vitest unit tests
-    accessors: process.env.TEST,
+    accessors: Boolean(process.env.TEST),
   },
 }

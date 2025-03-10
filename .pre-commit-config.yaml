@@ -2,18 +2,19 @@ ci:
   autoupdate_schedule: quarterly
   skip: [eslint]
 
-default_stages: [commit]
+default_stages: [pre-commit]
 
 default_install_hook_types: [pre-commit, commit-msg]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: check-case-conflict
       - id: check-symlinks
       - id: check-yaml
       - id: destroyed-symlinks
+      - id: double-quote-string-fixer
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: trailing-whitespace
@@ -29,14 +30,14 @@ repos:
           - svelte
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
-        stages: [commit, commit-msg]
+        stages: [pre-commit, commit-msg]
         args: [--ignore-words-list, falsy, --check-filenames]
 
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.4.0
+    rev: v9.22.0
     hooks:
       - id: eslint
         types: [file]
@@ -46,6 +47,6 @@ repos:
           - typescript-eslint
           - eslint
           - eslint-plugin-svelte
-          - globals
           - svelte
           - typescript
+          - '@stylistic/eslint-plugin'

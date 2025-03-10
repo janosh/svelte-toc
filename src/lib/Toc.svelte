@@ -1,51 +1,101 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte'
+  import type { Snippet } from 'svelte'
+  import { onMount } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
-  export let activeHeading: HTMLHeadingElement | null = null
-  export let activeHeadingScrollOffset: number = 100
-  export let activeTocLi: HTMLLIElement | null = null
-  export let aside: HTMLElement | undefined = undefined
-  export let breakpoint: number = 1000 // in pixels (smaller window width is considered mobile, larger is desktop)
-  export let desktop: boolean = true
-  export let flashClickedHeadingsFor: number = 1500
-  export let getHeadingIds = (node: HTMLHeadingElement): string => node.id
-  export let getHeadingLevels = (node: HTMLHeadingElement): number =>
-    Number(node.nodeName[1]) // get the number from H1, H2, ...
-  export let getHeadingTitles = (node: HTMLHeadingElement): string =>
-    node.textContent ?? ``
-  // the result of document.querySelectorAll(headingSelector). can be useful for binding
-  export let headings: HTMLHeadingElement[] = []
-  export let headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
-  export let hide: boolean = false
-  export let autoHide: boolean = true
-  export let keepActiveTocItemInView: boolean = true // requires scrollend event browser support
-  export let minItems: number = 0
-  export let nav: HTMLElement | undefined = undefined
-  export let open: boolean = false
-  export let openButtonLabel: string = `Open table of contents`
-  // prettier-ignore
-  export let reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
-  export let pageBody: string | HTMLElement = `body`
-  export let scrollBehavior: 'auto' | 'smooth' = `smooth`
-  export let title: string = `On this page`
-  export let titleTag: string = `h2`
-  export let tocItems: HTMLLIElement[] = []
-  export let warnOnEmpty: boolean = true
-  export let blurParams: BlurParams | undefined = { duration: 200 }
 
-  let window_width: number
+  interface Props {
+    activeHeading?: HTMLHeadingElement | null;
+    activeHeadingScrollOffset?: number;
+    activeTocLi?: HTMLLIElement | null;
+    aside?: HTMLElement | undefined;
+    breakpoint?: number; // in pixels (smaller window width is considered mobile, larger is desktop)
+    desktop?: boolean;
+    flashClickedHeadingsFor?: number;
+    getHeadingIds?: (node: HTMLHeadingElement) => string;
+    getHeadingLevels?: (node: HTMLHeadingElement) => number;
+    getHeadingTitles?: (node: HTMLHeadingElement) => string;
+    // the result of document.querySelectorAll(headingSelector). can be useful for binding
+    headings?: HTMLHeadingElement[];
+    headingSelector?: string;
+    hide?: boolean;
+    autoHide?: boolean;
+    keepActiveTocItemInView?: boolean; // requires scrollend event browser support
+    minItems?: number;
+    nav?: HTMLElement | undefined;
+    open?: boolean;
+    openButtonLabel?: string;
+    // prettier-ignore
+    reactToKeys?: string[];
+    pageBody?: string | HTMLElement;
+    scrollBehavior?: `auto` | `smooth`;
+    title?: string;
+    titleTag?: string;
+    tocItems?: HTMLLIElement[];
+    warnOnEmpty?: boolean;
+    blurParams?: BlurParams | undefined;
+    open_toc_icon?: Snippet;
+    title_snippet?: Snippet;
+    toc_item?: Snippet<[HTMLHeadingElement]>;
+    // Add callback prop for open event
+    onOpen?: (event: { open: boolean }) => void;
+  }
+
+  let {
+    activeHeading = $bindable(null),
+    activeHeadingScrollOffset = 100,
+    activeTocLi = $bindable(null),
+    aside = $bindable(undefined),
+    breakpoint = 1000,
+    desktop = $bindable(true),
+    flashClickedHeadingsFor = 1500,
+    getHeadingIds = (node: HTMLHeadingElement): string => node.id,
+    getHeadingLevels = (node: HTMLHeadingElement): number =>
+    Number(node.nodeName[1]),
+    getHeadingTitles = (node: HTMLHeadingElement): string =>
+    node.textContent ?? ``,
+    headings = $bindable([]),
+    headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
+    hide = $bindable(false),
+    autoHide = true,
+    keepActiveTocItemInView = true,
+    minItems = 0,
+    nav = $bindable(undefined),
+    open = $bindable(false),
+    openButtonLabel = `Open table of contents`,
+    reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
+    pageBody = $bindable(`body`),
+    scrollBehavior = `smooth`,
+    title = `On this page`,
+    titleTag = `h2`,
+    tocItems = $bindable([]),
+    warnOnEmpty = true,
+    blurParams = { duration: 200 },
+    open_toc_icon,
+    title_snippet,
+    toc_item,
+    onOpen
+  }: Props = $props();
+
+  // Export properties for access in unit tests. Used to work before Svelte 5, maybe an antipattern now.
+  export { activeHeading, activeTocLi, aside, desktop, nav, open, blurParams };
+
+  let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
   // scrolling in chrome. see https://github.com/janosh/svelte-toc/issues/57
-  let page_has_scrolled: boolean = false
-  // dispatch open event when open changes
-  const dispatch = createEventDispatcher()
-  $: dispatch(`open`, { open })
+  let page_has_scrolled: boolean = $state(false)
 
-  $: levels = headings.map(getHeadingLevels)
-  $: minLevel = Math.min(...levels)
-  $: desktop = window_width > breakpoint
+  // Use $effect instead of createEventDispatcher
+  $effect(() => {
+    if (onOpen) onOpen({ open })
+  });
+
+  let levels: number[] = $derived(headings.map(getHeadingLevels))
+  let minLevel: number = $derived(Math.min(...levels) || 0)
+  $effect(() => {
+    desktop = window_width > breakpoint
+  });
 
   function close(event: MouseEvent) {
     if (!aside?.contains(event.target as Node)) open = false
@@ -115,7 +165,7 @@
       }
     }
 
-  function scroll_to_active_toc_item(behavior: 'auto' | 'smooth' | 'instant' = `smooth`) {
+  function scroll_to_active_toc_item(behavior: `auto` | `smooth` | `instant` = `smooth`) {
     if (keepActiveTocItemInView && activeTocLi && nav) {
       // scroll the active ToC item into the middle of the ToC container
       const top = activeTocLi?.offsetTop - nav.offsetHeight / 2
@@ -124,10 +174,12 @@
   }
 
   // ensure active ToC is in view when ToC opens on mobile
-  $: if (open && nav) {
-    set_active_heading()
-    scroll_to_active_toc_item(`instant`)
-  }
+  $effect(() => {
+    if (open && nav) {
+      set_active_heading()
+      scroll_to_active_toc_item(`instant`)
+    }
+  });
 
   // enable keyboard navigation
   function on_keydown(event: KeyboardEvent) {
@@ -170,21 +222,22 @@
 
 <svelte:window
   bind:innerWidth={window_width}
-  on:scroll={set_active_heading}
-  on:click={close}
-  on:scroll|passive={() => (page_has_scrolled = true)}
-  on:scrollend|passive={() => {
+  onscroll={() => {
+    page_has_scrolled = true
+    set_active_heading()
+  }}
+  onclick={close}
+  onscrollend={() => {
     if (!page_has_scrolled) return
-
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
     scroll_to_active_toc_item()
   }}
-  on:resize={() => {
+  onresize={() => {
     desktop = window_width > breakpoint
     set_active_heading()
   }}
-  on:keydown={on_keydown}
+  onkeydown={on_keydown}
 />
 
 <aside
@@ -198,37 +251,48 @@
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
-      on:click|preventDefault|stopPropagation={() => (open = true)}
+      onclick={(event) => {
+        event.stopPropagation()
+        event.preventDefault()
+        open = true
+      }}
       aria-label={openButtonLabel}
     >
-      <slot name="open-toc-icon">
+      {#if open_toc_icon}{@render open_toc_icon()}{:else}
         <MenuIcon width="1em" />
-      </slot>
+      {/if}
     </button>
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
     <nav transition:blur={blurParams} bind:this={nav}>
       {#if title}
-        <slot name="title">
+        {#if title_snippet}
+          {@render title_snippet()}
+        {:else}
           <svelte:element this={titleTag} class="toc-title toc-exclude">
             {title}
           </svelte:element>
-        </slot>
+        {/if}
       {/if}
-      <ol>
-        {#each headings as heading, idx}
+      <ol role="menu">
+        {#each headings as heading, idx (`${idx}-${heading.id}`)}
+          {@const level = getHeadingLevels(heading)}
+          {@const indent = level - minLevel}
+          {@const title = getHeadingTitles(heading)}
           <li
-            style:margin="0 0 0 {levels[idx] - minLevel}em"
-            style:font-size="{2 - 0.2 * (levels[idx] - minLevel)}ex"
-            class:active={activeTocLi === tocItems[idx]}
-            on:click={li_click_key_handler(heading)}
-            on:keyup={li_click_key_handler(heading)}
-            bind:this={tocItems[idx]}
             role="menuitem"
+            class:active={heading === activeHeading}
+            bind:this={tocItems[idx]}
+            style:margin-left="{indent}em"
+            style:font-size="{Math.max(3 - indent * 0.1, 2)}ex"
+            onclick={li_click_key_handler(heading)}
+            onkeydown={li_click_key_handler(heading)}
           >
-            <slot name="toc-item" {heading} {idx}>
-              {getHeadingTitles(heading)}
-            </slot>
+            {#if toc_item}
+              {@render toc_item(heading)}
+            {:else}
+              {title}
+            {/if}
           </li>
         {/each}
       </ol>
