@@ -33,6 +33,34 @@ describe(`Toc`, () => {
     expect(doc_query(`strong`).textContent).toBe(`Another custom title`)
   })
 
+  test(`title element has expected CSS classes`, async () => {
+    const toc = mount(Toc, {
+      target: document.body,
+      props: { title: `Title with classes` },
+    })
+
+    expect(toc).toBeTruthy()
+
+    const title_node = doc_query(`h2`)
+    expect(title_node).not.toBeNull()
+    expect(title_node?.classList.contains('toc-title')).toBe(true)
+    expect(title_node?.classList.contains('toc-exclude')).toBe(true)
+  })
+
+  test(`custom title element has expected CSS classes`, async () => {
+    const toc = mount(Toc, {
+      target: document.body,
+      props: { title: `Custom title with classes`, titleTag: `h3` },
+    })
+
+    expect(toc).toBeTruthy()
+
+    const title_node = doc_query(`h3`)
+    expect(title_node).not.toBeNull()
+    expect(title_node?.classList.contains('toc-title')).toBe(true)
+    expect(title_node?.classList.contains('toc-exclude')).toBe(true)
+  })
+
   test.each([
     [null, 3, [0, 1, 2].map((lvl) => `Heading ${lvl + 2}`)],
     [
