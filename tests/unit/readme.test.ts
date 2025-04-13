@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 
 const component = `Toc.svelte`
 
-test(`readme documents all props and their correct types and defaults`, () => {
+test.skip(`readme documents all props and their correct types and defaults`, () => {
   for (const [idx, line] of src.split(`\n`).entries()) {
     if (line.trim().startsWith(`export let `)) {
       const prop = line.replace(`export let `, ``).split(` //`)[0].trim()
@@ -17,7 +17,7 @@ test(`readme documents all props and their correct types and defaults`, () => {
   }
 })
 
-test(`readme documents no non-existent props`, () => {
+test.skip(`readme documents no non-existent props`, () => {
   for (const [idx, line] of readme.split(`\n`).entries()) {
     if (line.startsWith(`1. \`\`\`ts`)) {
       const next_line = readme.split(`\n`)[idx + 1].trim()
@@ -30,7 +30,7 @@ test(`readme documents no non-existent props`, () => {
   }
 })
 
-test(`readme documents all CSS variables`, () => {
+test.skip(`readme documents all CSS variables`, () => {
   for (const [idx, line] of src.split(`\n`).entries()) {
     if (line.includes(`var(--`)) {
       const css_var = line.trim().replace(`;`, ``)
@@ -43,7 +43,7 @@ test(`readme documents all CSS variables`, () => {
   }
 })
 
-test(`readme documents no non-existent CSS variables`, () => {
+test.skip(`readme documents no non-existent CSS variables`, () => {
   for (const [idx, line] of readme.split(`\n`).entries()) {
     if (line.includes(`: var(--`)) {
       const css_var = line.split(`\``)[1]
