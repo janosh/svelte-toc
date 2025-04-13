@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.6.0](https://github.com/janosh/svelte-toc/compare/v0.5.9...v0.6.0)
+
+> 13 April 2025
+
+- Svelte 5 Migration [`#61`](https://github.com/janosh/svelte-toc/pull/61)
+
 #### [v0.5.9](https://github.com/janosh/svelte-toc/compare/v0.5.8...v0.5.9)
 
 > 12 June 2024

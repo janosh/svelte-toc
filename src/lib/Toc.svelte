@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { page } from '$app/state'
   import type { Snippet } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
@@ -91,7 +90,6 @@
   // (re-)query headings on mount and on route changes
   function update_toc_headings() {
     if (typeof document === `undefined`) return // for SSR
-    const _ = page.url.pathname // needed to trigger reactivity on route changes
 
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     set_active_heading()
