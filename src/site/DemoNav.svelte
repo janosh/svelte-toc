@@ -1,20 +1,23 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
 
-  export let style: string | null = null
+  interface Props {
+    style?: string | null
+  }
+  let { style = null }: Props = $props()
 
   const routes = Object.keys(
-    import.meta.glob(`/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}`),
+    import.meta.glob(`/src/routes/*demos*/*/+page*.{svx,md,svelte}`),
   ).map((filename) => filename.split(`/`)[4])
 
-  $: is_current = (path: string) => {
-    if (`/${path}` == $page.url.pathname) return `page`
+  let is_current = $derived((path: string) => {
+    if (`/${path}` == page.url.pathname) return `page`
     return undefined
-  }
+  })
 </script>
 
 <nav {style}>
-  {#each routes as href, idx}
+  {#each routes as href, idx (href)}
     {#if idx > 0}<strong>&bull;</strong>{/if}
     <a {href} aria-current={is_current(href)}>{href}</a>
   {/each}

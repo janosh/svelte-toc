@@ -1,10 +1,16 @@
 <script lang="ts">
   import { afterNavigate } from '$app/navigation'
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
+  import { mount, type Snippet } from 'svelte'
   import { CopyButton, GitHubCorner } from 'svelte-zoo'
   import '../app.css'
+
+  interface Props {
+    children?: Snippet;
+  }
+  let { children }: Props = $props();
 
   afterNavigate(() => {
     for (const node of document.querySelectorAll(`pre > code`)) {
@@ -12,7 +18,7 @@
       const pre = node.parentElement
       if (!pre || pre.querySelector(`button`)) continue
 
-      new CopyButton({
+      mount(CopyButton, {
         target: pre,
         props: {
           content: node.textContent ?? ``,
@@ -22,22 +28,22 @@
     }
   })
 
-  $: headingSelector =
-    { '/contributing': `main > h2`, '/changelog': `main > h4` }[$page.url.pathname] ??
-    `main :where(h2, h3)`
+  let headingSelector =
+    $derived({ '/contributing': `main > h2`, '/changelog': `main > h4` }[page.url.pathname] ??
+    `main :where(h2, h3)`)
 </script>
 
 <GitHubCorner href={repository} />
 
-{#if !$page.error && $page.url.pathname !== `/`}
+{#if !page.error && page.url.pathname !== `/`}
   <a href="." aria-label="Back to index page">&laquo; home</a>
 {/if}
 
 <main>
-  <slot />
+  {@render children?.()}
 </main>
 
-{#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes($page.url.pathname)}
+{#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes(page.url.pathname)}
   <Toc {headingSelector} activeHeadingScrollOffset={200} blurParams={{ duration: 400 }} />
 {/if}
 
