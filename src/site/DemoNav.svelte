@@ -1,18 +1,17 @@
 <script lang="ts">
-  import { page } from '$app/stores'
+  import { page } from '$app/state'
 
   interface Props {
-    style?: string | null;
+    style?: string | null
   }
-
-  let { style = null }: Props = $props();
+  let { style = null }: Props = $props()
 
   const routes = Object.keys(
-    import.meta.glob(`/src/routes/\\(demos\\)/*/+page*.{svx,md,svelte}`),
+    import.meta.glob(`/src/routes/*demos*/*/+page*.{svx,md,svelte}`),
   ).map((filename) => filename.split(`/`)[4])
 
   let is_current = $derived((path: string) => {
-    if (`/${path}` == $page.url.pathname) return `page`
+    if (`/${path}` == page.url.pathname) return `page`
     return undefined
   })
 </script>

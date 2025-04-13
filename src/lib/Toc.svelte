@@ -1,7 +1,6 @@
 <script lang="ts">
   import { page } from '$app/state'
   import type { Snippet } from 'svelte'
-  import { onMount } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -112,7 +111,7 @@
 
   $effect(update_toc_headings)
 
-  onMount(() => {
+  $effect(() => {
     const observer = new MutationObserver(update_toc_headings)
 
     // Configure the observer to watch for changes in the DOM structure
