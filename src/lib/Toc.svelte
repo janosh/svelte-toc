@@ -1,47 +1,45 @@
 <script lang="ts">
+  import { page } from '$app/state'
   import type { Snippet } from 'svelte'
   import { onMount } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
-
   interface Props {
-    activeHeading?: HTMLHeadingElement | null;
-    activeHeadingScrollOffset?: number;
-    activeTocLi?: HTMLLIElement | null;
-    aside?: HTMLElement | undefined;
-    breakpoint?: number; // in pixels (smaller window width is considered mobile, larger is desktop)
-    desktop?: boolean;
-    flashClickedHeadingsFor?: number;
-    getHeadingIds?: (node: HTMLHeadingElement) => string;
-    getHeadingLevels?: (node: HTMLHeadingElement) => number;
-    getHeadingTitles?: (node: HTMLHeadingElement) => string;
+    activeHeading?: HTMLHeadingElement | null
+    activeHeadingScrollOffset?: number
+    activeTocLi?: HTMLLIElement | null
+    aside?: HTMLElement | undefined
+    breakpoint?: number // in pixels (smaller window width is considered mobile, larger is desktop)
+    desktop?: boolean
+    flashClickedHeadingsFor?: number
+    getHeadingIds?: (node: HTMLHeadingElement) => string
+    getHeadingLevels?: (node: HTMLHeadingElement) => number
+    getHeadingTitles?: (node: HTMLHeadingElement) => string
     // the result of document.querySelectorAll(headingSelector). can be useful for binding
-    headings?: HTMLHeadingElement[];
-    headingSelector?: string;
-    hide?: boolean;
-    autoHide?: boolean;
-    keepActiveTocItemInView?: boolean; // requires scrollend event browser support
-    minItems?: number;
-    nav?: HTMLElement | undefined;
-    open?: boolean;
-    openButtonLabel?: string;
+    headings?: HTMLHeadingElement[]
+    headingSelector?: string
+    hide?: boolean
+    autoHide?: boolean
+    keepActiveTocItemInView?: boolean // requires scrollend event browser support
+    minItems?: number
+    nav?: HTMLElement | undefined
+    open?: boolean
+    openButtonLabel?: string
     // prettier-ignore
     reactToKeys?: string[];
-    pageBody?: string | HTMLElement;
-    scrollBehavior?: `auto` | `smooth`;
-    title?: string;
-    titleTag?: string;
-    tocItems?: HTMLLIElement[];
-    warnOnEmpty?: boolean;
-    blurParams?: BlurParams | undefined;
-    open_toc_icon?: Snippet;
-    title_snippet?: Snippet;
-    toc_item?: Snippet<[HTMLHeadingElement]>;
+    scrollBehavior?: `auto` | `smooth`
+    title?: string
+    titleTag?: string
+    tocItems?: HTMLLIElement[]
+    warnOnEmpty?: boolean
+    blurParams?: BlurParams | undefined
+    open_toc_icon?: Snippet
+    title_snippet?: Snippet
+    toc_item?: Snippet<[HTMLHeadingElement]>
     // Add callback prop for open event
-    onOpen?: (event: { open: boolean }) => void;
+    onOpen?: (event: { open: boolean }) => void
   }
-
   let {
     activeHeading = $bindable(null),
     activeHeadingScrollOffset = 100,
@@ -51,10 +49,8 @@
     desktop = $bindable(true),
     flashClickedHeadingsFor = 1500,
     getHeadingIds = (node: HTMLHeadingElement): string => node.id,
-    getHeadingLevels = (node: HTMLHeadingElement): number =>
-    Number(node.nodeName[1]),
-    getHeadingTitles = (node: HTMLHeadingElement): string =>
-    node.textContent ?? ``,
+    getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
+    getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
     headings = $bindable([]),
     headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
     hide = $bindable(false),
@@ -65,45 +61,39 @@
     open = $bindable(false),
     openButtonLabel = `Open table of contents`,
     reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
-    pageBody = $bindable(`body`),
     scrollBehavior = `smooth`,
     title = `On this page`,
     titleTag = `h2`,
     tocItems = $bindable([]),
-    warnOnEmpty = true,
+    warnOnEmpty = false,
     blurParams = { duration: 200 },
     open_toc_icon,
     title_snippet,
     toc_item,
-    onOpen
-  }: Props = $props();
-
-  // Export properties for access in unit tests. Used to work before Svelte 5, maybe an antipattern now.
-  export { activeHeading, activeTocLi, aside, desktop, nav, open, blurParams };
+    onOpen,
+  }: Props = $props()
 
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
   // scrolling in chrome. see https://github.com/janosh/svelte-toc/issues/57
   let page_has_scrolled: boolean = $state(false)
 
-  // Use $effect instead of createEventDispatcher
-  $effect(() => {
-    if (onOpen) onOpen({ open })
-  });
-
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
+  $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
-  });
+  })
 
   function close(event: MouseEvent) {
     if (!aside?.contains(event.target as Node)) open = false
   }
 
   // (re-)query headings on mount and on route changes
-  function requery_headings() {
+  function update_toc_headings() {
     if (typeof document === `undefined`) return // for SSR
+    const _ = page.url.pathname // needed to trigger reactivity on route changes
+
     headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
     set_active_heading()
     if (headings.length === 0) {
@@ -120,20 +110,21 @@
     }
   }
 
-  requery_headings()
+  $effect(update_toc_headings)
 
   onMount(() => {
-    if (typeof pageBody === `string`) {
-      pageBody = document.querySelector(pageBody) as HTMLElement
+    const observer = new MutationObserver(update_toc_headings)
 
-      if (!pageBody) {
-        throw new Error(`Could not find page body element: ${pageBody}`)
-      }
-    }
-    const mutation_observer = new MutationObserver(requery_headings)
-    mutation_observer.observe(pageBody, { childList: true, subtree: true })
-    return () => mutation_observer.disconnect()
+    // Configure the observer to watch for changes in the DOM structure
+    observer.observe(document.body, {
+      childList: true, // Watch for added/removed nodes
+      subtree: true, // Watch all descendants, not just direct children
+      characterData: true, // Watch for text content changes
+    })
+
+    return () => observer.disconnect()
   })
+
   function set_active_heading() {
     let idx = headings.length
     while (idx--) {
@@ -179,7 +170,7 @@
       set_active_heading()
       scroll_to_active_toc_item(`instant`)
     }
-  });
+  })
 
   // enable keyboard navigation
   function on_keydown(event: KeyboardEvent) {
