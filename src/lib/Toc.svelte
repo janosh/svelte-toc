@@ -37,6 +37,18 @@
     toc_item?: Snippet<[HTMLHeadingElement]>
     // Add callback prop for open event
     onOpen?: (event: { open: boolean }) => void
+    aside_style?: string
+    aside_class?: string
+    nav_style?: string
+    nav_class?: string
+    title_element_style?: string
+    title_element_class?: string
+    ol_style?: string
+    ol_class?: string
+    li_style?: string
+    li_class?: string
+    open_button_style?: string
+    open_button_class?: string
   }
   let {
     activeHeading = $bindable(null),
@@ -69,6 +81,18 @@
     title_snippet,
     toc_item,
     onOpen,
+    aside_style = ``,
+    aside_class = ``,
+    nav_style = ``,
+    nav_class = ``,
+    title_element_style = ``,
+    title_element_class = ``,
+    ol_style = ``,
+    ol_class = ``,
+    li_style = ``,
+    li_class = ``,
+    open_button_style = ``,
+    open_button_class = ``,
   }: Props = $props()
 
   let window_width: number = $state(0)
@@ -229,13 +253,14 @@
 />
 
 <aside
-  class="toc"
+  class="toc {aside_class || null}"
   class:desktop
   class:hidden={hide}
   class:mobile={!desktop}
   bind:this={aside}
   hidden={hide}
   aria-hidden={hide}
+  style={aside_style || null}
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
@@ -245,6 +270,8 @@
         open = true
       }}
       aria-label={openButtonLabel}
+      class={open_button_class || null}
+      style={open_button_style || null}
     >
       {#if open_toc_icon}{@render open_toc_icon()}{:else}
         <MenuIcon width="1em" />
@@ -252,25 +279,35 @@
     </button>
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
-    <nav transition:blur={blurParams} bind:this={nav}>
+    <nav
+      transition:blur={blurParams}
+      bind:this={nav}
+      class={nav_class || null}
+      style={nav_style || null}
+    >
       {#if title}
         {#if title_snippet}
           {@render title_snippet()}
         {:else}
-          <svelte:element this={titleTag} class="toc-title toc-exclude">
+          <svelte:element
+            this={titleTag}
+            class="toc-title toc-exclude {title_element_class || null}"
+            style={title_element_style || null}
+          >
             {title}
           </svelte:element>
         {/if}
       {/if}
-      <ol role="menu">
+      <ol role="menu" class={ol_class || null} style={ol_style || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const level = getHeadingLevels(heading)}
           {@const indent = level - minLevel}
-          {@const title = getHeadingTitles(heading)}
           <li
             role="menuitem"
             class:active={heading === activeHeading}
+            class={li_class || null}
             bind:this={tocItems[idx]}
+            style={li_style || null}
             style:margin-left="{indent}em"
             style:font-size="{Math.max(3 - indent * 0.1, 2)}ex"
             onclick={li_click_key_handler(heading)}
@@ -279,7 +316,7 @@
             {#if toc_item}
               {@render toc_item(heading)}
             {:else}
-              {title}
+              {getHeadingTitles(heading)}
             {/if}
           </li>
         {/each}
@@ -293,10 +330,10 @@
     box-sizing: border-box;
     height: max-content;
     overflow-wrap: break-word;
-    font-size: var(--toc-font-size);
+    font: var(--toc-font, 10pt sans-serif);
     min-width: var(--toc-min-width);
     width: var(--toc-width);
-    z-index: var(--toc-z-index, 1);
+    z-index: var(--toc-z-index);
   }
   :where(aside.toc > nav) {
     overflow: var(--toc-overflow, auto);
@@ -312,6 +349,7 @@
   :where(.toc-title) {
     padding: var(--toc-title-padding);
     margin: var(--toc-title-margin);
+    font: var(--toc-title-font);
   }
   :where(aside.toc > nav > ol > li) {
     cursor: pointer;
@@ -320,6 +358,7 @@
     border-radius: var(--toc-li-border-radius);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
+    font: var(--toc-li-font);
   }
   :where(aside.toc > nav > ol > li:hover) {
     color: var(--toc-li-hover-color, cornflowerblue);
@@ -328,20 +367,20 @@
   :where(aside.toc > nav > ol > li.active) {
     background: var(--toc-active-bg, cornflowerblue);
     color: var(--toc-active-color, white);
-    font-weight: var(--toc-active-font-weight);
+    font: var(--toc-active-li-font);
     border: var(--toc-active-border);
     border-width: var(--toc-active-border-width);
     border-radius: var(--toc-active-border-radius, 2pt);
   }
   :where(aside.toc > button) {
     border: none;
-    bottom: 0;
+    bottom: var(--toc-mobile-btn-bottom, 0);
     cursor: pointer;
-    font-size: 2em;
-    line-height: 0;
+    font: var(--toc-mobile-btn-font, 2em sans-serif);
+    line-height: var(--toc-mobile-btn-line-height, 0);
     position: absolute;
-    right: 0;
-    z-index: 2;
+    right: var(--toc-mobile-btn-right, 0);
+    z-index: var(--toc-mobile-btn-z-index, 2);
     padding: var(--toc-mobile-btn-padding, 2pt 3pt);
     border-radius: var(--toc-mobile-btn-border-radius, 4pt);
     background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
@@ -351,7 +390,7 @@
     position: relative;
   }
   :where(aside.toc > nav > .toc-title) {
-    margin-top: 0;
+    margin-top: var(--toc-title-margin-top, 0);
   }
 
   :where(aside.toc.mobile) {
@@ -360,8 +399,8 @@
     right: var(--toc-mobile-right, 1em);
   }
   :where(aside.toc.mobile > nav) {
-    border-radius: 3pt;
-    right: 0;
+    border-radius: var(--toc-mobile-border-radius, 3pt);
+    right: var(--toc-mobile-right, 1em);
     z-index: -1;
     box-sizing: border-box;
     background: var(--toc-mobile-bg, white);
