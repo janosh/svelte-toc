@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [v0.6.1](https://github.com/janosh/svelte-toc/compare/v0.6.0...v0.6.1)
+
+> 18 May 2025
+
+- add many more style props to Toc component [`9cf5697`](https://github.com/janosh/svelte-toc/commit/9cf5697c30cf25737defb88bba5a8d520d2f9d56)
+
 #### [v0.6.0](https://github.com/janosh/svelte-toc/compare/v0.5.9...v0.6.0)
 
 > 13 April 2025
