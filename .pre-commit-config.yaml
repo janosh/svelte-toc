@@ -36,8 +36,16 @@ repos:
         stages: [pre-commit, commit-msg]
         args: [--ignore-words-list, falsy, --check-filenames]
 
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.32.0
+    hooks:
+      - id: typos
+        types: [text]
+        args: []
+        exclude: changelog.md
+
   - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.22.0
+    rev: v9.27.0
     hooks:
       - id: eslint
         types: [file]

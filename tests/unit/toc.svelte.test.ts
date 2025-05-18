@@ -465,3 +465,193 @@ describe(`Toc`, () => {
     expect(toc_items[1].textContent?.trim()).toBe(`Dynamically Added Heading`)
   })
 })
+
+describe(`Style and Class Props Application`, () => {
+  const ensure_content_for_toc_elements = (
+    headings = [`<h2>Content Heading 1</h2>`, `<h3>Content Heading 2</h3>`],
+  ) => {
+    document.body.innerHTML = headings.join(`\n`)
+  }
+
+  const ensure_mobile_button_is_visible = () => {
+    ensure_content_for_toc_elements() // Need headings for the button to appear
+    window.innerWidth = 500 // Simulate mobile (default breakpoint is 1000px)
+  }
+
+  const test_cases = [
+    // Aside tests
+    {
+      elementName: `aside`,
+      propName: `aside_style`,
+      value: `color: rgb(255, 0, 0);`,
+      selector: `aside.toc`,
+      check: `style`,
+      setupFn: ensure_content_for_toc_elements,
+    },
+    {
+      elementName: `aside`,
+      propName: `aside_class`,
+      value: `custom-aside-class`,
+      selector: `aside.toc`,
+      check: `class`,
+      setupFn: ensure_content_for_toc_elements,
+    },
+    // Nav tests
+    {
+      elementName: `nav`,
+      propName: `nav_style`,
+      value: `background-color: rgb(0, 0, 255);`,
+      selector: `aside.toc nav`,
+      check: `style`,
+      setupFn: ensure_content_for_toc_elements,
+      extraProps: { title: `Test Title` }, // Nav needs title or items to render
+    },
+    {
+      elementName: `nav`,
+      propName: `nav_class`,
+      value: `custom-nav-class`,
+      selector: `aside.toc nav`,
+      check: `class`,
+      setupFn: ensure_content_for_toc_elements,
+      extraProps: { title: `Test Title` },
+    },
+    // Title element tests
+    {
+      elementName: `title`,
+      propName: `title_element_style`,
+      value: `font-style: italic;`,
+      selector: `aside.toc nav .toc-title`,
+      check: `style`,
+      setupFn: ensure_content_for_toc_elements,
+      extraProps: { title: `Test Custom Title` },
+    },
+    {
+      elementName: `title`,
+      propName: `title_element_class`,
+      value: `custom-title-class`,
+      selector: `aside.toc nav .toc-title`,
+      check: `class`,
+      setupFn: ensure_content_for_toc_elements,
+      extraProps: { title: `Test Custom Title` },
+      additionalClassChecks: [`toc-title`, `toc-exclude`],
+    },
+    // OL tests
+    {
+      elementName: `ol`,
+      propName: `ol_style`,
+      value: `list-style-type: square;`,
+      selector: `aside.toc nav ol`,
+      check: `style`,
+      setupFn: ensure_content_for_toc_elements,
+    },
+    {
+      elementName: `ol`,
+      propName: `ol_class`,
+      value: `custom-ol-class`,
+      selector: `aside.toc nav ol`,
+      check: `class`,
+      setupFn: ensure_content_for_toc_elements,
+    },
+    // LI tests
+    {
+      elementName: `li`,
+      propName: `li_style`,
+      value: `padding-left: 10px;`,
+      selector: `aside.toc nav ol li`,
+      check: `style`,
+      setupFn: () =>
+        ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+    },
+    {
+      elementName: `li`,
+      propName: `li_class`,
+      value: `custom-li-class`,
+      selector: `aside.toc nav ol li`,
+      check: `class`,
+      setupFn: () =>
+        ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+    },
+    // Open button tests
+    {
+      elementName: `open button`,
+      propName: `open_button_style`,
+      value: `border: 1px solid rgb(0, 128, 0);`,
+      selector: `aside.toc > button`,
+      check: `style`,
+      setupFn: ensure_mobile_button_is_visible,
+      extraProps: { desktop: false }, // Ensure button context
+    },
+    {
+      elementName: `open button`,
+      propName: `open_button_class`,
+      value: `custom-button-class`,
+      selector: `aside.toc > button`,
+      check: `class`,
+      setupFn: ensure_mobile_button_is_visible,
+      extraProps: { desktop: false },
+    },
+  ]
+
+  test.each(test_cases)(
+    `applies $propName to $elementName element ($check)`,
+    async ({
+      propName,
+      value,
+      selector,
+      check,
+      setupFn,
+      extraProps = {},
+      additionalClassChecks,
+    }) => {
+      if (setupFn) setupFn()
+
+      mount(Toc, {
+        target: document.body,
+        props: { ...extraProps, [propName]: value },
+      })
+      await tick()
+
+      const element = doc_query(selector) as HTMLElement
+      expect(element, `${selector} should exist`).not.toBeNull()
+
+      if (check === `style`) {
+        const style_attribute = element.getAttribute(`style`)
+        expect(
+          style_attribute,
+          `${selector} style attribute should exist`,
+        ).not.toBeNull()
+        if (style_attribute) {
+          // Type guard for style_attribute
+          expect(
+            style_attribute,
+            `${selector} style should contain '${value}'`,
+          ).toContain(value)
+          // Special check for li_style to ensure existing styles are preserved
+          if (propName === `li_style`) {
+            expect(
+              style_attribute,
+              `${selector} style should contain 'margin-left'`,
+            ).toContain(`margin-left`)
+            expect(
+              style_attribute,
+              `${selector} style should contain 'font-size'`,
+            ).toContain(`font-size`)
+          }
+        }
+      } else if (check === `class`) {
+        expect(
+          element.classList.contains(value),
+          `${selector} should have class '${value}'`,
+        ).toBe(true)
+        if (additionalClassChecks) {
+          additionalClassChecks.forEach((cls) => {
+            expect(
+              element.classList.contains(cls),
+              `${selector} should retain class '${cls}'`,
+            ).toBe(true)
+          })
+        }
+      }
+    },
+  )
+})

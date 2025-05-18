@@ -16,6 +16,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   margin: auto;
   color: #eee;
+  font-size: 12pt;
 }
 body > div {
   display: flex;
@@ -37,7 +38,6 @@ code {
   overflow-wrap: break-word;
   padding: 1pt 3pt;
   border-radius: 3pt;
-  font-size: 1.3em;
   background-color: rgba(255, 255, 255, 0.15);
 }
 pre code {
@@ -47,7 +47,6 @@ pre code {
 pre {
   position: relative;
   border-radius: 1ex;
-  font-size: 0.7em;
 }
 blockquote {
   border-left: 3pt solid cornflowerblue;
