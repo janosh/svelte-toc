@@ -275,7 +275,7 @@ The HTML structure of this component is
   - `width: var(--toc-width)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
   - `padding: var(--toc-padding, 1em 1em 0)`
-  - `font-size: var(--toc-font-size)`
+  - `font: var(--toc-font, 10pt sans-serif)`
 - `aside.toc > nav > ol > .toc-title`
   - `padding: var(--toc-title-padding)`
   - `margin: var(--toc-title-margin)`
@@ -295,19 +295,28 @@ The HTML structure of this component is
 - `aside.toc > nav > ol > li.active`
   - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
-  - `font-weight: var(--toc-active-font-weight)`
+  - `font: var(--toc-active-li-font)`
   - `border: var(--toc-active-border)`
   - `border-width: var(--toc-active-border-width)`: Allows setting top, right, bottom, left border widths separately.
   - `border-radius: var(--toc-active-border-radius, 2pt)`
 - `aside.toc > button`
+  - `bottom: var(--toc-mobile-btn-bottom, 0)`
+  - `font: var(--toc-mobile-btn-font, 2em sans-serif)`
+  - `line-height: var(--toc-mobile-btn-line-height, 0)`
+  - `right: var(--toc-mobile-btn-right, 0)`
+  - `z-index: var(--toc-mobile-btn-z-index, 2)`
   - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
   - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
   - `padding: var(--toc-mobile-btn-padding, 2pt 3pt)`
   - `border-radius: var(--toc-mobile-btn-border-radius, 4pt)`
+- `aside.toc > nav > .toc-title`
+  - `margin-top: var(--toc-title-margin-top, 0)`
 - `aside.toc.mobile`
   - `bottom: var(--toc-mobile-bottom, 1em)`
   - `right: var(--toc-mobile-right, 1em)`
 - `aside.toc.mobile > nav`
+  - `border-radius: var(--toc-mobile-border-radius, 3pt)`
+  - `right: var(--toc-mobile-right, 1em)`
   - `width: var(--toc-mobile-width, 18em)`
   - `background: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
   - `box-shadow: var(--toc-mobile-shadow)`
