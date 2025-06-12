@@ -408,15 +408,15 @@
     box-shadow: var(--toc-mobile-shadow);
     border: var(--toc-mobile-border);
   }
-
-  :where(aside.toc.desktop) {
-    margin: var(--toc-desktop-aside-margin);
-  }
   :where(aside.toc.desktop) {
     position: sticky;
     background: var(--toc-desktop-bg);
-    margin: var(--toc-desktop-nav-margin);
+    margin: var(--toc-desktop-aside-margin);
     max-width: var(--toc-desktop-max-width);
     top: var(--toc-desktop-sticky-top, 2em);
+  }
+
+  :where(aside.toc.desktop > nav) {
+    margin: var(--toc-desktop-nav-margin);
   }
 </style>
