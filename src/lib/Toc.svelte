@@ -340,6 +340,7 @@
     overscroll-behavior: contain;
     max-height: var(--toc-max-height, 90vh);
     padding: var(--toc-padding, 1em 1em 0);
+    position: relative;
   }
   :where(aside.toc > nav > ol) {
     list-style: var(--toc-ol-list-style, none);
@@ -385,9 +386,6 @@
     border-radius: var(--toc-mobile-btn-border-radius, 4pt);
     background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
     color: var(--toc-mobile-btn-color, black);
-  }
-  :where(aside.toc > nav) {
-    position: relative;
   }
   :where(aside.toc > nav > .toc-title) {
     margin-top: var(--toc-title-margin-top, 0);
