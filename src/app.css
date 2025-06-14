@@ -92,6 +92,6 @@ button {
   cursor: pointer;
   border: none;
   border-radius: 3pt;
-  background: teal;
+  background: rgba(255, 255, 255, 0.1);
   padding: 2pt 4pt;
 }
