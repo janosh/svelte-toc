@@ -270,7 +270,7 @@ The HTML structure of this component is
   - `font: var(--toc-font, 10pt sans-serif)`
   - `min-width: var(--toc-min-width)`
   - `width: var(--toc-width)`
-  - `z-index: var(--toc-z-index, 1)`: Applies on both mobile and desktop.
+  - `z-index: var(--toc-z-index)`: Applies on both mobile and desktop.
 - `aside.toc > nav`
   - `overflow: var(--toc-overflow, auto)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
@@ -336,7 +336,7 @@ Example:
 <Toc
   --toc-desktop-aside-margin="10em 0 0 0"
   --toc-desktop-sticky-top="3em"
-  --toc-desktop-width="15em"
+  --toc-width="15em"
 />
 ```
 
