@@ -340,6 +340,7 @@
     overscroll-behavior: contain;
     max-height: var(--toc-max-height, 90vh);
     padding: var(--toc-padding, 1em 1em 0);
+    position: relative;
   }
   :where(aside.toc > nav > ol) {
     list-style: var(--toc-ol-list-style, none);
@@ -386,9 +387,6 @@
     background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2));
     color: var(--toc-mobile-btn-color, black);
   }
-  :where(aside.toc > nav) {
-    position: relative;
-  }
   :where(aside.toc > nav > .toc-title) {
     margin-top: var(--toc-title-margin-top, 0);
   }
@@ -408,15 +406,15 @@
     box-shadow: var(--toc-mobile-shadow);
     border: var(--toc-mobile-border);
   }
-
-  :where(aside.toc.desktop) {
-    margin: var(--toc-desktop-aside-margin);
-  }
   :where(aside.toc.desktop) {
     position: sticky;
     background: var(--toc-desktop-bg);
-    margin: var(--toc-desktop-nav-margin);
+    margin: var(--toc-desktop-aside-margin);
     max-width: var(--toc-desktop-max-width);
     top: var(--toc-desktop-sticky-top, 2em);
+  }
+
+  :where(aside.toc.desktop > nav) {
+    margin: var(--toc-desktop-nav-margin);
   }
 </style>

@@ -1,39 +1,24 @@
 <script lang="ts">
-  import { afterNavigate } from '$app/navigation'
   import { page } from '$app/state'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
-  import { mount, type Snippet } from 'svelte'
+  import { type Snippet } from 'svelte'
   import { CopyButton, GitHubCorner } from 'svelte-zoo'
   import '../app.css'
 
   interface Props {
-    children?: Snippet;
+    children?: Snippet
   }
-  let { children }: Props = $props();
+  let { children }: Props = $props()
 
-  afterNavigate(() => {
-    for (const node of document.querySelectorAll(`pre > code`)) {
-      // skip if <pre> already contains a button (presumably for copy)
-      const pre = node.parentElement
-      if (!pre || pre.querySelector(`button`)) continue
-
-      mount(CopyButton, {
-        target: pre,
-        props: {
-          content: node.textContent ?? ``,
-          style: `position: absolute; top: 1ex; right: 1ex;`,
-        },
-      })
-    }
-  })
-
-  let headingSelector =
-    $derived({ '/contributing': `main > h2`, '/changelog': `main > h4` }[page.url.pathname] ??
-    `main :where(h2, h3)`)
+  let headingSelector = $derived(
+    { '/contributing': `main > h2`, '/changelog': `main > h4` }[page.url.pathname] ??
+      `main :where(h2, h3)`,
+  )
 </script>
 
 <GitHubCorner href={repository} />
+<CopyButton global />
 
 {#if !page.error && page.url.pathname !== `/`}
   <a href="." aria-label="Back to index page">&laquo; home</a>
