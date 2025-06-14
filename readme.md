@@ -267,57 +267,68 @@ The HTML structure of this component is
 `Toc.svelte` offers the following CSS variables which can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
 
 - `aside.toc`
-  - `z-index: var(--toc-z-index, 1)`: Applies on both mobile and desktop.
+  - `font: var(--toc-font, 10pt sans-serif)`
+  - `min-width: var(--toc-min-width)`
+  - `width: var(--toc-width)`
+  - `z-index: var(--toc-z-index)`: Applies on both mobile and desktop.
 - `aside.toc > nav`
   - `overflow: var(--toc-overflow, auto)`
-  - `min-width: var(--toc-min-width)`
-  - `max-width: var(--toc-desktop-max-width)`
-  - `width: var(--toc-width)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
   - `padding: var(--toc-padding, 1em 1em 0)`
-  - `font-size: var(--toc-font-size)`
-- `aside.toc > nav > ol > .toc-title`
-  - `padding: var(--toc-title-padding)`
-  - `margin: var(--toc-title-margin)`
 - `aside.toc > nav > ol`
   - `list-style: var(--toc-ol-list-style, none)`
   - `padding: var(--toc-ol-padding, 0)`
   - `margin: var(--toc-ol-margin)`
+- `.toc-title`
+  - `padding: var(--toc-title-padding)`
+  - `margin: var(--toc-title-margin)`
+  - `font: var(--toc-title-font)`
 - `aside.toc > nav > ol > li`
-  - `border-radius: var(--toc-li-border-radius)`
-  - `padding: var(--toc-li-padding, 2pt 4pt)`
-  - `margin: var(--toc-li-margin)`
-  - `border: var(--toc-li-border)`
   - `color: var(--toc-li-color)`
+  - `border: var(--toc-li-border)`
+  - `border-radius: var(--toc-li-border-radius)`
+  - `margin: var(--toc-li-margin)`
+  - `padding: var(--toc-li-padding, 2pt 4pt)`
+  - `font: var(--toc-li-font)`
 - `aside.toc > nav > ol > li:hover`
   - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`
 - `aside.toc > nav > ol > li.active`
-  - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `background: var(--toc-active-bg, cornflowerblue)`
-  - `font-weight: var(--toc-active-font-weight)`
+  - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
+  - `font: var(--toc-active-li-font)`
   - `border: var(--toc-active-border)`
   - `border-width: var(--toc-active-border-width)`: Allows setting top, right, bottom, left border widths separately.
   - `border-radius: var(--toc-active-border-radius, 2pt)`
 - `aside.toc > button`
-  - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
-  - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
+  - `bottom: var(--toc-mobile-btn-bottom, 0)`
+  - `font: var(--toc-mobile-btn-font, 2em sans-serif)`
+  - `line-height: var(--toc-mobile-btn-line-height, 0)`
+  - `right: var(--toc-mobile-btn-right, 0)`
+  - `z-index: var(--toc-mobile-btn-z-index, 2)`
   - `padding: var(--toc-mobile-btn-padding, 2pt 3pt)`
   - `border-radius: var(--toc-mobile-btn-border-radius, 4pt)`
+  - `background: var(--toc-mobile-btn-bg, rgba(255, 255, 255, 0.2))`: Background of padding area around the menu icon button.
+  - `color: var(--toc-mobile-btn-color, black)`: Menu icon color of button used as ToC opener on mobile.
+- `aside.toc > nav > .toc-title`
+  - `margin-top: var(--toc-title-margin-top, 0)`
 - `aside.toc.mobile`
   - `bottom: var(--toc-mobile-bottom, 1em)`
   - `right: var(--toc-mobile-right, 1em)`
 - `aside.toc.mobile > nav`
-  - `width: var(--toc-mobile-width, 18em)`
+  - `border-radius: var(--toc-mobile-border-radius, 3pt)`
+  - `right: var(--toc-mobile-right, 1em)`
   - `background: var(--toc-mobile-bg, white)`: Background color of the `nav` element hovering in the lower-left screen corner when the ToC was opened on mobile screens.
+  - `width: var(--toc-mobile-width, 18em)`
   - `box-shadow: var(--toc-mobile-shadow)`
   - `border: var(--toc-mobile-border)`
 - `aside.toc.desktop`
+  - `background: var(--toc-desktop-bg)`
   - `margin: var(--toc-desktop-aside-margin)`: Margin of the outer-most `aside.toc` element on desktops.
+  - `max-width: var(--toc-desktop-max-width)`
+  - `top: var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
 - `aside.toc.desktop > nav`
   - `margin: var(--toc-desktop-nav-margin)`
-  - `top: var(--toc-desktop-sticky-top, 2em)`: How far below the screen's top edge the ToC starts being sticky.
-  - `background: var(--toc-desktop-bg)`
 
 Example:
 
@@ -325,7 +336,7 @@ Example:
 <Toc
   --toc-desktop-aside-margin="10em 0 0 0"
   --toc-desktop-sticky-top="3em"
-  --toc-desktop-width="15em"
+  --toc-width="15em"
 />
 ```
 
