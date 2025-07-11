@@ -1,9 +1,10 @@
 <script lang="ts">
+  import { goto } from '$app/navigation'
   import { page } from '$app/state'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
   import { type Snippet } from 'svelte'
-  import { CopyButton, GitHubCorner } from 'svelte-zoo'
+  import { CmdPalette, CopyButton, GitHubCorner } from 'svelte-multiselect'
   import '../app.css'
 
   interface Props {
@@ -15,8 +16,22 @@
     { '/contributing': `main > h2`, '/changelog': `main > h4` }[page.url.pathname] ??
       `main :where(h2, h3)`,
   )
+
+  const routes = Object.keys(
+    import.meta.glob(`./**/+page.{svelte,md}`),
+  ).map((filename) => {
+    const parts = filename.split(`/`).filter((part) => !part.startsWith(`(`)) // remove hidden route segments
+    return { route: `/${parts.slice(1, -1).join(`/`)}`, filename }
+  })
 </script>
 
+<CmdPalette
+  actions={routes.map(({ route }) => ({
+    label: route,
+    action: () => goto(route),
+  }))}
+  --sms-options-bg="rgba(0, 0, 0, 0.7)"
+/>
 <GitHubCorner href={repository} />
 <CopyButton global />
 
@@ -29,7 +44,7 @@
 </main>
 
 {#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes(page.url.pathname)}
-  <Toc {headingSelector} activeHeadingScrollOffset={200} blurParams={{ duration: 400 }} />
+  <Toc {headingSelector} />
 {/if}
 
 <style>

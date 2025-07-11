@@ -7,7 +7,7 @@
   let { style = null }: Props = $props()
 
   const routes = Object.keys(
-    import.meta.glob(`/src/routes/*demos*/*/+page*.{svx,md,svelte}`),
+    import.meta.glob(`/src/routes/*demos*/*/+page*.{md,svelte}`),
   ).map((filename) => filename.split(`/`)[4])
 
   let is_current = $derived((path: string) => {

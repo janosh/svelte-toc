@@ -8,9 +8,9 @@ export default defineConfig(({ mode }) => ({
   test: {
     environment: `jsdom`,
     css: true,
+    include: [`tests/vitest/**/*.test.ts`],
     coverage: {
       reporter: [`text`, `json-summary`],
-      include: [`src/lib/Toc.svelte`],
     },
   },
 

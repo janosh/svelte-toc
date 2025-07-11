@@ -12,7 +12,7 @@ describe(`Toc`, () => {
   test.each([
     [`Custom title`, `h2`],
     [`Another custom title`, `strong`],
-  ])(`renders title with titleTag`, async (title, titleTag) => {
+  ])(`renders title with titleTag`, (title, titleTag) => {
     mount(Toc, { target: document.body, props: { title, titleTag } })
 
     expect(doc_query(titleTag).textContent).toBe(title)
@@ -21,7 +21,7 @@ describe(`Toc`, () => {
   test.each([
     [`Title with classes`, `h2`],
     [`Custom title with classes`, `h3`],
-  ])(`title element has expected CSS classes`, async (title, titleTag) => {
+  ])(`title element has expected CSS classes`, (title, titleTag) => {
     mount(Toc, { target: document.body, props: { title, titleTag } })
 
     const title_node = doc_query(titleTag)
@@ -34,7 +34,7 @@ describe(`Toc`, () => {
     [
       `body > :is(h1, h2, h3, h4, h5, h6)`,
       6,
-      [...Array(6).keys()].map((lvl) => `Heading ${lvl + 1}`),
+      Array.from({ length: 6 }, (_, lvl) => `Heading ${lvl + 1}`),
     ],
     [`h1:not(.toc-exclude)`, 0, []],
   ])(
@@ -102,7 +102,8 @@ describe(`Toc`, () => {
       if (warnOnEmpty) {
         await tick() // don't move this tick() outside, seems to cause console.calls
         //  to pollute the other test if applied to warnOnEmpty=false
-        const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
+        const msg =
+          `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
         expect(console.warn).toHaveBeenCalledWith(msg)
       } else {
         expect(console.warn).not.toHaveBeenCalled()
@@ -124,7 +125,7 @@ describe(`Toc`, () => {
     const toc_list = doc_query(`aside.toc > nav > ol`)
     expect(toc_list.children.length).toBe(3)
 
-    const lis = [...toc_list.children] as HTMLLIElement[]
+    const lis = Array.from(toc_list.children) as HTMLLIElement[]
     expect(lis[0].style.marginLeft).toBe(`0em`)
     expect(lis[1].style.marginLeft).toBe(`1em`)
     expect(lis[2].style.marginLeft).toBe(`2em`)
@@ -144,9 +145,7 @@ describe(`Toc`, () => {
         })
         await tick()
 
-        const matches = heading_levels.filter((lvl) =>
-          [2, 3, 4].includes(lvl),
-        ).length
+        const matches = heading_levels.filter((lvl) => [2, 3, 4].includes(lvl)).length
         if (matches >= minItems) {
           const toc_list = doc_query(`aside.toc > nav > ol`)
 
@@ -173,8 +172,8 @@ describe(`Toc`, () => {
     `should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
     async (smaller, breakpoint, larger) => {
       const set_window_width = (width: number) => {
-        window.innerWidth = width
-        window.dispatchEvent(new Event(`resize`))
+        globalThis.innerWidth = width
+        globalThis.dispatchEvent(new Event(`resize`))
       }
 
       mount(Toc, {
@@ -197,7 +196,7 @@ describe(`Toc`, () => {
   )
 
   test(`onOpen handler receives correct open value`, async () => {
-    window.innerWidth = 600
+    globalThis.innerWidth = 600
     document.body.innerHTML = `
       <h2>Heading 1</h2>
       <h2>Heading 2</h2>
@@ -224,7 +223,7 @@ describe(`Toc`, () => {
   })
 
   test(`should toggle mobile ToC visibility`, async () => {
-    window.innerWidth = 600
+    globalThis.innerWidth = 600
     document.body.innerHTML = `
       <h2>Heading 1</h2>
       <h2>Heading 2</h2>
@@ -251,11 +250,12 @@ describe(`Toc`, () => {
 
   test(`active heading is scrolled into view and highlighted when opening ToC on mobile`, async () => {
     const n_headings = 100
-    document.body.innerHTML = [...Array(n_headings)]
+    document.body.innerHTML = Array(n_headings)
+      .fill(0)
       .map((_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`)
       .join(`\n`)
 
-    window.innerWidth = 600
+    globalThis.innerWidth = 600
 
     mount(Toc, { target: document.body, props: { open: true } })
     await tick()
@@ -281,17 +281,17 @@ describe(`Toc`, () => {
         const toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
         expect(toc_items.length).toBe(4)
 
-        const initial_active = doc_query(`aside.toc > nav > ol > li.active`)!
+        const initial_active = doc_query(`aside.toc > nav > ol > li.active`)
         expect(initial_active).not.toBeNull()
 
-        const all_items = [
-          ...document.querySelectorAll(`aside.toc > nav > ol > li`),
-        ]
+        const all_items = Array.from(
+          document.querySelectorAll(`aside.toc > nav > ol > li`),
+        )
         const initial_active_idx = all_items.indexOf(initial_active)
 
-        window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
 
-        const after_down = doc_query(`aside.toc > nav > ol > li.active`)!
+        const after_down = doc_query(`aside.toc > nav > ol > li.active`)
         expect(after_down).not.toBeNull()
 
         const after_down_idx = all_items.indexOf(after_down)
@@ -302,16 +302,16 @@ describe(`Toc`, () => {
         )
         expect(after_down_idx).toBe(expected_idx)
 
-        window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
+        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
 
-        const after_up = doc_query(`aside.toc > nav > ol > li.active`)!
+        const after_up = doc_query(`aside.toc > nav > ol > li.active`)
         expect(after_up).not.toBeNull()
 
         const after_up_idx = all_items.indexOf(after_up)
         expect(after_up_idx).toBe(initial_active_idx)
       } else {
         // If ToC is closed, no items should be active and arrow keys should not navigate
-        window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
         // expect no active item
         // TODO: fix this test
         // expect(doc_query(`aside.toc > nav > ol > li.active`)).toBeNull()
@@ -336,7 +336,7 @@ describe(`Toc`, () => {
       const active_item = doc_query(`aside.toc ol li.active`)
       expect(active_item).toBeTruthy()
 
-      window.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
+      globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
 
       expect(scroll_into_view_mock).toHaveBeenCalledWith({
         behavior: `instant`,
@@ -349,7 +349,7 @@ describe(`Toc`, () => {
     `Escape key closes ToC on mobile if reactToKeys=%s includes 'Escape'`,
     async (reactToKeys) => {
       document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
-      window.innerWidth = 600
+      globalThis.innerWidth = 600
       const onOpen = vi.fn()
 
       mount(Toc, {
@@ -361,7 +361,7 @@ describe(`Toc`, () => {
       onOpen.mockClear() // Clear previous calls
 
       // Simulate pressing Escape
-      window.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+      globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
       await tick()
 
       if (reactToKeys.includes(`Escape`)) {
@@ -475,7 +475,7 @@ describe(`Style and Class Props Application`, () => {
 
   const ensure_mobile_button_is_visible = () => {
     ensure_content_for_toc_elements() // Need headings for the button to appear
-    window.innerWidth = 500 // Simulate mobile (default breakpoint is 1000px)
+    globalThis.innerWidth = 500 // Simulate mobile (default breakpoint is 1000px)
   }
 
   const test_cases = [
@@ -559,8 +559,7 @@ describe(`Style and Class Props Application`, () => {
       value: `padding-left: 10px;`,
       selector: `aside.toc nav ol li`,
       check: `style`,
-      setupFn: () =>
-        ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+      setupFn: () => ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
     },
     {
       elementName: `li`,
@@ -568,8 +567,7 @@ describe(`Style and Class Props Application`, () => {
       value: `custom-li-class`,
       selector: `aside.toc nav ol li`,
       check: `class`,
-      setupFn: () =>
-        ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+      setupFn: () => ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
     },
     // Open button tests
     {

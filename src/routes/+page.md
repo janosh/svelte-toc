@@ -1,6 +1,6 @@
 <script lang="ts">
   import Readme from '$root/readme.md'
-  import { DemoNav } from '$site'
+  import { DemoNav } from '../site'
 </script>
 
 <Readme>

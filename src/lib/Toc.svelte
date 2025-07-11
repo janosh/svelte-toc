@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
+  import { untrack } from 'svelte'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
@@ -24,8 +25,7 @@
     nav?: HTMLElement | undefined
     open?: boolean
     openButtonLabel?: string
-    // prettier-ignore
-    reactToKeys?: string[];
+    reactToKeys?: string[]
     scrollBehavior?: `auto` | `smooth`
     title?: string
     titleTag?: string
@@ -115,20 +115,27 @@
   function update_toc_headings() {
     if (typeof document === `undefined`) return // for SSR
 
-    headings = [...document.querySelectorAll(headingSelector)] as HTMLHeadingElement[]
-    set_active_heading()
-    if (headings.length === 0) {
-      if (warnOnEmpty) {
-        console.warn(
-          `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
-            autoHide ? `Hiding` : `Showing empty`
-          } table of contents.`,
-        )
+    const new_headings = Array.from(
+      document.querySelectorAll(headingSelector),
+    ) as HTMLHeadingElement[]
+
+    // Use untrack to avoid creating dependencies on the state we're about to modify
+    untrack(() => {
+      headings = new_headings
+      set_active_heading()
+      if (headings.length === 0) {
+        if (warnOnEmpty) {
+          console.warn(
+            `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
+              autoHide ? `Hiding` : `Showing empty`
+            } table of contents.`,
+          )
+        }
+        if (autoHide) hide = true
+      } else if (hide && autoHide) {
+        hide = false
       }
-      if (autoHide) hide = true
-    } else if (hide && autoHide) {
-      hide = false
-    }
+    })
   }
 
   $effect(update_toc_headings)
@@ -164,7 +171,9 @@
   // click and key handler for ToC items that scrolls to the heading
   const li_click_key_handler =
     (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
-      if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) return
+      if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) {
+        return
+      }
       open = false
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
@@ -173,11 +182,16 @@
 
       if (flashClickedHeadingsFor) {
         node.classList.add(`toc-clicked`)
-        setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
+        setTimeout(
+          () => node.classList.remove(`toc-clicked`),
+          flashClickedHeadingsFor,
+        )
       }
     }
 
-  function scroll_to_active_toc_item(behavior: `auto` | `smooth` | `instant` = `smooth`) {
+  function scroll_to_active_toc_item(
+    behavior: `auto` | `smooth` | `instant` = `smooth`,
+  ) {
     if (keepActiveTocItemInView && activeTocLi && nav) {
       // scroll the active ToC item into the middle of the ToC container
       const top = activeTocLi?.offsetTop - nav.offsetHeight / 2
@@ -207,14 +221,14 @@
       // ignore keyboard events when ToC is closed on mobile or when ToC is not currently hovered on desktop
       (!desktop && !open) ||
       (desktop && !toc_is_hovered)
-    )
-      return
+    ) return
 
     event.preventDefault()
 
     if (event.key === `Escape` && open) open = false
-    else if (event.key === `Tab` && !aside?.contains(document.activeElement)) open = false
-    else if (activeTocLi) {
+    else if (event.key === `Tab` && !aside?.contains(document.activeElement)) {
+      open = false
+    } else if (activeTocLi) {
       if (event.key === `ArrowDown`) {
         const next = activeTocLi.nextElementSibling
         if (next) activeTocLi = next as HTMLLIElement
@@ -330,8 +344,8 @@
     box-sizing: border-box;
     height: max-content;
     overflow-wrap: break-word;
-    font: var(--toc-font, 10pt sans-serif);
-    min-width: var(--toc-min-width);
+    font-size: var(--toc-font-size, 0.7em);
+    min-width: var(--toc-min-width, 15em);
     width: var(--toc-width);
     z-index: var(--toc-z-index);
   }
@@ -339,7 +353,7 @@
     overflow: var(--toc-overflow, auto);
     overscroll-behavior: contain;
     max-height: var(--toc-max-height, 90vh);
-    padding: var(--toc-padding, 1em 1em 0);
+    padding: var(--toc-padding, 1em 1em 0 3em);
     position: relative;
   }
   :where(aside.toc > nav > ol) {
@@ -349,8 +363,8 @@
   }
   :where(.toc-title) {
     padding: var(--toc-title-padding);
-    margin: var(--toc-title-margin);
-    font: var(--toc-title-font);
+    margin: var(--toc-title-margin, 1em 0);
+    font-size: var(--toc-title-font-size, initial);
   }
   :where(aside.toc > nav > ol > li) {
     cursor: pointer;
