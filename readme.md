@@ -110,15 +110,13 @@ Full list of props and bindable variables for this component (all of them option
    Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
 
 1. ```ts
-   getHeadingLevels = (node: HTMLHeadingElement): number =>
-     Number(node.nodeName[1]) // get the number from H1, H2, ...
+   getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]) // get the number from H1, H2, ...
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
 
 1. ```ts
-   getHeadingTitles = (node: HTMLHeadingElement): string =>
-     node.textContent ?? ``
+   getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``
    ```
 
    Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.

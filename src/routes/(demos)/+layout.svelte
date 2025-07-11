@@ -1,19 +1,19 @@
 <script lang="ts">
   import { name } from '$root/package.json'
-  import { DemoNav } from '$site'
   import type { Snippet } from 'svelte'
+  import { DemoNav } from '../../site'
 
   interface Props {
-    children?: Snippet;
+    children?: Snippet
   }
-  let { children }: Props = $props();
+  let { children }: Props = $props()
 </script>
 
 <h1>
   <img src="favicon.svg" alt={name} height="50" width="50" />&ensp;Svelte MultiSelect
 </h1>
 
-<DemoNav style="place-content: center;" />
+<DemoNav style="place-content: center" />
 
 {@render children?.()}
 
