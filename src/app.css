@@ -3,24 +3,19 @@
 
   --toc-mobile-bg: #484452;
   --toc-mobile-btn-color: white;
-  --toc-min-width: 15em;
-  --toc-desktop-max-width: 15em;
-  --toc-font-size: 11pt;
+  --toc-min-width: 18em;
+  --toc-desktop-max-width: 30em;
 
-  --zoo-github-corner-color: var(--bg);
-  --zoo-github-corner-bg: white;
+  --github-corner-color: var(--bg);
+  --github-corner-bg: white;
 }
 body {
   background: var(--bg);
   padding: min(3em, 5vw);
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-  margin: auto;
   color: #eee;
   font-size: 12pt;
-}
-body > div {
   display: flex;
-  margin: auto;
   place-content: center;
 }
 main {

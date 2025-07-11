@@ -27,7 +27,7 @@ const { default: pkg } = await import(`./package.json`, {
   with: { type: `json` },
 })
 const defaults = {
-  Wrapper: `svelte-zoo/CodeExample.svelte`,
+  Wrapper: [`svelte-multiselect`, `CodeExample`],
   pkg: pkg.name,
   repo: pkg.repository,
 }
@@ -35,24 +35,16 @@ const remarkPlugins = [[mdsvexamples, { defaults }]]
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
-  extensions: [`.svelte`, `.svx`, `.md`],
+  extensions: [`.svelte`, `.md`],
 
   preprocess: [
     preprocess(),
-    mdsvex({ rehypePlugins, remarkPlugins, extensions: [`.svx`, `.md`] }),
+    mdsvex({ rehypePlugins, remarkPlugins, extensions: [`.md`] }),
   ],
 
   kit: {
     adapter: adapter(),
 
-    alias: {
-      $root: `.`,
-      $site: `src/site`,
-    },
-  },
-
-  compilerOptions: {
-    // enable direct prop access for vitest unit tests
-    accessors: Boolean(process.env.TEST),
+    alias: { $root: `.` },
   },
 }

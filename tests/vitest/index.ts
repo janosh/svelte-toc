@@ -3,7 +3,7 @@ import { beforeEach } from 'vitest'
 beforeEach(() => {
   document.body.innerHTML = ``
   // reset window width
-  window.innerWidth = 1024
+  globalThis.innerWidth = 1024
 })
 
 export function doc_query<T extends HTMLElement>(selector: string): T {

@@ -249,7 +249,7 @@ You can also check out the Java tutorials and user guides at [https://code.visua
 
 ### Jupyter
 
-**Performance improvements**
+#### Performance improvements
 
 There were a number of performance improvements made to the startup of Jupyter kernels, specifically `Python`. Users who have previously opened a notebook will see a 2x speedup when starting a kernel. Restarting `Python` kernels should also be faster.
 
@@ -261,7 +261,7 @@ For more details on the changes made to improve the performance, you can review 
 - Avoid looking for IPyKernel when we've found it once before. ([#8196](https://github.com/microsoft/vscode-jupyter/issues/8196))
 - Avoid unnecessarily searching for `Jupyter` packages when `Jupyter` runtime isn't required to start kernels. ([#8350](https://github.com/microsoft/vscode-jupyter/issues/8350), [#8352](https://github.com/Microsoft/vscode-jupyter/issues/8352))
 
-**Improvements in handling kernel failures**
+#### Improvements in handling kernel failures
 
 A diagnostic message along with a Quick Fix has been added to warn about the usage of `!pip install` when installing Python packages. The Quick Fix will help users choose the right command `%pip install`.
 
@@ -269,7 +269,7 @@ Several improvements have been made to provide better and more meaningful error 
 
 ### Python
 
-**Limited support for untrusted and virtual workspaces**
+#### Limited support for untrusted and virtual workspaces
 
 The Python extension now has limited support for untrusted workspaces (see [Workspace Trust](https://code.visualstudio.com/docs/editor/workspace-trust#_extensions)) or is on a virtual file system (for example, if a remote GitHub repository is opened). Only partial IntelliSense is provided in such cases and other features of the extension are not available:
 
@@ -279,7 +279,7 @@ The Python extension now has limited support for untrusted workspaces (see [Work
 
 The language item in Status bar is updated to indicate these situations:
 
-**Module rename refactoring**
+#### Module rename refactoring
 
 You can now more easily rename modules with the Python and Pylance extensions. Once you rename a Python module, you'll be prompted to choose whether you'd like to change all imports and references throughout your code. If you're not sure, you can first preview what the changes will look like before you make the decision. Once you're confident, you can select **Apply Refactoring** or **Discard Refactoring** to not have the proposed changes applied.
 
@@ -325,13 +325,13 @@ A detailed migration guide and sample migrations can be found in [issue #136964]
 
 This iteration, we are finalizing a couple of APIs for the QuickPick in VS Code.
 
-**QuickPickItem inline buttons**
+#### QuickPickItem inline buttons
 
 Being able to provide rich input experiences is a goal of our extension API and using the familiarity of VS Code's Quick Pick allows for powerful yet simple UI flows. One addition is that extensions can now add buttons to individual `QuickPickItem`s.
 
 Clicking on a button triggers the `onDidTriggerItemButton` event that exists on a `QuickPick` object. We look forward to seeing how you use these buttons in your extensions.
 
-**Ability to keep scroll position when updating items**
+#### Ability to keep scroll position when updating items
 
 Along with the ability to add buttons to `QuickPickItem`s, you may also want to keep the scroll position when updating the items. This is a common use case for extensions who want to:
 
@@ -345,7 +345,7 @@ The `keepScrollPosition` property on the `QuickPick` object that comes back from
 
 This iteration, we are finalizing several APIs related to authentication in VS Code.
 
-**Force the creation of a new session**
+#### Force the creation of a new session
 
 Sometimes, when you get a session using `authentication.getSession()`, it may be valid for some resources but not valid for others, and by going through the sign-in flow again, this situation can be fixed.
 
@@ -357,7 +357,7 @@ In this example, the GitHub Authentication provider won't know the difference be
 
 You can also specify an object with a `detail` string, if you want to show a more descriptive message to the user.
 
-**Silently retrieve a session if an extension has one**
+#### Silently retrieve a session if an extension has one
 
 A common pattern we've seen is that some extensions, when they activate, will check to see if they have an authentication session available. If so, they will use it to pre-load data and do other tasks ahead of time to speed up performance later on. The downside of this was that if a user hasn't given that extension access to an authentication session, a badge would be displayed on the account menu and an item in the menu will be added asking the user to sign in.
 
@@ -367,17 +367,17 @@ This is fine for some cases, but in others it's not desirable and clutters the s
 
 ### Settings editor improvements
 
-**Ordered settings**
+#### Ordered settings
 
 Individual settings can now be ordered with the `order` field. Ordered settings always come before unordered ones within the same category, and the ordering is relative.
 
-**Ungrouped category support**
+#### Ungrouped category support
 
 Settings can also be grouped under the main extension header instead of a specific category. To do that, set the category title of one of the categories to be the same as the extension display name.
 
 Notice in the example below that the **Conf** > **Language: Show Size** setting is directly under the **Configuration Sample** header.
 
-**Support for number and integer objects**
+#### Support for number and integer objects
 
 Objects with non-nullable number/integer values are now supported in the Settings editor.
 
