@@ -1,6 +1,18 @@
 ### Changelog
 
-All notable changes to this project will be documented in this file. Dates are displayed in UTC.
+#### [v0.6.2](https://github.com/janosh/svelte-toc/compare/v0.6.1...v0.6.2)
+
+> 11 July 2025
+
+- Update documentation to be in sync with `Toc.svelte` and fix minor bugs by @Zlendy in https://github.com/janosh/svelte-toc/pull/63
+- Swap `node` for `deno` by @janosh in https://github.com/janosh/svelte-toc/pull/65
+- Update deps, add `vitest` and `playwright` tests, add `svelte-check` and `svelte-package` scripts, add `eslint` and `eslint-plugin-svelte` to `devDependencies`
+
+##### New Contributors
+
+- @Zlendy made their first contribution in https://github.com/janosh/svelte-toc/pull/63
+
+**Full Changelog**: https://github.com/janosh/svelte-toc/compare/v0.6.1...v0.6.2
 
 #### [v0.6.1](https://github.com/janosh/svelte-toc/compare/v0.6.0...v0.6.1)
 
