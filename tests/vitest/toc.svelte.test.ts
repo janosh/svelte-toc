@@ -4,8 +4,10 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
 beforeAll(() => {
-  // Mock animate API
-  Element.prototype.animate = vi.fn().mockImplementation(() => ({}))
+  // Mock animate API with cancel method
+  Element.prototype.animate = vi.fn().mockImplementation(() => ({
+    cancel: vi.fn(),
+  }))
 })
 
 describe(`Toc`, () => {

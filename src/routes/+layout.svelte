@@ -1,20 +1,20 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
+  import { resolve } from '$app/paths'
   import { page } from '$app/state'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
-  import { type Snippet } from 'svelte'
+  import type { Snippet } from 'svelte'
   import { CmdPalette, CopyButton, GitHubCorner } from 'svelte-multiselect'
   import '../app.css'
 
-  interface Props {
-    children?: Snippet
-  }
-  let { children }: Props = $props()
+  let { children }: { children?: Snippet<[]> } = $props()
 
   let headingSelector = $derived(
-    { '/contributing': `main > h2`, '/changelog': `main > h4` }[page.url.pathname] ??
-      `main :where(h2, h3)`,
+    {
+      '/contributing': `main > h2`,
+      '/changelog': `main > h4`,
+    }[page.url.pathname as string] ?? `main :where(h2, h3)`,
   )
 
   const routes = Object.keys(
@@ -28,7 +28,7 @@
 <CmdPalette
   actions={routes.map(({ route }) => ({
     label: route,
-    action: () => goto(route),
+    action: () => goto(resolve(route)),
   }))}
   --sms-options-bg="rgba(0, 0, 0, 0.7)"
 />
@@ -36,7 +36,7 @@
 <CopyButton global />
 
 {#if !page.error && page.url.pathname !== `/`}
-  <a href="." aria-label="Back to index page">&laquo; home</a>
+  <a href={resolve(`/`)} aria-label="Back to index page">&laquo; home</a>
 {/if}
 
 <main>

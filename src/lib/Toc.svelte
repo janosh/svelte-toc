@@ -1,10 +1,55 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { untrack } from 'svelte'
+  import type { HTMLAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
   import { MenuIcon } from '.'
 
-  interface Props {
+  let {
+    activeHeading = $bindable(null),
+    activeHeadingScrollOffset = 100,
+    activeTocLi = $bindable(null),
+    aside = $bindable(),
+    breakpoint = 1000,
+    desktop = $bindable(true),
+    flashClickedHeadingsFor = 1500,
+    getHeadingIds = (node: HTMLHeadingElement): string => node.id,
+    getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
+    getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
+    headings = $bindable([]),
+    headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
+    hide = $bindable(false),
+    autoHide = true,
+    keepActiveTocItemInView = true,
+    minItems = 0,
+    nav = $bindable(),
+    open = $bindable(false),
+    openButtonLabel = `Open table of contents`,
+    reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
+    scrollBehavior = `smooth`,
+    title = `On this page`,
+    titleTag = `h2`,
+    tocItems = $bindable([]),
+    warnOnEmpty = false,
+    blurParams = { duration: 200 },
+    open_toc_icon,
+    title_snippet,
+    toc_item,
+    onOpen,
+    aside_style = ``,
+    aside_class = ``,
+    nav_style = ``,
+    nav_class = ``,
+    title_element_style = ``,
+    title_element_class = ``,
+    ol_style = ``,
+    ol_class = ``,
+    li_style = ``,
+    li_class = ``,
+    open_button_style = ``,
+    open_button_class = ``,
+    ...rest
+  }: {
     activeHeading?: HTMLHeadingElement | null
     activeHeadingScrollOffset?: number
     activeTocLi?: HTMLLIElement | null
@@ -49,51 +94,7 @@
     li_class?: string
     open_button_style?: string
     open_button_class?: string
-  }
-  let {
-    activeHeading = $bindable(null),
-    activeHeadingScrollOffset = 100,
-    activeTocLi = $bindable(null),
-    aside = $bindable(undefined),
-    breakpoint = 1000,
-    desktop = $bindable(true),
-    flashClickedHeadingsFor = 1500,
-    getHeadingIds = (node: HTMLHeadingElement): string => node.id,
-    getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
-    getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
-    headings = $bindable([]),
-    headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
-    hide = $bindable(false),
-    autoHide = true,
-    keepActiveTocItemInView = true,
-    minItems = 0,
-    nav = $bindable(undefined),
-    open = $bindable(false),
-    openButtonLabel = `Open table of contents`,
-    reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
-    scrollBehavior = `smooth`,
-    title = `On this page`,
-    titleTag = `h2`,
-    tocItems = $bindable([]),
-    warnOnEmpty = false,
-    blurParams = { duration: 200 },
-    open_toc_icon,
-    title_snippet,
-    toc_item,
-    onOpen,
-    aside_style = ``,
-    aside_class = ``,
-    nav_style = ``,
-    nav_class = ``,
-    title_element_style = ``,
-    title_element_class = ``,
-    ol_style = ``,
-    ol_class = ``,
-    li_style = ``,
-    li_class = ``,
-    open_button_style = ``,
-    open_button_class = ``,
-  }: Props = $props()
+  } & HTMLAttributes<HTMLElementTagNameMap[`aside`]> = $props()
 
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
@@ -132,9 +133,7 @@
           )
         }
         if (autoHide) hide = true
-      } else if (hide && autoHide) {
-        hide = false
-      }
+      } else if (hide && autoHide) hide = false
     })
   }
 
@@ -267,6 +266,7 @@
 />
 
 <aside
+  {...rest}
   class="toc {aside_class || null}"
   class:desktop
   class:hidden={hide}
@@ -348,6 +348,7 @@
     min-width: var(--toc-min-width, 15em);
     width: var(--toc-width);
     z-index: var(--toc-z-index);
+    text-wrap: var(--toc-text-wrap, balance);
   }
   :where(aside.toc > nav) {
     overflow: var(--toc-overflow, auto);
@@ -376,12 +377,12 @@
     font: var(--toc-li-font);
   }
   :where(aside.toc > nav > ol > li:hover) {
-    color: var(--toc-li-hover-color, cornflowerblue);
+    color: var(--toc-li-hover-color);
     background: var(--toc-li-hover-bg);
   }
   :where(aside.toc > nav > ol > li.active) {
-    background: var(--toc-active-bg, cornflowerblue);
-    color: var(--toc-active-color, white);
+    background: var(--toc-active-bg);
+    color: var(--toc-active-color);
     font: var(--toc-active-li-font);
     border: var(--toc-active-border);
     border-width: var(--toc-active-border-width);
