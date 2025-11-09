@@ -1,14 +1,17 @@
 <script lang="ts">
   import Readme from '$root/readme.md'
-  import { DemoNav } from '../site'
+  import { Nav } from 'svelte-multiselect'
+  import { demo_routes } from './index'
 </script>
 
 <Readme>
-  <svelte:fragment slot="demo-nav">
-    <h2>📝 &thinsp; Examples</h2>
-    <p>Demos of specific features of <code>svelte-toc</code>.</p>
-    <DemoNav />
-  </svelte:fragment>
+
+## 📝 &thinsp; Examples
+
+Demos of specific `<Toc />` features.
+
+<Nav routes={demo_routes} />
+
 </Readme>
 
 <style>

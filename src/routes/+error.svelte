@@ -16,7 +16,8 @@
   {#if page.status >= 500}
     <p>
       If page reloading doesn't help, please raise an issue on
-      <a href="{homepage}/issues" target="_blank" rel="noreferrer">GitHub</a>. Thanks! 🙏
+      <a href="{homepage}/issues" target="_blank" rel="noreferrer noopener">GitHub</a>.
+      Thanks! 🙏
     </p>
   {/if}
   {#if online === false}
@@ -26,7 +27,7 @@
   {/if}
 
   <p>
-    Back to <a href=".">
+    Back to <a href="/">
       <img src="favicon.svg" alt={name} height="30" />
       landing page
     </a>.

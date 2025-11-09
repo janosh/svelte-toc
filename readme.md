@@ -7,7 +7,6 @@
 
 [![Tests](https://github.com/janosh/svelte-toc/actions/workflows/test.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/test.yml)
 [![GitHub Pages](https://github.com/janosh/svelte-toc/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/janosh/svelte-toc/actions/workflows/gh-pages.yml)
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/janosh/svelte-toc/main.svg)](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
 [![NPM version](https://img.shields.io/npm/v/svelte-toc?color=blue&logo=NPM)](https://npmjs.com/package/svelte-toc)
 [![Open in StackBlitz](https://img.shields.io/badge/Open%20in-StackBlitz-darkblue?logo=stackblitz)](https://stackblitz.com/github/janosh/svelte-toc)
 [![REPL](https://img.shields.io/badge/Svelte-REPL-blue?label=Try%20it!)](https://svelte.dev/repl/e292ff8935dc4f5d97e5373f9f611c1b)
@@ -22,7 +21,7 @@ Sticky responsive table of contents component. <strong class="hide-in-docs"><a h
 npm install --dev svelte-toc
 ```
 
-<slot name="demo-nav" />
+<slot />
 
 ## 📙 &nbsp; Usage
 
@@ -293,7 +292,7 @@ The HTML structure of this component is
   - `background: var(--toc-li-hover-bg)`
 - `aside.toc > nav > ol > li.active`
   - `background: var(--toc-active-bg, cornflowerblue)`
-  - `color: var(--toc-active-color, white)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
+  - `color: var(--toc-active-color)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `font: var(--toc-active-li-font)`
   - `border: var(--toc-active-border)`
   - `border-width: var(--toc-active-border-width)`: Allows setting top, right, bottom, left border widths separately.
