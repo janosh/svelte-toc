@@ -484,7 +484,7 @@ describe(`Style and Class Props Application`, () => {
     // Aside tests
     {
       elementName: `aside`,
-      propName: `aside_style`,
+      propName: `asideStyle`,
       value: `color: rgb(255, 0, 0);`,
       selector: `aside.toc`,
       check: `style`,
@@ -492,7 +492,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `aside`,
-      propName: `aside_class`,
+      propName: `asideClass`,
       value: `custom-aside-class`,
       selector: `aside.toc`,
       check: `class`,
@@ -501,7 +501,7 @@ describe(`Style and Class Props Application`, () => {
     // Nav tests
     {
       elementName: `nav`,
-      propName: `nav_style`,
+      propName: `navStyle`,
       value: `background-color: rgb(0, 0, 255);`,
       selector: `aside.toc nav`,
       check: `style`,
@@ -510,7 +510,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `nav`,
-      propName: `nav_class`,
+      propName: `navClass`,
       value: `custom-nav-class`,
       selector: `aside.toc nav`,
       check: `class`,
@@ -520,7 +520,7 @@ describe(`Style and Class Props Application`, () => {
     // Title element tests
     {
       elementName: `title`,
-      propName: `title_element_style`,
+      propName: `titleElementStyle`,
       value: `font-style: italic;`,
       selector: `aside.toc nav .toc-title`,
       check: `style`,
@@ -529,7 +529,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `title`,
-      propName: `title_element_class`,
+      propName: `titleElementClass`,
       value: `custom-title-class`,
       selector: `aside.toc nav .toc-title`,
       check: `class`,
@@ -540,7 +540,7 @@ describe(`Style and Class Props Application`, () => {
     // OL tests
     {
       elementName: `ol`,
-      propName: `ol_style`,
+      propName: `olStyle`,
       value: `list-style-type: square;`,
       selector: `aside.toc nav ol`,
       check: `style`,
@@ -548,7 +548,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `ol`,
-      propName: `ol_class`,
+      propName: `olClass`,
       value: `custom-ol-class`,
       selector: `aside.toc nav ol`,
       check: `class`,
@@ -557,7 +557,7 @@ describe(`Style and Class Props Application`, () => {
     // LI tests
     {
       elementName: `li`,
-      propName: `li_style`,
+      propName: `liStyle`,
       value: `padding-left: 10px;`,
       selector: `aside.toc nav ol li`,
       check: `style`,
@@ -565,7 +565,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `li`,
-      propName: `li_class`,
+      propName: `liClass`,
       value: `custom-li-class`,
       selector: `aside.toc nav ol li`,
       check: `class`,
@@ -574,7 +574,7 @@ describe(`Style and Class Props Application`, () => {
     // Open button tests
     {
       elementName: `open button`,
-      propName: `open_button_style`,
+      propName: `openButtonStyle`,
       value: `border: 1px solid rgb(0, 128, 0);`,
       selector: `aside.toc > button`,
       check: `style`,
@@ -583,7 +583,7 @@ describe(`Style and Class Props Application`, () => {
     },
     {
       elementName: `open button`,
-      propName: `open_button_class`,
+      propName: `openButtonClass`,
       value: `custom-button-class`,
       selector: `aside.toc > button`,
       check: `class`,
@@ -626,8 +626,8 @@ describe(`Style and Class Props Application`, () => {
             style_attribute,
             `${selector} style should contain '${value}'`,
           ).toContain(value)
-          // Special check for li_style to ensure existing styles are preserved
-          if (propName === `li_style`) {
+          // Special check for liStyle to ensure existing styles are preserved
+          if (propName === `liStyle`) {
             expect(
               style_attribute,
               `${selector} style should contain 'margin-left'`,

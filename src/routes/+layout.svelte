@@ -6,6 +6,7 @@
   import { repository } from '$root/package.json'
   import type { Snippet } from 'svelte'
   import { CmdPalette, CopyButton, GitHubCorner } from 'svelte-multiselect'
+  import { heading_anchors } from 'svelte-multiselect/heading-anchors'
   import '../app.css'
 
   let { children }: { children?: Snippet<[]> } = $props()
@@ -38,7 +39,7 @@
   <a href={resolve(`/`)} aria-label="Back to index page">&laquo; home</a>
 {/if}
 
-<main>
+<main {@attach heading_anchors()}>
   {@render children?.()}
 </main>
 

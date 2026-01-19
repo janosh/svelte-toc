@@ -1,9 +1,8 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { untrack } from 'svelte'
-  import type { HTMLAttributes } from 'svelte/elements'
+  import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
-  import { MenuIcon } from '.'
 
   let {
     activeHeading = $bindable(null),
@@ -32,22 +31,23 @@
     tocItems = $bindable([]),
     warnOnEmpty = false,
     blurParams = { duration: 200 },
-    open_toc_icon,
-    title_snippet,
-    toc_item,
+    openTocIcon,
+    titleSnippet,
+    tocItem,
     onOpen,
-    aside_style = ``,
-    aside_class = ``,
-    nav_style = ``,
-    nav_class = ``,
-    title_element_style = ``,
-    title_element_class = ``,
-    ol_style = ``,
-    ol_class = ``,
-    li_style = ``,
-    li_class = ``,
-    open_button_style = ``,
-    open_button_class = ``,
+    asideStyle = ``,
+    asideClass = ``,
+    navStyle = ``,
+    navClass = ``,
+    titleElementStyle = ``,
+    titleElementClass = ``,
+    olStyle = ``,
+    olClass = ``,
+    liStyle = ``,
+    liClass = ``,
+    openButtonStyle = ``,
+    openButtonClass = ``,
+    openButtonIconProps = {},
     ...rest
   }: {
     activeHeading?: HTMLHeadingElement | null
@@ -77,23 +77,24 @@
     tocItems?: HTMLLIElement[]
     warnOnEmpty?: boolean
     blurParams?: BlurParams | undefined
-    open_toc_icon?: Snippet
-    title_snippet?: Snippet
-    toc_item?: Snippet<[HTMLHeadingElement]>
+    openTocIcon?: Snippet
+    titleSnippet?: Snippet
+    tocItem?: Snippet<[HTMLHeadingElement]>
     // Add callback prop for open event
     onOpen?: (event: { open: boolean }) => void
-    aside_style?: string
-    aside_class?: string
-    nav_style?: string
-    nav_class?: string
-    title_element_style?: string
-    title_element_class?: string
-    ol_style?: string
-    ol_class?: string
-    li_style?: string
-    li_class?: string
-    open_button_style?: string
-    open_button_class?: string
+    asideStyle?: string
+    asideClass?: string
+    navStyle?: string
+    navClass?: string
+    titleElementStyle?: string
+    titleElementClass?: string
+    olStyle?: string
+    olClass?: string
+    liStyle?: string
+    liClass?: string
+    openButtonStyle?: string
+    openButtonClass?: string
+    openButtonIconProps?: SVGAttributes<SVGSVGElement>
   } & HTMLAttributes<HTMLElementTagNameMap[`aside`]> = $props()
 
   let window_width: number = $state(0)
@@ -267,14 +268,14 @@
 
 <aside
   {...rest}
-  class="toc {aside_class || null}"
+  class="toc {asideClass || null}"
   class:desktop
   class:hidden={hide}
   class:mobile={!desktop}
   bind:this={aside}
   hidden={hide}
   aria-hidden={hide}
-  style={aside_style || null}
+  style={asideStyle || null}
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
@@ -284,11 +285,16 @@
         open = true
       }}
       aria-label={openButtonLabel}
-      class={open_button_class || null}
-      style={open_button_style || null}
+      class={openButtonClass || null}
+      style={openButtonStyle || null}
     >
-      {#if open_toc_icon}{@render open_toc_icon()}{:else}
-        <MenuIcon width="1em" />
+      {#if openTocIcon}{@render openTocIcon()}{:else}
+        <!-- https://iconify.design/icon-sets/heroicons-solid/menu.html -->
+        <svg width="1em" {...openButtonIconProps} viewBox="0 0 20 20" fill="currentColor">
+          <path
+            d="M3 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm0 5a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1z"
+          />
+        </svg>
       {/if}
     </button>
   {/if}
@@ -296,39 +302,39 @@
     <nav
       transition:blur={blurParams}
       bind:this={nav}
-      class={nav_class || null}
-      style={nav_style || null}
+      class={navClass || null}
+      style={navStyle || null}
     >
       {#if title}
-        {#if title_snippet}
-          {@render title_snippet()}
+        {#if titleSnippet}
+          {@render titleSnippet()}
         {:else}
           <svelte:element
             this={titleTag}
-            class="toc-title toc-exclude {title_element_class || null}"
-            style={title_element_style || null}
+            class="toc-title toc-exclude {titleElementClass || null}"
+            style={titleElementStyle || null}
           >
             {title}
           </svelte:element>
         {/if}
       {/if}
-      <ol role="menu" class={ol_class || null} style={ol_style || null}>
+      <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const level = getHeadingLevels(heading)}
           {@const indent = level - minLevel}
           <li
             role="menuitem"
             class:active={heading === activeHeading}
-            class={li_class || null}
+            class={liClass || null}
             bind:this={tocItems[idx]}
-            style={li_style || null}
+            style={liStyle || null}
             style:margin-left="{indent}em"
             style:font-size="{Math.max(3 - indent * 0.1, 2)}ex"
             onclick={li_click_key_handler(heading)}
             onkeydown={li_click_key_handler(heading)}
           >
-            {#if toc_item}
-              {@render toc_item(heading)}
+            {#if tocItem}
+              {@render tocItem(heading)}
             {:else}
               {getHeadingTitles(heading)}
             {/if}
