@@ -1,5 +1,26 @@
 ### Changelog
 
+#### [v0.6.3](https://github.com/janosh/svelte-toc/compare/v0.6.2...v0.6.3)
+
+##### Breaking Changes
+
+- Renamed style/class props from snake_case to camelCase for consistency:
+  - `aside_style` → `asideStyle`, `aside_class` → `asideClass`
+  - `nav_style` → `navStyle`, `nav_class` → `navClass`
+  - `title_element_style` → `titleElementStyle`, `title_element_class` → `titleElementClass`
+  - `ol_style` → `olStyle`, `ol_class` → `olClass`
+  - `li_style` → `liStyle`, `li_class` → `liClass`
+  - `open_button_style` → `openButtonStyle`, `open_button_class` → `openButtonClass`
+  - `open_toc_icon` → `openTocIcon`, `title_snippet` → `titleSnippet`, `toc_item` → `tocItem`
+- Removed `MenuIcon` component export (now inlined in `Toc.svelte`)
+
+##### Changes
+
+- Replaced `rehype-slug` and `rehype-autolink-headings` with `heading_ids` and `heading_anchors` from `svelte-multiselect`
+- Added `openButtonIconProps` prop to customize the mobile menu icon SVG attributes
+- Fixed CSS selector for `.toc-clicked` to only apply to headings
+- Updated readme tests to work with Svelte 5 `$props()` syntax
+
 #### [v0.6.2](https://github.com/janosh/svelte-toc/compare/v0.6.1...v0.6.2)
 
 > 11 July 2025

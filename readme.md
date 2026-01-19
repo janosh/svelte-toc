@@ -176,12 +176,6 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
-   pageBody: string | HTMLElement = `body`
-   ```
-
-   Which DOM node to use as the `MutationObserver` root node. This is usually the page's `<main>` tag or `<body>` element. All headings to list in the ToC should be children of this root node. Use the closest parent node containing all headings for efficiency, especially if you have a lot of elements on the page that are on a separate branch of the DOM tree from the headings you want to list.
-
-1. ```ts
    reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
    ```
 
@@ -264,8 +258,9 @@ The HTML structure of this component is
 `Toc.svelte` offers the following CSS variables which can be [passed in directly as props](https://github.com/sveltejs/rfcs/pull/13):
 
 - `aside.toc`
-  - `font: var(--toc-font, 10pt sans-serif)`
-  - `min-width: var(--toc-min-width)`
+  - `font-size: var(--toc-font-size, 0.7em)`
+  - `min-width: var(--toc-min-width, 15em)`
+  - `text-wrap: var(--toc-text-wrap, balance)`
   - `width: var(--toc-width)`
   - `z-index: var(--toc-z-index)`: Applies on both mobile and desktop.
 - `aside.toc > nav`
@@ -279,7 +274,7 @@ The HTML structure of this component is
 - `.toc-title`
   - `padding: var(--toc-title-padding)`
   - `margin: var(--toc-title-margin)`
-  - `font: var(--toc-title-font)`
+  - `font-size: var(--toc-title-font-size, initial)`
 - `aside.toc > nav > ol > li`
   - `color: var(--toc-li-color)`
   - `border: var(--toc-li-border)`

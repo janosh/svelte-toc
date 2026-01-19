@@ -2,56 +2,61 @@ import src from '$lib/Toc.svelte?raw'
 import readme from '$root/readme.md?raw'
 import { expect, test } from 'vitest'
 
-const component = `Toc.svelte`
+// Extract prop names from Svelte 5 type definition block
+const source_props = (src.match(/}: \{([\s\S]*?)\} & HTMLAttributes/)?.[1] ?? ``)
+  .split(`\n`)
+  .map((line) => line.match(/^\s+(\w+)\??:/)?.[1])
+  .filter(Boolean) as string[]
 
-test.skip(`readme documents all props and their correct types and defaults`, () => {
-  for (const [idx, line] of src.split(`\n`).entries()) {
-    if (line.trim().startsWith(`export let `)) {
-      const prop = line.replace(`export let `, ``).split(` //`)[0].trim()
+// Extract prop names from readme (format: "1. ```ts\n   propName:")
+const readme_props = readme.split(`\n`).flatMap((line, idx, lines) =>
+  line.trim() === `1. \`\`\`ts` ? lines[idx + 1]?.match(/^\s+(\w+)/)?.[1] ?? [] : []
+)
 
-      const msg = `${component} has prop '${prop}' on line ${
-        idx + 1
-      } which is not in readme`
-      expect(readme, msg).to.contain(`1. \`\`\`ts\n   ${prop}`)
-    }
+// Extract unique CSS variable names (null coalesce for no matches)
+const extract_css_vars = (text: string) =>
+  [...new Set(text.match(/var\((--toc-[\w-]+)/g) ?? [])]
+    .map((match) => match.slice(4)) // remove "var("
+
+const source_css_vars = extract_css_vars(src)
+const readme_css_vars = extract_css_vars(readme)
+
+// Props intentionally not documented (snippets/style/class props)
+const style_class_props = [`aside`, `nav`, `titleElement`, `ol`, `li`, `openButton`]
+  .flatMap((el) => [`${el}Style`, `${el}Class`])
+const undocumented_props = new Set([
+  `openTocIcon`,
+  `titleSnippet`,
+  `tocItem`,
+  `onOpen`,
+  ...style_class_props,
+  `openButtonIconProps`,
+])
+
+test(`readme documents all props`, () => {
+  for (const prop of source_props.filter((p) => !undocumented_props.has(p))) {
+    expect(readme_props, `Toc.svelte prop '${prop}' not in readme`).toContain(prop)
   }
 })
 
-test.skip(`readme documents no non-existent props`, () => {
-  for (const [idx, line] of readme.split(`\n`).entries()) {
-    if (line.startsWith(`1. \`\`\`ts`)) {
-      const next_line = readme.split(`\n`)[idx + 1].trim()
-
-      const msg = `readme has prop '${next_line}' on line ${
-        idx + 1
-      } which is not in ${component}`
-      expect(src, msg).to.contain(next_line)
-    }
+test(`readme documents no non-existent props`, () => {
+  for (const prop of readme_props) {
+    expect(source_props, `readme prop '${prop}' not in Toc.svelte`).toContain(prop)
   }
 })
 
-test.skip(`readme documents all CSS variables`, () => {
-  for (const [idx, line] of src.split(`\n`).entries()) {
-    if (line.includes(`var(--`)) {
-      const css_var = line.trim().replace(`;`, ``)
-
-      const msg = `${component} has CSS variable '${css_var}' on line ${
-        idx + 1
-      } which is not in readme`
-      expect(readme, msg).to.contain(`- \`${css_var}\``)
-    }
+test(`readme documents all CSS variables`, () => {
+  for (const css_var of source_css_vars) {
+    expect(readme_css_vars, `Toc.svelte CSS var '${css_var}' not in readme`).toContain(
+      css_var,
+    )
   }
 })
 
-test.skip(`readme documents no non-existent CSS variables`, () => {
-  for (const [idx, line] of readme.split(`\n`).entries()) {
-    if (line.includes(`: var(--`)) {
-      const css_var = line.split(`\``)[1]
-
-      const msg = `readme documents CSS variable '${css_var}' on line ${
-        idx + 1
-      } which is not in ${component}`
-      expect(src, msg).to.contain(css_var)
-    }
+test(`readme documents no non-existent CSS variables`, () => {
+  for (const css_var of readme_css_vars) {
+    expect(source_css_vars, `readme CSS var '${css_var}' not in Toc.svelte`).toContain(
+      css_var,
+    )
   }
 })

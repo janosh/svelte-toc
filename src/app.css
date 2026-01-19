@@ -16,7 +16,10 @@ body {
   color: #eee;
   font-size: 12pt;
   display: flex;
-  place-content: center;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 main {
   max-width: 50em;
@@ -54,14 +57,14 @@ blockquote {
   transition: 0.3s;
   scroll-margin-top: 20px;
 }
-.toc-clicked {
+/* Highlight heading on fragment navigation or ToC click */
+:is(h2, h3, h4, h5, h6):is(:target, .toc-clicked) {
   color: cornflowerblue;
 }
 :is(ul, ol) > li {
   line-height: 3ex;
 }
-
-/* style heading anchors added by rehype-autolink-headings, see svelte.config.js */
+/* Heading anchor links (heading_anchors attachment) */
 :is(h2, h3, h4, h5, h6) a[aria-hidden='true'] {
   transition: 0.3s;
   margin-left: 4pt;
@@ -70,7 +73,6 @@ blockquote {
 :is(h2, h3, h4, h5, h6):hover a[aria-hidden='true'] {
   opacity: 1;
 }
-
 table {
   border-collapse: collapse;
 }

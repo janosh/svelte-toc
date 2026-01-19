@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from '$app/navigation'
-  import { resolve } from '$app/paths'
   import { page } from '$app/state'
   import { Toc } from '$lib'
   import { repository } from '$root/package.json'
   import type { Snippet } from 'svelte'
-  import { CmdPalette, CopyButton, GitHubCorner } from 'svelte-multiselect'
+  import { CmdPalette, CopyButton, GitHubCorner, Nav } from 'svelte-multiselect'
+  import { heading_anchors } from 'svelte-multiselect/heading-anchors'
   import '../app.css'
 
   let { children }: { children?: Snippet<[]> } = $props()
@@ -17,14 +17,19 @@
     }[page.url.pathname as string] ?? `main :where(h2, h3)`,
   )
 
-  const routes = Object.keys(
-    import.meta.glob(`./**/+page.{svelte,md}`),
-  ).map((filename) => {
-    const parts = filename.split(`/`).filter((part) => !part.startsWith(`(`)) // remove hidden route segments
-    return { route: `/${parts.slice(1, -1).join(`/`)}`, filename }
-  })
+  const all_routes = Object.keys(import.meta.glob(`./**/+page.{svelte,md}`))
+    .map((filename) => {
+      const parts = filename.split(`/`).filter((part) => !part.startsWith(`(`))
+      return `/${parts.slice(1, -1).join(`/`)}`
+    })
+    .filter((route) => route !== `/`) // home handled separately
 
-  const actions = routes.map(({ route }) => ({
+  // Show home link in nav when not on home page
+  let nav_routes = $derived(
+    page.url.pathname === `/` ? all_routes : [`/`, ...all_routes],
+  )
+
+  const actions = all_routes.map((route) => ({
     label: route,
     action: () => goto(route),
   }))
@@ -33,31 +38,12 @@
 <CmdPalette {actions} --sms-options-bg="rgba(0, 0, 0, 0.7)" />
 <GitHubCorner href={repository} />
 <CopyButton global />
+<Nav routes={nav_routes} />
 
-{#if !page.error && page.url.pathname !== `/`}
-  <a href={resolve(`/`)} aria-label="Back to index page">&laquo; home</a>
-{/if}
-
-<main>
+<main {@attach heading_anchors()}>
   {@render children?.()}
 </main>
 
 {#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes(page.url.pathname)}
   <Toc {headingSelector} />
 {/if}
-
-<style>
-  a[href='.'] {
-    font-size: 15pt;
-    position: absolute;
-    top: 2em;
-    left: 2em;
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 1pt 5pt;
-    border-radius: 3pt;
-    transition: 0.2s;
-  }
-  a[href='.']:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-</style>
