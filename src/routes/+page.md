@@ -8,8 +8,6 @@
 
 ## 📝 &thinsp; Examples
 
-Demos of specific `<Toc />` features.
-
 <Nav routes={demo_routes} />
 
 </Readme>
