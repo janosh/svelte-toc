@@ -1,9 +1,9 @@
 import { sveltekit } from '@sveltejs/kit/vite'
-import mdsvexamples from 'mdsvexamples/vite'
+import { vite_plugin as live_examples } from 'svelte-multiselect/live-examples'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig(({ mode }) => ({
-  plugins: [sveltekit(), mdsvexamples],
+  plugins: [sveltekit(), live_examples()],
 
   test: {
     environment: `jsdom`,

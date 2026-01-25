@@ -1,3 +1,6 @@
+/* starry-night syntax highlighting (GitHub-style, dark theme) */
+@import '@wooorm/starry-night/style/dark';
+
 :root {
   --bg: #090019;
 
@@ -15,15 +18,31 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: #eee;
   font-size: 12pt;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   min-height: 100vh;
   box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 50em) auto 1fr;
+}
+body > div > nav {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2em;
 }
 main {
   max-width: 50em;
-  margin-bottom: 3em;
+  grid-column: 2;
+}
+aside.toc.desktop {
+  grid-column: 3;
+}
+@media (max-width: 1000px) {
+  body {
+    display: block;
+  }
+  main {
+    margin: 0 auto;
+  }
 }
 a {
   color: cornflowerblue;
@@ -45,6 +64,8 @@ pre code {
 pre {
   position: relative;
   border-radius: 1ex;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 blockquote {
   border-left: 3pt solid cornflowerblue;
