@@ -1,26 +1,33 @@
 import adapter from '@sveltejs/adapter-static'
 import { mdsvex } from 'mdsvex'
-import mdsvexamples from 'mdsvexamples'
 import { heading_ids } from 'svelte-multiselect/heading-anchors'
-import preprocess from 'svelte-preprocess'
+import {
+  mdsvex_transform,
+  starry_night_highlighter,
+  sveltePreprocess,
+} from 'svelte-multiselect/live-examples'
 
 const { default: pkg } = await import(`./package.json`, {
   with: { type: `json` },
 })
 const defaults = {
   Wrapper: [`svelte-multiselect`, `CodeExample`],
-  pkg: pkg.name,
   repo: pkg.repository,
+  hideStyle: true,
 }
-const remarkPlugins = [[mdsvexamples, { defaults }]]
+const remarkPlugins = [[mdsvex_transform, { defaults }]]
 
 /** @type {import('@sveltejs/kit').Config} */
 export default {
   extensions: [`.svelte`, `.md`],
 
   preprocess: [
-    preprocess(),
-    mdsvex({ remarkPlugins, extensions: [`.md`] }),
+    sveltePreprocess(),
+    mdsvex({
+      remarkPlugins,
+      extensions: [`.md`],
+      highlight: { highlighter: starry_night_highlighter },
+    }),
     heading_ids(),
   ],
 

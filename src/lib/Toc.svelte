@@ -324,6 +324,7 @@
           {@const indent = level - minLevel}
           <li
             role="menuitem"
+            tabindex="0"
             class:active={heading === activeHeading}
             class={liClass || null}
             bind:this={tocItems[idx]}

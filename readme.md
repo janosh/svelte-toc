@@ -21,8 +21,6 @@ Sticky responsive table of contents component. <strong class="hide-in-docs"><a h
 npm install --dev svelte-toc
 ```
 
-<slot />
-
 ## 📙 &nbsp; Usage
 
 ```svelte
