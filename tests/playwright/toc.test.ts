@@ -2,6 +2,79 @@ import { expect, test } from '@playwright/test'
 
 test.describe.configure({ mode: `parallel` })
 
+test.describe(`hideOnIntersect`, () => {
+  test(`TOC hides when full-width banner overlaps it`, async ({ page }) => {
+    await page.goto(`/hide-on-intersect`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc = page.locator(`aside.toc`)
+
+    // Initially TOC should be visible
+    await expect(toc).not.toHaveClass(/intersecting/)
+
+    // Scroll to full-width banner - it spans 100vw so always overlaps TOC
+    await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
+    await page.waitForTimeout(100)
+
+    await expect(toc).toHaveClass(/intersecting/)
+  })
+
+  test(`TOC reappears when scrolling past the overlapping element`, async ({ page }) => {
+    await page.goto(`/hide-on-intersect`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc = page.locator(`aside.toc`)
+
+    // Scroll to banner then back to top
+    await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
+    await page.waitForTimeout(100)
+    await page.evaluate(() => scrollTo(0, 0))
+    await page.waitForTimeout(100)
+
+    await expect(toc).not.toHaveClass(/intersecting/)
+  })
+
+  test(`TOC is not hidden on mobile even when banner is in view`, async ({ page }) => {
+    await page.goto(`/hide-on-intersect`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 600, height: 800 })
+
+    const toc = page.locator(`aside.toc`)
+    await expect(toc).toHaveClass(/mobile/)
+
+    await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
+    await page.waitForTimeout(100)
+
+    // hideOnIntersect is desktop-only
+    await expect(toc).not.toHaveClass(/intersecting/)
+  })
+
+  test(`TOC lists correct headings on hide-on-intersect page`, async ({ page }) => {
+    await page.goto(`/hide-on-intersect`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const expected_headings = [
+      `The hideOnIntersect Feature`,
+      `Why This Matters`,
+      `How It Works`,
+      `Usage Example`,
+      `Desktop Only`,
+      `Performance Considerations`,
+      `Accessibility`,
+      `Edge Cases Handled`,
+      `Implementation Details`,
+      `Try It Yourself`,
+      `Summary`,
+    ]
+
+    const toc_headings = await page
+      .locator(`aside.toc > nav > ol > li`)
+      .allTextContents()
+      .then((texts) => texts.map((text) => text.trim()))
+
+    expect(toc_headings).toEqual(expected_headings)
+  })
+})
+
 test.describe(`Toc`, () => {
   test(`lists the right page headings`, async ({ page }) => {
     // Test each page separately to avoid await in loop

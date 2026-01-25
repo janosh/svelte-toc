@@ -18,6 +18,7 @@
     headings = $bindable([]),
     headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
     hide = $bindable(false),
+    hideOnIntersect = null,
     autoHide = true,
     keepActiveTocItemInView = true,
     minItems = 0,
@@ -64,6 +65,7 @@
     headings?: HTMLHeadingElement[]
     headingSelector?: string
     hide?: boolean
+    hideOnIntersect?: string | HTMLElement[] | null
     autoHide?: boolean
     keepActiveTocItemInView?: boolean // requires scrollend event browser support
     minItems?: number
@@ -101,12 +103,21 @@
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
   // scrolling in chrome. see https://github.com/janosh/svelte-toc/issues/57
   let page_has_scrolled: boolean = $state(false)
+  // tracks whether TOC overlaps with any hideOnIntersect elements (desktop only)
+  let intersecting: boolean = $state(false)
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
   $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
+  })
+
+  // Re-check overlap when headings or hideOnIntersect change
+  $effect(() => {
+    void headings // track headings as dependency
+    void hideOnIntersect // track prop changes
+    check_toc_overlap()
   })
 
   function close(event: MouseEvent) {
@@ -166,6 +177,25 @@
         return // exit while loop if updated active heading
       }
     }
+  }
+
+  // check if TOC overlaps with any hideOnIntersect elements (desktop only)
+  function check_toc_overlap() {
+    if (!hideOnIntersect || !aside || !desktop) {
+      intersecting = false
+      return
+    }
+
+    const elements = typeof hideOnIntersect === `string`
+      ? Array.from(document.querySelectorAll(hideOnIntersect))
+      : hideOnIntersect
+
+    const toc = aside.getBoundingClientRect()
+    intersecting = elements.some((el) => {
+      const rect = el.getBoundingClientRect()
+      return !(toc.right < rect.left || toc.left > rect.right ||
+        toc.bottom < rect.top || toc.top > rect.bottom)
+    })
   }
 
   // click and key handler for ToC items that scrolls to the heading
@@ -251,6 +281,7 @@
   onscroll={() => {
     page_has_scrolled = true
     set_active_heading()
+    check_toc_overlap()
   }}
   onclick={close}
   onscrollend={() => {
@@ -262,6 +293,7 @@
   onresize={() => {
     desktop = window_width > breakpoint
     set_active_heading()
+    check_toc_overlap()
   }}
   onkeydown={on_keydown}
 />
@@ -271,10 +303,11 @@
   class="toc {asideClass || null}"
   class:desktop
   class:hidden={hide}
+  class:intersecting
   class:mobile={!desktop}
   bind:this={aside}
   hidden={hide}
-  aria-hidden={hide}
+  aria-hidden={hide || intersecting}
   style={asideStyle || null}
 >
   {#if !open && !desktop && headings.length >= minItems}
@@ -438,5 +471,12 @@
 
   :where(aside.toc.desktop > nav) {
     margin: var(--toc-desktop-nav-margin);
+  }
+  :where(aside.toc) {
+    transition: opacity 0.15s;
+  }
+  :where(aside.toc.intersecting) {
+    opacity: 0;
+    pointer-events: none;
   }
 </style>
