@@ -1,7 +1,7 @@
 Your prefer a left border on the active `<li>` to a full background color? Here's how to do that:
 
 ```svelte example
-<script>
+<script lang="ts">
   import Toc from '$lib'
 </script>
 
