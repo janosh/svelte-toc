@@ -12,6 +12,9 @@
   --github-corner-color: var(--bg);
   --github-corner-bg: white;
 }
+html {
+  overflow-x: hidden;
+}
 body {
   background: var(--bg);
   padding: min(3em, 5vw);

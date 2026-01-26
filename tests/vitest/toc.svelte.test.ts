@@ -375,42 +375,39 @@ describe(`Toc`, () => {
     },
   )
 
-  test.each([[`First Page Heading`, `Second Page Heading`, 2, 3]])(
-    `updates ToC when page content changes`,
-    async (initial_title, new_title, initial_count, final_count) => {
-      document.body.innerHTML = `
-        <div id="content-container">
-          <h2>${initial_title} 1</h2>
-          <h3>${initial_title} 2</h3>
-        </div>
+  test(`updates ToC when page content changes`, async () => {
+    document.body.innerHTML = `
+      <div id="content-container">
+        <h2>First Page Heading 1</h2>
+        <h3>First Page Heading 2</h3>
+      </div>
+    `
+
+    mount(Toc, { target: document.body })
+    await tick()
+
+    let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
+    expect(toc_items.length).toBe(2)
+    expect(toc_items[0].textContent?.trim()).toBe(`First Page Heading 1`)
+    expect(toc_items[1].textContent?.trim()).toBe(`First Page Heading 2`)
+
+    const container = document.getElementById(`content-container`)
+    if (container) {
+      container.innerHTML = `
+        <h2>Second Page Heading 1</h2>
+        <h3>Second Page Heading 2</h3>
+        <h4>Second Page Heading 3</h4>
       `
+    }
 
-      mount(Toc, { target: document.body })
-      await tick()
+    await tick()
 
-      let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-      expect(toc_items.length).toBe(initial_count)
-      expect(toc_items[0].textContent?.trim()).toBe(`${initial_title} 1`)
-      expect(toc_items[1].textContent?.trim()).toBe(`${initial_title} 2`)
-
-      const container = document.getElementById(`content-container`)
-      if (container) {
-        container.innerHTML = `
-          <h2>${new_title} 1</h2>
-          <h3>${new_title} 2</h3>
-          <h4>${new_title} 3</h4>
-        `
-      }
-
-      await tick()
-
-      toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-      expect(toc_items.length).toBe(final_count)
-      expect(toc_items[0].textContent?.trim()).toBe(`${new_title} 1`)
-      expect(toc_items[1].textContent?.trim()).toBe(`${new_title} 2`)
-      expect(toc_items[2].textContent?.trim()).toBe(`${new_title} 3`)
-    },
-  )
+    toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
+    expect(toc_items.length).toBe(3)
+    expect(toc_items[0].textContent?.trim()).toBe(`Second Page Heading 1`)
+    expect(toc_items[1].textContent?.trim()).toBe(`Second Page Heading 2`)
+    expect(toc_items[2].textContent?.trim()).toBe(`Second Page Heading 3`)
+  })
 
   test.each([`auto`, `smooth`] as const)(
     `custom scroll behavior %s is applied when clicking ToC items`,
@@ -465,6 +462,129 @@ describe(`Toc`, () => {
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(2)
     expect(toc_items[1].textContent?.trim()).toBe(`Dynamically Added Heading`)
+  })
+})
+
+describe(`hideOnIntersect`, () => {
+  // Mocks getBoundingClientRect. Note: width/height are independent defaults—overlap
+  // detection only uses top/bottom/left/right, so geometry consistency isn't required.
+  const mock_bounding_rect = (element: Element, rect: Partial<DOMRect>) => {
+    vi.spyOn(element, `getBoundingClientRect`).mockReturnValue({
+      top: 0,
+      left: 0,
+      bottom: 100,
+      right: 100,
+      width: 100,
+      height: 100,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+      ...rect,
+    } as DOMRect)
+  }
+
+  // Parameterized test for overlap detection on desktop
+  test.each([
+    { banner_rect: { top: 150, bottom: 250 }, should_hide: true, desc: `overlapping` },
+    { banner_rect: { top: 0, bottom: 50 }, should_hide: false, desc: `non-overlapping` },
+  ])(
+    `$desc banner: TOC hidden=$should_hide on desktop`,
+    async ({ banner_rect, should_hide }) => {
+      document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
+      globalThis.innerWidth = 1200
+
+      mount(Toc, { target: document.body, props: { hideOnIntersect: `.banner` } })
+      await tick()
+
+      const aside = doc_query(`aside.toc`)
+      mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
+      mock_bounding_rect(doc_query(`.banner`), { left: 0, right: 1200, ...banner_rect })
+
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+
+      expect(aside.classList.contains(`intersecting`)).toBe(should_hide)
+    },
+  )
+
+  test(`does not hide on mobile even when overlapping`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
+    globalThis.innerWidth = 600
+
+    mount(Toc, {
+      target: document.body,
+      props: { hideOnIntersect: `.banner`, open: true },
+    })
+    await tick()
+
+    const aside = doc_query(`aside.toc`)
+    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 0, right: 200 })
+    mock_bounding_rect(doc_query(`.banner`), {
+      top: 150,
+      bottom: 250,
+      left: 0,
+      right: 600,
+    })
+
+    globalThis.dispatchEvent(new Event(`scroll`))
+    await tick()
+
+    expect(aside.classList.contains(`intersecting`)).toBe(false)
+  })
+
+  test(`accepts HTMLElement array`, async () => {
+    document.body.innerHTML =
+      `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
+    globalThis.innerWidth = 1200
+
+    const [b1, b2] = [`b1`, `b2`].map((id) => document.getElementById(id) as HTMLElement)
+    mount(Toc, { target: document.body, props: { hideOnIntersect: [b1, b2] } })
+    await tick()
+
+    const aside = doc_query(`aside.toc`)
+    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
+    mock_bounding_rect(b1, { top: 0, bottom: 50, left: 0, right: 1200 })
+    mock_bounding_rect(b2, { top: 150, bottom: 250, left: 0, right: 1200 }) // overlaps
+
+    globalThis.dispatchEvent(new Event(`scroll`))
+    await tick()
+
+    expect(aside.classList.contains(`intersecting`)).toBe(true)
+  })
+
+  test(`does not hide when selector matches nothing`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2>`
+    globalThis.innerWidth = 1200
+
+    mount(Toc, { target: document.body, props: { hideOnIntersect: `.nonexistent` } })
+    await tick()
+
+    globalThis.dispatchEvent(new Event(`scroll`))
+    await tick()
+
+    expect(doc_query(`aside.toc`).classList.contains(`intersecting`)).toBe(false)
+  })
+
+  test(`re-shows TOC when overlap ends`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
+    globalThis.innerWidth = 1200
+
+    mount(Toc, { target: document.body, props: { hideOnIntersect: `.banner` } })
+    await tick()
+
+    const aside = doc_query(`aside.toc`)
+    const banner = doc_query(`.banner`)
+    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
+    mock_bounding_rect(banner, { top: 150, bottom: 250, left: 0, right: 1200 })
+
+    globalThis.dispatchEvent(new Event(`scroll`))
+    await tick()
+    expect(aside.classList.contains(`intersecting`)).toBe(true)
+
+    mock_bounding_rect(banner, { top: 500, bottom: 600, left: 0, right: 1200 })
+    globalThis.dispatchEvent(new Event(`scroll`))
+    await tick()
+    expect(aside.classList.contains(`intersecting`)).toBe(false)
   })
 })
 
