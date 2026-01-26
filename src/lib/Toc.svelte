@@ -114,7 +114,7 @@
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
 
-  // Collapse threshold level: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity (no collapse)
+  // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
   let collapse_threshold: number = $derived(
     collapseSubheadings === true
       ? 6
@@ -123,58 +123,46 @@
       : Infinity,
   )
 
-  // Find index of immediate parent (nearest heading with lower level)
-  function get_parent_idx(idx: number): number | null {
-    const level = levels[idx]
-    if (level === minLevel) return null
-    for (let parent_idx = idx - 1; parent_idx >= 0; parent_idx--) {
-      if (levels[parent_idx] < level) return parent_idx
-    }
-    return null
-  }
-
   // Check if heading at idx is "expanded" (active or contains active in subtree)
-  function is_parent_expanded(idx: number): boolean {
+  function is_expanded(idx: number): boolean {
     if (headings[idx] === activeHeading) return true
     const level = levels[idx]
-    // Check if any descendant (higher level, before next same-or-lower level) is active
-    for (
-      let desc_idx = idx + 1;
-      desc_idx < headings.length && levels[desc_idx] > level;
-      desc_idx++
-    ) {
-      if (headings[desc_idx] === activeHeading) return true
+    for (let jdx = idx + 1; jdx < headings.length && levels[jdx] > level; jdx++) {
+      if (headings[jdx] === activeHeading) return true
     }
     return false
   }
 
-  // Determine if heading at idx should be visible based on collapse settings
-  function is_heading_visible(idx: number): boolean {
-    if (!collapseSubheadings) return true
-    if (activeHeading === null) return true // show all until first scroll sets active heading
-    if (levels[idx] === minLevel) return true // top-level always visible
-
-    const level = levels[idx]
-
-    if (level <= collapse_threshold) {
-      // This level collapses independently - check immediate parent
-      const parent_idx = get_parent_idx(idx)
-      if (parent_idx === null) return true // orphan heading, show it
-      return is_parent_expanded(parent_idx)
-    } else {
-      // Beyond threshold - find nearest ancestor AT threshold level
-      // and check if IT is visible (chains visibility up)
-      for (let ancestor_idx = idx - 1; ancestor_idx >= 0; ancestor_idx--) {
-        if (levels[ancestor_idx] === collapse_threshold) {
-          return is_heading_visible(ancestor_idx) // recursive
-        }
-        if (levels[ancestor_idx] < collapse_threshold) {
-          return true // no threshold-level ancestor found, show it
-        }
-      }
-      return true
+  // Memoized visibility array - computed once per render cycle
+  let heading_visibility: boolean[] = $derived.by(() => {
+    if (!collapseSubheadings || activeHeading === null) {
+      return headings.map(() => true)
     }
-  }
+
+    const visible: boolean[] = []
+    for (let idx = 0; idx < headings.length; idx++) {
+      const level = levels[idx]
+      if (level === minLevel) {
+        visible.push(true) // top-level always visible
+      } else if (level <= collapse_threshold) {
+        // Find immediate parent and check if expanded
+        let parent_idx = idx - 1
+        while (parent_idx >= 0 && levels[parent_idx] >= level) parent_idx--
+        visible.push(parent_idx < 0 || is_expanded(parent_idx))
+      } else {
+        // Beyond threshold - chain to nearest ancestor at threshold level
+        let ancestor_idx = idx - 1
+        while (ancestor_idx >= 0 && levels[ancestor_idx] > collapse_threshold) {
+          ancestor_idx--
+        }
+        visible.push(
+          ancestor_idx < 0 || levels[ancestor_idx] < collapse_threshold ||
+            visible[ancestor_idx],
+        )
+      }
+    }
+    return visible
+  })
 
   $effect(() => onOpen?.({ open }))
   $effect(() => {
@@ -328,12 +316,20 @@
       open = false
     } else if (activeTocLi) {
       if (event.key === `ArrowDown`) {
-        const next = activeTocLi.nextElementSibling
-        if (next) activeTocLi = next as HTMLLIElement
+        let next = activeTocLi.nextElementSibling as HTMLLIElement | null
+        // skip collapsed items when collapseSubheadings is enabled
+        while (next?.classList.contains(`collapsed`)) {
+          next = next.nextElementSibling as HTMLLIElement | null
+        }
+        if (next) activeTocLi = next
       }
       if (event.key === `ArrowUp`) {
-        const prev = activeTocLi.previousElementSibling
-        if (prev) activeTocLi = prev as HTMLLIElement
+        let prev = activeTocLi.previousElementSibling as HTMLLIElement | null
+        // skip collapsed items when collapseSubheadings is enabled
+        while (prev?.classList.contains(`collapsed`)) {
+          prev = prev.previousElementSibling as HTMLLIElement | null
+        }
+        if (prev) activeTocLi = prev
       }
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
@@ -369,6 +365,7 @@
 <aside
   {...rest}
   class="toc {asideClass || null}"
+  class:collapsible={collapseSubheadings}
   class:desktop
   class:hidden={hide}
   class:intersecting
@@ -422,7 +419,7 @@
       <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const indent = levels[idx] - minLevel}
-          {@const collapsed = collapseSubheadings && !is_heading_visible(idx)}
+          {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
           <li
             role="menuitem"
             tabindex={collapsed ? -1 : 0}
@@ -486,6 +483,8 @@
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
     font: var(--toc-li-font);
+  }
+  :where(aside.toc.collapsible > nav > ol > li) {
     max-height: var(--toc-li-max-height, 10em);
     overflow: hidden;
     transition:
@@ -494,7 +493,7 @@
       padding var(--toc-collapse-duration, 0.2s) ease-out,
       margin var(--toc-collapse-duration, 0.2s) ease-out;
   }
-  :where(aside.toc > nav > ol > li.collapsed) {
+  :where(aside.toc.collapsible > nav > ol > li.collapsed) {
     max-height: 0;
     opacity: 0;
     padding-block: 0;

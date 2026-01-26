@@ -3,18 +3,26 @@ import { expect, test } from '@playwright/test'
 test.describe.configure({ mode: `parallel` })
 
 test.describe(`collapseSubheadings`, () => {
-  // Helper to scroll to element and trigger scroll event
+  // Helper to scroll to element and wait for TOC to update
   async function scroll_to_element(
     page: import('@playwright/test').Page,
     selector: string,
   ) {
-    await page.evaluate((sel) => {
+    const heading_text = await page.evaluate((sel) => {
       const element = document.querySelector(sel)
       if (element) {
         element.scrollIntoView({ behavior: `instant`, block: `start` })
+        return element.textContent?.trim()
       }
+      return null
     }, selector)
-    await page.waitForTimeout(150)
+    // Wait for active heading to update in TOC
+    if (heading_text) {
+      await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
+        heading_text,
+        { timeout: 1000 },
+      )
+    }
   }
 
   test.beforeEach(async ({ page }) => {
@@ -35,7 +43,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`top-level headings always visible with full nested collapse`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
     await expect(toc_items).toHaveCount(41)
@@ -53,7 +60,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`nested collapse hides h4s when h3 parent not active`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     // Scroll to Getting Started to make it active
     await scroll_to_element(page, `#getting-started`)
@@ -78,7 +84,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`h4s expand when scrolling to their h3 parent`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
     const npm_setup = toc_items.filter({ hasText: /^NPM Setup$/ })
@@ -103,7 +108,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`threshold mode h3 expands all h4s when h3 ancestor visible`, async ({ page }) => {
     // Enable h3 threshold mode
     await page.click(`input[value="h3"]`)
-    await page.waitForTimeout(100)
 
     // Scroll to Getting Started to make it active
     await scroll_to_element(page, `#getting-started`)
@@ -134,7 +138,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`collapsed items have correct accessibility attributes`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     // Scroll to Getting Started to set context
     await scroll_to_element(page, `#getting-started`)
@@ -155,14 +158,12 @@ test.describe(`collapseSubheadings`, () => {
   test(`clicking a TOC item scrolls to heading and updates collapse state`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
 
     // Click on Configuration in TOC
     const config_toc = toc_items.filter({ hasText: /^Configuration$/ })
     await config_toc.click()
-    await page.waitForTimeout(300)
 
     // Configuration's h3 children should now be visible
     const styling = toc_items.filter({ hasText: /^Styling Options$/ })
@@ -177,42 +178,31 @@ test.describe(`collapseSubheadings`, () => {
 
   test(`switching collapse modes updates visibility immediately`, async ({ page }) => {
     // Start with off mode - all visible
-    const collapsed_count_off = await page.locator(`aside.toc > nav > ol > li.collapsed`)
-      .count()
-    expect(collapsed_count_off).toBe(0)
+    const collapsed_items = page.locator(`aside.toc > nav > ol > li.collapsed`)
+    await expect(collapsed_items).toHaveCount(0)
 
-    // Switch to full nested
+    // Switch to full nested - wait for at least one item to collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
-
-    const collapsed_count_nested = await page.locator(
-      `aside.toc > nav > ol > li.collapsed`,
-    ).count()
+    await expect(collapsed_items.first()).toBeAttached()
+    const collapsed_count_nested = await collapsed_items.count()
     expect(collapsed_count_nested).toBeGreaterThan(0)
 
     // Switch to h3 threshold
     await page.click(`input[value="h3"]`)
-    await page.waitForTimeout(100)
-
-    const collapsed_count_h3 = await page.locator(`aside.toc > nav > ol > li.collapsed`)
-      .count()
     // h3 threshold should have fewer or equal collapsed items than full nested
-    expect(collapsed_count_h3).toBeLessThanOrEqual(collapsed_count_nested)
+    await expect(async () => {
+      const count = await collapsed_items.count()
+      expect(count).toBeLessThanOrEqual(collapsed_count_nested)
+    }).toPass()
 
     // Switch back to off
     await page.click(`input[value="false"]`)
-    await page.waitForTimeout(100)
-
-    const collapsed_count_final = await page.locator(
-      `aside.toc > nav > ol > li.collapsed`,
-    ).count()
-    expect(collapsed_count_final).toBe(0)
+    await expect(collapsed_items).toHaveCount(0)
   })
 
   test(`scrolling to h4 reveals it and its siblings`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
 
@@ -236,7 +226,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`h4 threshold mode behavior`, async ({ page }) => {
     // Enable h4 threshold mode
     await page.click(`input[value="h4"]`)
-    await page.waitForTimeout(100)
 
     // Scroll to Installation to make it active
     await scroll_to_element(page, `#installation`)
@@ -251,7 +240,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`maintains correct active heading highlight while collapsed`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     // Test that scrolling to different h2 sections updates active state
     await scroll_to_element(page, `#getting-started`)
@@ -270,7 +258,6 @@ test.describe(`collapseSubheadings`, () => {
   test(`collapsed items have correct CSS properties`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
-    await page.waitForTimeout(100)
 
     // Scroll to Getting Started so h4s are collapsed
     await scroll_to_element(page, `#getting-started`)
@@ -281,11 +268,11 @@ test.describe(`collapseSubheadings`, () => {
     // Verify collapsed class is applied
     await expect(collapsed_item).toHaveClass(/collapsed/)
 
-    // Verify opacity is 0 for collapsed items
-    const opacity = await collapsed_item.evaluate((el) => {
-      return getComputedStyle(el).opacity
-    })
-    expect(opacity).toBe(`0`)
+    // Verify opacity reaches 0 after CSS transition completes
+    await expect(async () => {
+      const opacity = await collapsed_item.evaluate((el) => getComputedStyle(el).opacity)
+      expect(opacity).toBe(`0`)
+    }).toPass({ timeout: 500 })
   })
 })
 

@@ -836,35 +836,51 @@ describe(`collapseSubheadings`, () => {
   // Parameterized test for collapse behavior with different modes and active headings
   test.each(
     [
-      // [mode, active_id, expected_collapsed_states, description]
-      [
+      // [description, mode, active_id, expected_collapsed_states]
+      [`full nesting with h2 active`, true, `section-1`, [
+        false,
+        false,
         true,
-        `section-1`,
-        [false, false, true, true, false, true, false, true],
-        `full nesting with h2 active`,
-      ],
-      [
         true,
-        `sub-1-1`,
-        [false, false, false, false, false, true, false, true],
-        `full nesting with h3 active`,
-      ],
-      [
+        false,
         true,
-        `detail-1-1-1`,
-        [false, false, false, false, false, true, false, true],
-        `full nesting with h4 active`,
-      ],
-      [
-        `h3`,
-        `section-1`,
-        [false, false, false, false, false, false, false, true],
-        `h3 threshold with h2 active`,
-      ],
+        false,
+        true,
+      ]],
+      [`full nesting with h3 active`, true, `sub-1-1`, [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+      ]],
+      [`full nesting with h4 active`, true, `detail-1-1-1`, [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        true,
+      ]],
+      [`h3 threshold with h2 active`, `h3`, `section-1`, [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+      ]],
     ] as const,
   )(
-    `collapse mode %s with %s active: %s`,
-    async (mode, active_id, expected, _desc) => {
+    `%s`,
+    async (_, mode, active_id, expected) => {
       setup_nested_headings()
       mock_active_heading(active_id)
       mount(Toc, { target: document.body, props: { collapseSubheadings: mode } })
