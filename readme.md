@@ -215,6 +215,18 @@ Full list of props and bindable variables for this component (all of them option
 
    Whether to issue a console warning if the ToC is empty.
 
+1. ```ts
+   collapseSubheadings: boolean | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = false
+   ```
+
+   Collapse subheadings under inactive parent headings.
+
+   - `false` (default): All headings visible
+   - `true`: Full nested collapse - each level collapses independently (h4s only visible when their h3 parent is active)
+   - `'h3'`, `'h4'`, etc.: Threshold mode - specified level is the deepest that collapses independently. Levels below expand together when their ancestor at the threshold level is visible.
+
+   Example with `collapseSubheadings="h3"`: When an h2 section is active, all h3s in that section are visible, and ALL h4s under those h3s expand together (rather than each h4 requiring its h3 to be active).
+
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
@@ -279,13 +291,24 @@ The HTML structure of this component is
   - `padding: var(--toc-title-padding)`
   - `margin: var(--toc-title-margin)`
   - `font-size: var(--toc-title-font-size, initial)`
+  - `color: var(--toc-title-color)`
+  - `font-weight: var(--toc-title-font-weight)`
 - `aside.toc > nav > ol > li`
   - `color: var(--toc-li-color)`
+  - `background: var(--toc-li-bg)`: Base background for TOC items.
   - `border: var(--toc-li-border)`
   - `border-radius: var(--toc-li-border-radius)`
   - `margin: var(--toc-li-margin)`
+  - `margin-left: calc(indent * var(--toc-indent-per-level, 1em))`: Indentation per heading level.
   - `padding: var(--toc-li-padding, 2pt 4pt)`
   - `font: var(--toc-li-font)`
+  - `font-size: max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - indent * var(--toc-li-font-size-step, 0.1ex)))`: Font size decreases for deeper heading levels.
+  - `transition: var(--toc-li-transition)`: Custom transition for hover/focus effects.
+  - `max-height: var(--toc-li-max-height, 10em)`: Used for collapse animation.
+  - `transition: ... var(--toc-collapse-duration, 0.2s) ...`: Duration for collapse/expand animation.
+- `aside.toc > nav > ol > li:focus-visible`
+  - `outline: var(--toc-focus-outline, 2px solid currentColor)`: Focus outline for keyboard navigation.
+  - `outline-offset: var(--toc-focus-outline-offset, 1px)`
 - `aside.toc > nav > ol > li:hover`
   - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`
@@ -296,6 +319,7 @@ The HTML structure of this component is
   - `border: var(--toc-active-border)`
   - `border-width: var(--toc-active-border-width)`: Allows setting top, right, bottom, left border widths separately.
   - `border-radius: var(--toc-active-border-radius, 2pt)`
+  - `text-shadow: var(--toc-active-text-shadow)`: Use for faux-bold effect without layout shift (e.g. `0 0 0.5px currentColor`).
 - `aside.toc > button`
   - `bottom: var(--toc-mobile-btn-bottom, 0)`
   - `font: var(--toc-mobile-btn-font, 2em sans-serif)`

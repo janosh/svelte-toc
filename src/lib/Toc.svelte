@@ -3,6 +3,7 @@
   import { untrack } from 'svelte'
   import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
+  import type { CollapseMode } from './index'
 
   let {
     activeHeading = $bindable(null),
@@ -31,6 +32,7 @@
     titleTag = `h2`,
     tocItems = $bindable([]),
     warnOnEmpty = false,
+    collapseSubheadings = false,
     blurParams = { duration: 200 },
     openTocIcon,
     titleSnippet,
@@ -78,6 +80,10 @@
     titleTag?: string
     tocItems?: HTMLLIElement[]
     warnOnEmpty?: boolean
+    // collapse subheadings under inactive parent headings
+    // true = full nested collapse (each level collapses independently)
+    // 'h3' = h3 is deepest collapsing level, h4+ expand together when h3 ancestor visible
+    collapseSubheadings?: CollapseMode
     blurParams?: BlurParams | undefined
     openTocIcon?: Snippet
     titleSnippet?: Snippet
@@ -108,6 +114,57 @@
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
+
+  // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
+  let collapse_threshold: number = $derived(
+    collapseSubheadings === true
+      ? 6
+      : typeof collapseSubheadings === `string`
+      ? parseInt(collapseSubheadings.slice(1), 10)
+      : Infinity,
+  )
+
+  // Check if heading at idx is "expanded" (active or contains active in subtree)
+  function is_expanded(idx: number): boolean {
+    if (headings[idx] === activeHeading) return true
+    const level = levels[idx]
+    for (let jdx = idx + 1; jdx < headings.length && levels[jdx] > level; jdx++) {
+      if (headings[jdx] === activeHeading) return true
+    }
+    return false
+  }
+
+  // Memoized visibility array - computed once per render cycle
+  let heading_visibility: boolean[] = $derived.by(() => {
+    if (!collapseSubheadings || activeHeading === null) {
+      return Array(headings.length).fill(true)
+    }
+
+    const visible: boolean[] = []
+    for (let idx = 0; idx < headings.length; idx++) {
+      const level = levels[idx]
+      if (level === minLevel) {
+        visible.push(true) // top-level always visible
+      } else if (level <= collapse_threshold) {
+        // Find immediate parent and check if expanded
+        let parent_idx = idx - 1
+        while (parent_idx >= 0 && levels[parent_idx] >= level) parent_idx--
+        visible.push(parent_idx < 0 || is_expanded(parent_idx))
+      } else {
+        // Beyond threshold - chain to nearest ancestor at threshold level
+        let ancestor_idx = idx - 1
+        while (ancestor_idx >= 0 && levels[ancestor_idx] > collapse_threshold) {
+          ancestor_idx--
+        }
+        visible.push(
+          ancestor_idx < 0 || levels[ancestor_idx] < collapse_threshold ||
+            visible[ancestor_idx],
+        )
+      }
+    }
+    return visible
+  })
+
   $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
@@ -260,12 +317,20 @@
       open = false
     } else if (activeTocLi) {
       if (event.key === `ArrowDown`) {
-        const next = activeTocLi.nextElementSibling
-        if (next) activeTocLi = next as HTMLLIElement
+        let next = activeTocLi.nextElementSibling as HTMLLIElement | null
+        // skip collapsed items when collapseSubheadings is enabled
+        while (next?.classList.contains(`collapsed`)) {
+          next = next.nextElementSibling as HTMLLIElement | null
+        }
+        if (next) activeTocLi = next
       }
       if (event.key === `ArrowUp`) {
-        const prev = activeTocLi.previousElementSibling
-        if (prev) activeTocLi = prev as HTMLLIElement
+        let prev = activeTocLi.previousElementSibling as HTMLLIElement | null
+        // skip collapsed items when collapseSubheadings is enabled
+        while (prev?.classList.contains(`collapsed`)) {
+          prev = prev.previousElementSibling as HTMLLIElement | null
+        }
+        if (prev) activeTocLi = prev
       }
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
@@ -301,6 +366,7 @@
 <aside
   {...rest}
   class="toc {asideClass || null}"
+  class:collapsible={collapseSubheadings}
   class:desktop
   class:hidden={hide}
   class:intersecting
@@ -353,17 +419,19 @@
       {/if}
       <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
-          {@const level = getHeadingLevels(heading)}
-          {@const indent = level - minLevel}
+          {@const indent = levels[idx] - minLevel}
+          {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
           <li
             role="menuitem"
-            tabindex="0"
+            tabindex={collapsed ? -1 : 0}
             class:active={heading === activeHeading}
+            class:collapsed
+            aria-hidden={collapsed || undefined}
             class={liClass || null}
             bind:this={tocItems[idx]}
             style={liStyle || null}
-            style:margin-left="{indent}em"
-            style:font-size="{Math.max(3 - indent * 0.1, 2)}ex"
+            style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
+            style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
             onclick={li_click_key_handler(heading)}
             onkeydown={li_click_key_handler(heading)}
           >
@@ -407,15 +475,38 @@
     padding: var(--toc-title-padding);
     margin: var(--toc-title-margin, 1em 0);
     font-size: var(--toc-title-font-size, initial);
+    color: var(--toc-title-color);
+    font-weight: var(--toc-title-font-weight);
   }
   :where(aside.toc > nav > ol > li) {
     cursor: pointer;
     color: var(--toc-li-color);
+    background: var(--toc-li-bg);
     border: var(--toc-li-border);
     border-radius: var(--toc-li-border-radius);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
     font: var(--toc-li-font);
+    transition: var(--toc-li-transition);
+  }
+  :where(aside.toc > nav > ol > li:focus-visible) {
+    outline: var(--toc-focus-outline, 2px solid currentColor);
+    outline-offset: var(--toc-focus-outline-offset, 1px);
+  }
+  :where(aside.toc.collapsible > nav > ol > li) {
+    max-height: var(--toc-li-max-height, 10em);
+    overflow: hidden;
+    transition:
+      max-height var(--toc-collapse-duration, 0.2s) ease-out,
+      opacity var(--toc-collapse-duration, 0.2s) ease-out,
+      padding var(--toc-collapse-duration, 0.2s) ease-out,
+      margin var(--toc-collapse-duration, 0.2s) ease-out;
+  }
+  :where(aside.toc.collapsible > nav > ol > li.collapsed) {
+    max-height: 0;
+    opacity: 0;
+    padding-block: 0;
+    margin-block: 0;
   }
   :where(aside.toc > nav > ol > li:hover) {
     color: var(--toc-li-hover-color);
@@ -425,6 +516,7 @@
     background: var(--toc-active-bg);
     color: var(--toc-active-color);
     font: var(--toc-active-li-font);
+    text-shadow: var(--toc-active-text-shadow);
     border: var(--toc-active-border);
     border-width: var(--toc-active-border-width);
     border-radius: var(--toc-active-border-radius, 2pt);
