@@ -25,12 +25,14 @@ test.describe(`hideOnIntersect`, () => {
 
     const toc = page.locator(`aside.toc`)
 
-    // Scroll to banner then back to top
+    // Scroll to banner and verify TOC hides
     await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
     await page.waitForTimeout(100)
+    await expect(toc).toHaveClass(/intersecting/)
+
+    // Scroll back to top and verify TOC reappears
     await page.evaluate(() => scrollTo(0, 0))
     await page.waitForTimeout(100)
-
     await expect(toc).not.toHaveClass(/intersecting/)
   })
 
