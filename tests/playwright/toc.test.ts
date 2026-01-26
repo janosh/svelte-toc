@@ -66,8 +66,10 @@ test.describe(`hideOnIntersect`, () => {
       `Summary`,
     ]
 
-    const toc_headings = await page
-      .locator(`aside.toc > nav > ol > li`)
+    const toc_items = page.locator(`aside.toc > nav > ol > li`)
+    await toc_items.first().waitFor()
+
+    const toc_headings = await toc_items
       .allTextContents()
       .then((texts) => texts.map((text) => text.trim()))
 
