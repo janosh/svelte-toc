@@ -16,8 +16,8 @@
   temporarily hiding the TOC when such elements scroll into its space.
 </p>
 <p>
-  This is especially useful for marketing pages, documentation with hero sections, or any
-  layout that mixes sidebar navigation with full-bleed imagery.
+  This is useful for documentation with hero sections, image galleries, or any layout that
+  mixes sidebar navigation with full-bleed content.
 </p>
 
 <h2>How It Works</h2>
@@ -32,7 +32,7 @@
 <code>&lt;Toc hideOnIntersect=".full-width-banner" /&gt;
 
 &lt;!-- Or with multiple selectors --&gt;
-&lt;Toc hideOnIntersect=".hero, .cta-banner, .full-width-image" /&gt;</code></pre>
+&lt;Toc hideOnIntersect=".hero, .full-width-image" /&gt;</code></pre>
 
 <h2>Desktop Only</h2>
 <p>
@@ -97,10 +97,9 @@
   or below the other.
 </p>
 
-<div class="cta-banner" data-testid="banner-2">
-  <h3 class="toc-exclude">Call to Action Banner</h3>
-  <p>Full-width CTAs are common in marketing pages</p>
-  <button>Learn More</button>
+<div class="info-banner" data-testid="banner-2">
+  <h3 class="toc-exclude">Full-Width Info Section</h3>
+  <p>Another example of content that spans the viewport</p>
 </div>
 
 <h2>Try It Yourself</h2>
@@ -143,17 +142,22 @@
     padding: 0;
   }
   .hero-banner,
-  .cta-banner {
-    width: 100vw;
+  .info-banner {
     position: relative;
-    left: 50%;
-    transform: translateX(-50%);
     padding: 3rem 2rem;
     margin: 3rem 0;
     text-align: center;
     color: white;
   }
-  .hero-banner {
+  .hero-banner::before, .info-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 200vw;
+    left: -50vw;
+    z-index: -1;
+  }
+  .hero-banner::before {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   }
   .hero-banner .hero-icon {
@@ -169,30 +173,16 @@
     margin: 0;
     opacity: 0.9;
   }
-  .cta-banner {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  .info-banner::before {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
   }
-  .cta-banner h3 {
+  .info-banner h3 {
     margin: 0 0 0.5rem;
     font-size: 1.5rem;
   }
-  .cta-banner p {
-    margin: 0 0 1rem;
+  .info-banner p {
+    margin: 0;
     opacity: 0.9;
-  }
-  .cta-banner button {
-    background: white;
-    color: #f5576c;
-    border: none;
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 25px;
-    cursor: pointer;
-    transition: transform 0.2s;
-  }
-  .cta-banner button:hover {
-    transform: scale(1.05);
   }
   ul {
     padding-left: 1.5rem;

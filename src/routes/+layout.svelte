@@ -49,6 +49,6 @@
   )}
   <Toc
     {headingSelector}
-    hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .cta-banner` : null}
+    hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .info-banner` : null}
   />
 {/if}
