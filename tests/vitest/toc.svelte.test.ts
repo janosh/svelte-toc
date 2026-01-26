@@ -128,9 +128,10 @@ describe(`Toc`, () => {
     expect(toc_list.children.length).toBe(3)
 
     const lis = Array.from(toc_list.children) as HTMLLIElement[]
-    expect(lis[0].style.marginLeft).toBe(`0em`)
-    expect(lis[1].style.marginLeft).toBe(`1em`)
-    expect(lis[2].style.marginLeft).toBe(`2em`)
+    // Indent is applied via CSS calc with --toc-indent-per-level variable
+    expect(lis[0].style.marginLeft).toContain(`calc(0 *`)
+    expect(lis[1].style.marginLeft).toContain(`calc(1 *`)
+    expect(lis[2].style.marginLeft).toContain(`calc(2 *`)
   })
 
   describe.each([[[1, 2, 3, 4]], [[1, 5, 6]]])(`minItems`, (heading_levels) => {

@@ -3,6 +3,7 @@
   import { untrack } from 'svelte'
   import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
+  import type { CollapseMode } from './index'
 
   let {
     activeHeading = $bindable(null),
@@ -82,7 +83,7 @@
     // collapse subheadings under inactive parent headings
     // true = full nested collapse (each level collapses independently)
     // 'h3' = h3 is deepest collapsing level, h4+ expand together when h3 ancestor visible
-    collapseSubheadings?: boolean | `h${2 | 3 | 4 | 5 | 6}`
+    collapseSubheadings?: CollapseMode
     blurParams?: BlurParams | undefined
     openTocIcon?: Snippet
     titleSnippet?: Snippet
@@ -136,7 +137,7 @@
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
     if (!collapseSubheadings || activeHeading === null) {
-      return headings.map(() => true)
+      return Array(headings.length).fill(true)
     }
 
     const visible: boolean[] = []
@@ -429,8 +430,8 @@
             class={liClass || null}
             bind:this={tocItems[idx]}
             style={liStyle || null}
-            style:margin-left="{indent}em"
-            style:font-size="{Math.max(3 - indent * 0.1, 2)}ex"
+            style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
+            style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
             onclick={li_click_key_handler(heading)}
             onkeydown={li_click_key_handler(heading)}
           >
@@ -474,15 +475,23 @@
     padding: var(--toc-title-padding);
     margin: var(--toc-title-margin, 1em 0);
     font-size: var(--toc-title-font-size, initial);
+    color: var(--toc-title-color);
+    font-weight: var(--toc-title-font-weight);
   }
   :where(aside.toc > nav > ol > li) {
     cursor: pointer;
     color: var(--toc-li-color);
+    background: var(--toc-li-bg);
     border: var(--toc-li-border);
     border-radius: var(--toc-li-border-radius);
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
     font: var(--toc-li-font);
+    transition: var(--toc-li-transition);
+  }
+  :where(aside.toc > nav > ol > li:focus-visible) {
+    outline: var(--toc-focus-outline, 2px solid currentColor);
+    outline-offset: var(--toc-focus-outline-offset, 1px);
   }
   :where(aside.toc.collapsible > nav > ol > li) {
     max-height: var(--toc-li-max-height, 10em);
@@ -507,6 +516,7 @@
     background: var(--toc-active-bg);
     color: var(--toc-active-color);
     font: var(--toc-active-li-font);
+    text-shadow: var(--toc-active-text-shadow);
     border: var(--toc-active-border);
     border-width: var(--toc-active-border-width);
     border-radius: var(--toc-active-border-radius, 2pt);

@@ -1,7 +1,6 @@
 <script lang="ts">
-  import { Toc } from '$lib'
+  import { type CollapseMode, Toc } from '$lib'
 
-  type CollapseMode = boolean | `h${2 | 3 | 4 | 5 | 6}`
   let collapse_mode: CollapseMode = $state(false)
 
   const mode_options: [CollapseMode, string][] = [
@@ -170,6 +169,8 @@
 <Toc
   collapseSubheadings={collapse_mode}
   headingSelector=":is(h2, h3, h4, h5, h6):not(.toc-exclude)"
+  asideStyle="position: fixed; right: 9em; top: 6em; width: 22em;"
+  --toc-active-bg="rgba(100, 149, 237, 0.2)"
 />
 
 <style>
@@ -196,17 +197,5 @@
   }
   :is(h4, h5) {
     margin-top: 1em;
-  }
-  /* Position TOC to the right side of viewport */
-  :global(aside.toc.desktop) {
-    position: fixed;
-    right: 9em;
-    top: 6em;
-    width: 22em;
-  }
-  /* Highlight active TOC item - use text-shadow instead of font-weight to avoid layout shift */
-  :global(aside.toc li.active) {
-    text-shadow: 0 0 0.5px currentColor, 0 0 0.5px currentColor;
-    background: rgba(100, 149, 237, 0.2);
   }
 </style>
