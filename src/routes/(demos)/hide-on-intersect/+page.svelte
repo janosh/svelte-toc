@@ -64,13 +64,14 @@
 
 <h2>Accessibility</h2>
 <p>
-  When hidden, the TOC sets <code>hidden</code> and <code>aria-hidden="true"</code>
-  attributes, ensuring screen readers skip the temporarily hidden content. The TOC remains
-  in the DOM and reappears instantly when scrolling past the overlapping element.
+  When hidden by intersection, the TOC sets <code>aria-hidden="true"</code> so screen
+  readers skip the temporarily hidden content. Visibility is controlled via CSS (<code
+  >opacity: 0</code>, <code>pointer-events: none</code>) to enable smooth fade transitions
+  while keeping the element in the layout flow.
 </p>
 <p>
-  This approach is preferred over removing the element from the DOM, as it maintains a
-  consistent document structure and allows for instant re-rendering.
+  This approach is preferred over using the <code>hidden</code> attribute or removing the
+  element from the DOM, as it maintains layout stability and allows for smooth animations.
 </p>
 
 <h2>Edge Cases Handled</h2>

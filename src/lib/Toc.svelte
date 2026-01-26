@@ -207,7 +207,7 @@
       open = false
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
-      const id = getHeadingIds && getHeadingIds(node)
+      const id = getHeadingIds(node)
       if (id) history.replaceState({}, ``, `#${id}`)
 
       if (flashClickedHeadingsFor) {
@@ -389,6 +389,7 @@
     width: var(--toc-width);
     z-index: var(--toc-z-index);
     text-wrap: var(--toc-text-wrap, balance);
+    transition: opacity 0.15s;
   }
   :where(aside.toc > nav) {
     overflow: var(--toc-overflow, auto);
@@ -471,9 +472,6 @@
 
   :where(aside.toc.desktop > nav) {
     margin: var(--toc-desktop-nav-margin);
-  }
-  :where(aside.toc) {
-    transition: opacity 0.15s;
   }
   :where(aside.toc.intersecting) {
     opacity: 0;

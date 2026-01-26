@@ -375,42 +375,39 @@ describe(`Toc`, () => {
     },
   )
 
-  test.each([[`First Page Heading`, `Second Page Heading`, 2, 3]])(
-    `updates ToC when page content changes`,
-    async (initial_title, new_title, initial_count, final_count) => {
-      document.body.innerHTML = `
-        <div id="content-container">
-          <h2>${initial_title} 1</h2>
-          <h3>${initial_title} 2</h3>
-        </div>
+  test(`updates ToC when page content changes`, async () => {
+    document.body.innerHTML = `
+      <div id="content-container">
+        <h2>First Page Heading 1</h2>
+        <h3>First Page Heading 2</h3>
+      </div>
+    `
+
+    mount(Toc, { target: document.body })
+    await tick()
+
+    let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
+    expect(toc_items.length).toBe(2)
+    expect(toc_items[0].textContent?.trim()).toBe(`First Page Heading 1`)
+    expect(toc_items[1].textContent?.trim()).toBe(`First Page Heading 2`)
+
+    const container = document.getElementById(`content-container`)
+    if (container) {
+      container.innerHTML = `
+        <h2>Second Page Heading 1</h2>
+        <h3>Second Page Heading 2</h3>
+        <h4>Second Page Heading 3</h4>
       `
+    }
 
-      mount(Toc, { target: document.body })
-      await tick()
+    await tick()
 
-      let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-      expect(toc_items.length).toBe(initial_count)
-      expect(toc_items[0].textContent?.trim()).toBe(`${initial_title} 1`)
-      expect(toc_items[1].textContent?.trim()).toBe(`${initial_title} 2`)
-
-      const container = document.getElementById(`content-container`)
-      if (container) {
-        container.innerHTML = `
-          <h2>${new_title} 1</h2>
-          <h3>${new_title} 2</h3>
-          <h4>${new_title} 3</h4>
-        `
-      }
-
-      await tick()
-
-      toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-      expect(toc_items.length).toBe(final_count)
-      expect(toc_items[0].textContent?.trim()).toBe(`${new_title} 1`)
-      expect(toc_items[1].textContent?.trim()).toBe(`${new_title} 2`)
-      expect(toc_items[2].textContent?.trim()).toBe(`${new_title} 3`)
-    },
-  )
+    toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
+    expect(toc_items.length).toBe(3)
+    expect(toc_items[0].textContent?.trim()).toBe(`Second Page Heading 1`)
+    expect(toc_items[1].textContent?.trim()).toBe(`Second Page Heading 2`)
+    expect(toc_items[2].textContent?.trim()).toBe(`Second Page Heading 3`)
+  })
 
   test.each([`auto`, `smooth`] as const)(
     `custom scroll behavior %s is applied when clicking ToC items`,
@@ -469,6 +466,8 @@ describe(`Toc`, () => {
 })
 
 describe(`hideOnIntersect`, () => {
+  // Mocks getBoundingClientRect. Note: width/height are independent defaults—overlap
+  // detection only uses top/bottom/left/right, so geometry consistency isn't required.
   const mock_bounding_rect = (element: Element, rect: Partial<DOMRect>) => {
     vi.spyOn(element, `getBoundingClientRect`).mockReturnValue({
       top: 0,
