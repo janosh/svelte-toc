@@ -137,6 +137,12 @@ Full list of props and bindable variables for this component (all of them option
    Whether to render the ToC. The reason you would use this and not wrap the component as a whole with Svelte's `{#if}` block is so that the script part of this component can still operate and keep track of the headings on the page, allowing conditional rendering based on the number or kinds of headings present (see [PR#14](https://github.com/janosh/svelte-toc/pull/14)). To access the headings `<Toc>` is currently tracking, use `<Toc bind:headings />`.
 
 1. ```ts
+   hideOnIntersect: string | HTMLElement[] | null = null
+   ```
+
+   CSS selector string or array of DOM elements. When provided, the ToC automatically hides on desktop when it visually overlaps with any matching element (e.g., full-width banners or images). The TOC reappears when scrolling past the overlapping element. This feature only applies on desktop; mobile ToC behavior is unaffected. Example: `hideOnIntersect=".full-width-banner"`
+
+1. ```ts
    autoHide: boolean = true
    ```
 

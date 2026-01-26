@@ -14,7 +14,7 @@
     {
       '/contributing': `main > h2`,
       '/changelog': `main > h4`,
-    }[page.url.pathname as string] ?? `main :where(h2, h3)`,
+    }[page.url.pathname as string] ?? `main :where(h2, h3):not(.toc-exclude)`,
   )
 
   const all_routes = Object.keys(import.meta.glob(`./**/+page.{svelte,md}`))
@@ -44,6 +44,11 @@
   {@render children?.()}
 </main>
 
-{#if [`/`, `/long-page`, `/changelog`, `/contributing`].includes(page.url.pathname)}
-  <Toc {headingSelector} />
+{#if [`/`, `/long-page`, `/changelog`, `/contributing`, `/hide-on-intersect`].includes(
+    page.url.pathname,
+  )}
+  <Toc
+    {headingSelector}
+    hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .info-banner` : null}
+  />
 {/if}
