@@ -215,6 +215,18 @@ Full list of props and bindable variables for this component (all of them option
 
    Whether to issue a console warning if the ToC is empty.
 
+1. ```ts
+   collapseSubheadings: boolean | 'h2' | 'h3' | 'h4' | 'h5' | 'h6' = false
+   ```
+
+   Collapse subheadings under inactive parent headings.
+
+   - `false` (default): All headings visible
+   - `true`: Full nested collapse - each level collapses independently (h4s only visible when their h3 parent is active)
+   - `'h3'`, `'h4'`, etc.: Threshold mode - specified level is the deepest that collapses independently. Levels below expand together when their ancestor at the threshold level is visible.
+
+   Example with `collapseSubheadings="h3"`: When an h2 section is active, all h3s in that section are visible, and ALL h4s under those h3s expand together (rather than each h4 requiring its h3 to be active).
+
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
@@ -286,6 +298,8 @@ The HTML structure of this component is
   - `margin: var(--toc-li-margin)`
   - `padding: var(--toc-li-padding, 2pt 4pt)`
   - `font: var(--toc-li-font)`
+  - `max-height: var(--toc-li-max-height, 10em)`: Used for collapse animation.
+  - `transition: ... var(--toc-collapse-duration, 0.2s) ...`: Duration for collapse/expand animation.
 - `aside.toc > nav > ol > li:hover`
   - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`

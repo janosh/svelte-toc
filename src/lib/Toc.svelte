@@ -31,6 +31,7 @@
     titleTag = `h2`,
     tocItems = $bindable([]),
     warnOnEmpty = false,
+    collapseSubheadings = false,
     blurParams = { duration: 200 },
     openTocIcon,
     titleSnippet,
@@ -78,6 +79,10 @@
     titleTag?: string
     tocItems?: HTMLLIElement[]
     warnOnEmpty?: boolean
+    // collapse subheadings under inactive parent headings
+    // true = full nested collapse (each level collapses independently)
+    // 'h3' = h3 is deepest collapsing level, h4+ expand together when h3 ancestor visible
+    collapseSubheadings?: boolean | `h${2 | 3 | 4 | 5 | 6}`
     blurParams?: BlurParams | undefined
     openTocIcon?: Snippet
     titleSnippet?: Snippet
@@ -108,6 +113,69 @@
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
+
+  // Collapse threshold level: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity (no collapse)
+  let collapse_threshold: number = $derived(
+    collapseSubheadings === true
+      ? 6
+      : typeof collapseSubheadings === `string`
+      ? parseInt(collapseSubheadings.slice(1), 10)
+      : Infinity,
+  )
+
+  // Find index of immediate parent (nearest heading with lower level)
+  function get_parent_idx(idx: number): number | null {
+    const level = levels[idx]
+    if (level === minLevel) return null
+    for (let parent_idx = idx - 1; parent_idx >= 0; parent_idx--) {
+      if (levels[parent_idx] < level) return parent_idx
+    }
+    return null
+  }
+
+  // Check if heading at idx is "expanded" (active or contains active in subtree)
+  function is_parent_expanded(idx: number): boolean {
+    if (headings[idx] === activeHeading) return true
+    const level = levels[idx]
+    // Check if any descendant (higher level, before next same-or-lower level) is active
+    for (
+      let desc_idx = idx + 1;
+      desc_idx < headings.length && levels[desc_idx] > level;
+      desc_idx++
+    ) {
+      if (headings[desc_idx] === activeHeading) return true
+    }
+    return false
+  }
+
+  // Determine if heading at idx should be visible based on collapse settings
+  function is_heading_visible(idx: number): boolean {
+    if (!collapseSubheadings) return true
+    if (activeHeading === null) return true // show all until first scroll sets active heading
+    if (levels[idx] === minLevel) return true // top-level always visible
+
+    const level = levels[idx]
+
+    if (level <= collapse_threshold) {
+      // This level collapses independently - check immediate parent
+      const parent_idx = get_parent_idx(idx)
+      if (parent_idx === null) return true // orphan heading, show it
+      return is_parent_expanded(parent_idx)
+    } else {
+      // Beyond threshold - find nearest ancestor AT threshold level
+      // and check if IT is visible (chains visibility up)
+      for (let ancestor_idx = idx - 1; ancestor_idx >= 0; ancestor_idx--) {
+        if (levels[ancestor_idx] === collapse_threshold) {
+          return is_heading_visible(ancestor_idx) // recursive
+        }
+        if (levels[ancestor_idx] < collapse_threshold) {
+          return true // no threshold-level ancestor found, show it
+        }
+      }
+      return true
+    }
+  }
+
   $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
@@ -353,12 +421,14 @@
       {/if}
       <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
-          {@const level = getHeadingLevels(heading)}
-          {@const indent = level - minLevel}
+          {@const indent = levels[idx] - minLevel}
+          {@const collapsed = collapseSubheadings && !is_heading_visible(idx)}
           <li
             role="menuitem"
-            tabindex="0"
+            tabindex={collapsed ? -1 : 0}
             class:active={heading === activeHeading}
+            class:collapsed
+            aria-hidden={collapsed || undefined}
             class={liClass || null}
             bind:this={tocItems[idx]}
             style={liStyle || null}
@@ -416,6 +486,19 @@
     margin: var(--toc-li-margin);
     padding: var(--toc-li-padding, 2pt 4pt);
     font: var(--toc-li-font);
+    max-height: var(--toc-li-max-height, 10em);
+    overflow: hidden;
+    transition:
+      max-height var(--toc-collapse-duration, 0.2s) ease-out,
+      opacity var(--toc-collapse-duration, 0.2s) ease-out,
+      padding var(--toc-collapse-duration, 0.2s) ease-out,
+      margin var(--toc-collapse-duration, 0.2s) ease-out;
+  }
+  :where(aside.toc > nav > ol > li.collapsed) {
+    max-height: 0;
+    opacity: 0;
+    padding-block: 0;
+    margin-block: 0;
   }
   :where(aside.toc > nav > ol > li:hover) {
     color: var(--toc-li-hover-color);
