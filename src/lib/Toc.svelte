@@ -114,6 +114,9 @@
   // tracks the target heading during programmatic scrolls (click/keyboard-initiated)
   // prevents scroll events from incorrectly updating activeHeading during smooth scroll
   let scroll_target: HTMLHeadingElement | null = $state(null)
+  // fallback timeout to clear scroll_target if scrollend doesn't fire
+  // (e.g., no scroll needed, or browser doesn't support scrollend)
+  let scroll_target_timeout: ReturnType<typeof setTimeout> | null = null
 
   // helper to immediately set active heading and track scroll target
   function set_scroll_target(node: HTMLHeadingElement) {
@@ -121,6 +124,11 @@
     const idx = headings.indexOf(node)
     if (idx >= 0) activeTocLi = tocItems[idx]
     scroll_target = node
+    // clear any existing timeout and set a new fallback
+    if (scroll_target_timeout) clearTimeout(scroll_target_timeout)
+    scroll_target_timeout = setTimeout(() => {
+      scroll_target = null
+    }, 1000)
   }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
@@ -355,7 +363,7 @@
     }
     if (activeTocLi && [` `, `Enter`].includes(event.key) && activeHeading) {
       set_scroll_target(activeHeading)
-      activeHeading.scrollIntoView({ behavior: scrollBehavior, block: `start` })
+      activeHeading.scrollIntoView({ behavior: `instant`, block: `start` })
     }
   }
 </script>
@@ -369,7 +377,9 @@
   }}
   onclick={close}
   onscrollend={() => {
-    scroll_target = null // clear scroll target to resume normal scroll-based detection
+    // clear scroll target and cancel fallback timeout
+    if (scroll_target_timeout) clearTimeout(scroll_target_timeout)
+    scroll_target = null
     if (!page_has_scrolled) return
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)

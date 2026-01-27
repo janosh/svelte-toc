@@ -276,6 +276,8 @@ test.describe(`collapseSubheadings`, () => {
 })
 
 test.describe(`hideOnIntersect`, () => {
+  test.describe.configure({ mode: `parallel` })
+
   test(`TOC hides when full-width banner overlaps it`, async ({ page }) => {
     await page.goto(`/hide-on-intersect`, { waitUntil: `networkidle` })
     await page.setViewportSize({ width: 1400, height: 800 })
@@ -353,6 +355,8 @@ test.describe(`hideOnIntersect`, () => {
 })
 
 test.describe(`Toc`, () => {
+  test.describe.configure({ mode: `parallel` })
+
   test(`lists the right page headings`, async ({ page }) => {
     // Test each page separately to avoid await in loop
     await page.goto(`/`, { waitUntil: `networkidle` })

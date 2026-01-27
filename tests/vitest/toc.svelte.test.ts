@@ -333,7 +333,9 @@ describe(`Toc`, () => {
       const scroll_into_view_mock = vi.fn()
       Element.prototype.scrollIntoView = scroll_into_view_mock
 
-      mount(Toc, { target: document.body, props: { open: true } })
+      // Use breakpoint higher than JSDOM's default width to simulate mobile mode
+      // On mobile, keyboard events work when open=true (no hover check needed)
+      mount(Toc, { target: document.body, props: { open: true, breakpoint: 2000 } })
       await tick()
 
       const active_item = doc_query(`aside.toc ol li.active`)
@@ -342,7 +344,7 @@ describe(`Toc`, () => {
       globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
 
       expect(scroll_into_view_mock).toHaveBeenCalledWith({
-        behavior: `instant`,
+        behavior: `smooth`,
         block: `start`,
       })
     },
@@ -946,7 +948,7 @@ describe(`collapseSubheadings`, () => {
       await tick()
 
       // In JSDOM, last heading is initially active (getBoundingClientRect returns 0 for all)
-      expect(active_text()).toBe(`Heading 3`) // Click on the first heading - should be immediately active
+      expect(active_text()).toBe(`Heading 3`) // Click first heading - should be immediately active
       ;(document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement).click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -955,7 +957,7 @@ describe(`collapseSubheadings`, () => {
 
     test(`scroll events during click-initiated scroll do not change active heading`, async () => {
       mount(Toc, { target: document.body, props: { open: true } })
-      await tick() // Click on first item (which differs from JSDOM's default of last)
+      await tick() // Click first item (differs from JSDOM's default of last)
       ;(document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement).click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
