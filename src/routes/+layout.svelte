@@ -38,13 +38,13 @@
 <CmdPalette {actions} --sms-options-bg="rgba(0, 0, 0, 0.7)" />
 <GitHubCorner href={repository} />
 <CopyButton global />
-<Nav routes={nav_routes} />
+<Nav routes={nav_routes} menu_props={{ style: `gap: 2em` }} />
 
 <main {@attach heading_anchors()}>
   {@render children?.()}
 </main>
 
-{#if [`/`, `/long-page`, `/changelog`, `/contributing`, `/hide-on-intersect`].includes(
+{#if ![`/collapse-headings`, `/dynamic-headings`, `/no-toc-page`].includes(
     page.url.pathname,
   )}
   <Toc
