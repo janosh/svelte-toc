@@ -1,8 +1,7 @@
 import { expect, test } from '@playwright/test'
 
-test.describe.configure({ mode: `parallel` })
-
 test.describe(`collapseSubheadings`, () => {
+  test.describe.configure({ mode: `parallel` })
   // Helper to scroll to element and wait for TOC to update
   async function scroll_to_element(
     page: import('@playwright/test').Page,
@@ -449,5 +448,84 @@ test.describe(`Toc`, () => {
     ).map((li_text) => li_text.trim())
 
     expect(toc_headings_after_remove).toEqual(page_headings_after_remove)
+  })
+
+  // Tests for issue #50: clicking ToC items should immediately highlight the correct heading
+  // https://github.com/janosh/svelte-toc/issues/50
+  const toc_item_sel = `aside.toc > nav > ol > li`
+
+  test(`clicking ToC item immediately highlights clicked heading`, async ({ page }) => {
+    await page.goto(`/long-page`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc_items = page.locator(toc_item_sel)
+    const active = page.locator(`${toc_item_sel}.active`)
+    const mid_idx = Math.floor((await toc_items.count()) / 2)
+    const target_text = ((await toc_items.nth(mid_idx).textContent()) ?? ``).trim()
+
+    // Scroll to bottom, then click middle item
+    await page.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
+    await page.waitForTimeout(300) // wait for scroll to settle
+    await toc_items.nth(mid_idx).click()
+
+    // Clicked item should be immediately active and stay active after scroll completes
+    await expect(active).toContainText(target_text, { timeout: 1000 })
+    await page.waitForTimeout(500) // wait for smooth scroll animation
+    await expect(active).toContainText(target_text)
+  })
+
+  test(`clicking ToC item skipping multiple headings highlights correct target`, async ({ page }) => {
+    await page.goto(`/contributing`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc_items = page.locator(toc_item_sel)
+    const active = page.locator(`${toc_item_sel}.active`)
+    const first_text = ((await toc_items.first().textContent()) ?? ``).trim()
+    const last_text = ((await toc_items.last().textContent()) ?? ``).trim()
+
+    await expect(active).toContainText(first_text)
+
+    await toc_items.last().click()
+    await expect(active).toContainText(last_text, { timeout: 500 })
+
+    await toc_items.first().click()
+    await expect(active).toContainText(first_text, { timeout: 500 })
+  })
+
+  test(`rapid ToC clicks highlight last clicked heading`, async ({ page }) => {
+    await page.goto(`/long-page`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc_items = page.locator(toc_item_sel)
+    const active = page.locator(`${toc_item_sel}.active`)
+    const count = await toc_items.count()
+    const mid_idx = Math.floor(count / 2)
+
+    // Click multiple items rapidly - last clicked should be active
+    await toc_items.nth(count - 1).click()
+    await toc_items.nth(1).click()
+    await toc_items.nth(mid_idx).click()
+
+    const mid_text = ((await toc_items.nth(mid_idx).textContent()) ?? ``).trim()
+    await expect(active).toContainText(mid_text, { timeout: 1000 })
+  })
+
+  test(`manual scroll after ToC click correctly updates active heading`, async ({ page }) => {
+    await page.goto(`/contributing`, { waitUntil: `networkidle` })
+    await page.setViewportSize({ width: 1400, height: 800 })
+
+    const toc_items = page.locator(toc_item_sel)
+    const active = page.locator(`${toc_item_sel}.active`)
+    const last_text = ((await toc_items.last().textContent()) ?? ``).trim()
+
+    await toc_items.last().click()
+    await page.waitForTimeout(800) // wait for smooth scroll to complete
+    await expect(active).toContainText(last_text)
+
+    // Manual scroll to top should update active heading
+    await page.evaluate(() => globalThis.scrollTo(0, 0))
+    await page.waitForTimeout(500) // wait for scrollend event
+    const first_text = ((await toc_items.first().textContent()) ?? ``).trim()
+    await expect(active).toContainText(first_text)
   })
 })

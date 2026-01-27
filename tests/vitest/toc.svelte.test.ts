@@ -1,6 +1,6 @@
 import Toc from '$lib'
 import { mount, tick } from 'svelte'
-import { beforeAll, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
 beforeAll(() => {
@@ -921,5 +921,83 @@ describe(`collapseSubheadings`, () => {
     // At least the top-level h2s should never be collapsed
     expect(states[0]).toBe(false) // Section 1 (h2)
     expect(states[6]).toBe(false) // Section 2 (h2)
+  })
+
+  // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
+  // https://github.com/janosh/svelte-toc/issues/50
+  describe(`scroll_target behavior`, () => {
+    const active_text = () => doc_query(`aside.toc ol li.active`).textContent?.trim()
+    const scroll_mock = vi.fn()
+
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <h2 id="heading-1">Heading 1</h2>
+        <h2 id="heading-2">Heading 2</h2>
+        <h2 id="heading-3">Heading 3</h2>
+      `
+      scroll_mock.mockClear()
+      Element.prototype.scrollIntoView = function (arg) {
+        scroll_mock(arg)
+      }
+    })
+
+    test(`clicking ToC item immediately sets active heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      // In JSDOM, last heading is initially active (getBoundingClientRect returns 0 for all)
+      expect(active_text()).toBe(`Heading 3`) // Click on the first heading - should be immediately active
+      ;(document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+      expect(scroll_mock).toHaveBeenCalled()
+    })
+
+    test(`scroll events during click-initiated scroll do not change active heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick() // Click on first item (which differs from JSDOM's default of last)
+      ;(document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // Simulate scroll events - should not change active heading
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+    })
+
+    test(`scrollend clears scroll_target allowing normal detection`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+      ;(document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // Scroll event while scroll_target set - no change
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // scrollend clears scroll_target, next scroll can update
+      globalThis.dispatchEvent(new Event(`scrollend`))
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+      expect(active_text()).toBe(`Heading 3`)
+    })
+
+    test(`rapid clicks activate last clicked item`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      const items = document.querySelectorAll(`aside.toc ol li`)
+      ;(items[2] as HTMLLIElement).click()
+      ;(items[0] as HTMLLIElement).click()
+      ;(items[1] as HTMLLIElement).click()
+      await tick()
+
+      expect(active_text()).toBe(`Heading 2`)
+      expect(scroll_mock).toHaveBeenCalledTimes(3)
+    })
   })
 })

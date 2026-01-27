@@ -111,6 +111,17 @@
   let page_has_scrolled: boolean = $state(false)
   // tracks whether TOC overlaps with any hideOnIntersect elements (desktop only)
   let intersecting: boolean = $state(false)
+  // tracks the target heading during programmatic scrolls (click/keyboard-initiated)
+  // prevents scroll events from incorrectly updating activeHeading during smooth scroll
+  let scroll_target: HTMLHeadingElement | null = $state(null)
+
+  // helper to immediately set active heading and track scroll target
+  function set_scroll_target(node: HTMLHeadingElement) {
+    activeHeading = node
+    const idx = headings.indexOf(node)
+    if (idx >= 0) activeTocLi = tocItems[idx]
+    scroll_target = node
+  }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
@@ -222,6 +233,12 @@
   })
 
   function set_active_heading() {
+    // if we're in a programmatic scroll (click/keyboard initiated), keep the target active
+    // until scrollend fires to prevent highlighting intermediate headings during smooth scroll
+    if (scroll_target) {
+      return
+    }
+
     let idx = headings.length
     while (idx--) {
       const { top } = headings[idx].getBoundingClientRect()
@@ -262,6 +279,7 @@
         return
       }
       open = false
+      set_scroll_target(node) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
       const id = getHeadingIds(node)
@@ -335,8 +353,9 @@
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
     }
-    if (activeTocLi && [` `, `Enter`].includes(event.key)) {
-      activeHeading?.scrollIntoView({ behavior: `instant`, block: `start` })
+    if (activeTocLi && [` `, `Enter`].includes(event.key) && activeHeading) {
+      set_scroll_target(activeHeading)
+      activeHeading.scrollIntoView({ behavior: scrollBehavior, block: `start` })
     }
   }
 </script>
@@ -350,6 +369,7 @@
   }}
   onclick={close}
   onscrollend={() => {
+    scroll_target = null // clear scroll target to resume normal scroll-based detection
     if (!page_has_scrolled) return
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)
