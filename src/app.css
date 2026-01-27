@@ -8,6 +8,8 @@
   --toc-mobile-btn-color: white;
   --toc-min-width: 18em;
   --toc-desktop-max-width: 30em;
+  --toc-active-bg: rgba(100, 149, 237, 0.2);
+  --toc-active-color: cornflowerblue;
 
   --github-corner-color: var(--bg);
   --github-corner-bg: white;

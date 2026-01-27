@@ -1,6 +1,6 @@
 import Toc from '$lib'
 import { mount, tick } from 'svelte'
-import { beforeAll, describe, expect, test, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
 beforeAll(() => {
@@ -322,9 +322,16 @@ describe(`Toc`, () => {
     },
   )
 
-  test.each([` `, `Enter`])(
-    `%s key activates heading navigation when pressed in the ToC`,
-    async (key) => {
+  test.each(
+    [
+      [` `, `smooth`],
+      [`Enter`, `smooth`],
+      [` `, `auto`],
+      [`Enter`, `auto`],
+    ] as const,
+  )(
+    `%s key with scrollBehavior=%s uses prop value for scroll`,
+    async (key, scroll_behavior) => {
       document.body.innerHTML = `
         <h2 id="heading-1">Heading 1</h2>
         <h2 id="heading-2">Heading 2</h2>
@@ -333,7 +340,12 @@ describe(`Toc`, () => {
       const scroll_into_view_mock = vi.fn()
       Element.prototype.scrollIntoView = scroll_into_view_mock
 
-      mount(Toc, { target: document.body, props: { open: true } })
+      // Use breakpoint higher than JSDOM's default width to simulate mobile mode
+      // On mobile, keyboard events work when open=true (no hover check needed)
+      mount(Toc, {
+        target: document.body,
+        props: { open: true, breakpoint: 2000, scrollBehavior: scroll_behavior },
+      })
       await tick()
 
       const active_item = doc_query(`aside.toc ol li.active`)
@@ -342,11 +354,35 @@ describe(`Toc`, () => {
       globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
 
       expect(scroll_into_view_mock).toHaveBeenCalledWith({
-        behavior: `instant`,
+        behavior: scroll_behavior,
         block: `start`,
       })
     },
   )
+
+  test(`keyboard navigation uses default scrollBehavior (smooth) when prop not specified`, async () => {
+    document.body.innerHTML = `
+      <h2 id="heading-1">Heading 1</h2>
+      <h2 id="heading-2">Heading 2</h2>
+    `
+
+    const scroll_into_view_mock = vi.fn()
+    Element.prototype.scrollIntoView = scroll_into_view_mock
+
+    // Mount without specifying scrollBehavior - should use default 'smooth'
+    mount(Toc, {
+      target: document.body,
+      props: { open: true, breakpoint: 2000 },
+    })
+    await tick()
+
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Enter` }))
+
+    expect(scroll_into_view_mock).toHaveBeenCalledWith({
+      behavior: `smooth`,
+      block: `start`,
+    })
+  })
 
   test.each([[[]], [[`Escape`]]])(
     `Escape key closes ToC on mobile if reactToKeys=%s includes 'Escape'`,
@@ -463,6 +499,181 @@ describe(`Toc`, () => {
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(2)
     expect(toc_items[1].textContent?.trim()).toBe(`Dynamically Added Heading`)
+  })
+
+  // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
+  // https://github.com/janosh/svelte-toc/issues/50
+  describe(`scroll_target behavior`, () => {
+    const active_text = () => doc_query(`aside.toc ol li.active`).textContent?.trim()
+    const scroll_mock = vi.fn()
+
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <h2 id="heading-1">Heading 1</h2>
+        <h2 id="heading-2">Heading 2</h2>
+        <h2 id="heading-3">Heading 3</h2>
+      `
+      scroll_mock.mockClear()
+      Element.prototype.scrollIntoView = function (arg) {
+        scroll_mock(arg)
+      }
+    })
+
+    test(`clicking ToC item immediately sets active heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      // In JSDOM, last heading is initially active (getBoundingClientRect returns 0 for all)
+      expect(active_text()).toBe(`Heading 3`)
+
+      // Click first heading - should be immediately active
+      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      first_item.click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+      expect(scroll_mock).toHaveBeenCalled()
+    })
+
+    test(`scroll events during click-initiated scroll do not change active heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      // Click first item (differs from JSDOM's default of last)
+      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      first_item.click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // Simulate scroll events - should not change active heading
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+    })
+
+    test(`scrollend clears scroll_target allowing normal detection`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      first_item.click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // Scroll event while scroll_target set - no change
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // scrollend clears scroll_target, next scroll can update
+      globalThis.dispatchEvent(new Event(`scrollend`))
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+      expect(active_text()).toBe(`Heading 3`)
+    })
+
+    test(`rapid clicks activate last clicked item`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      const items = document.querySelectorAll(`aside.toc ol li`)
+      const item_0 = items[0] as HTMLLIElement
+      const item_1 = items[1] as HTMLLIElement
+      const item_2 = items[2] as HTMLLIElement
+      item_2.click()
+      item_0.click()
+      item_1.click()
+      await tick()
+
+      expect(active_text()).toBe(`Heading 2`)
+      expect(scroll_mock).toHaveBeenCalledTimes(3)
+    })
+
+    test(`scroll_target persists when heading far from destination during smooth scroll`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      const headings = document.querySelectorAll(`h2`)
+      const first_heading = headings[0] as HTMLHeadingElement
+
+      // Mock heading starting far from destination (simulating start of smooth scroll)
+      // First call: heading is at y=2000 (far from activeHeadingScrollOffset=100)
+      let mock_top = 2000
+      vi.spyOn(first_heading, `getBoundingClientRect`).mockImplementation(() => ({
+        top: mock_top,
+        bottom: mock_top + 50,
+        left: 0,
+        right: 100,
+        width: 100,
+        height: 50,
+        x: 0,
+        y: mock_top,
+        toJSON: () => ({}),
+      }))
+
+      // Click first heading - should be immediately active
+      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      first_item.click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // Simulate scroll events during smooth scroll (heading moving toward destination)
+      // Distance is decreasing, so scroll_target should NOT be cleared
+      mock_top = 1500 // moved closer
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`) // still active, not cleared
+
+      mock_top = 800 // moved even closer
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`) // still active
+
+      mock_top = 200 // almost at destination
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`) // still active
+    })
+
+    test(`scroll_target clears when user manually scrolls away`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      const headings = document.querySelectorAll(`h2`)
+      const first_heading = headings[0] as HTMLHeadingElement
+
+      // Start with heading near destination
+      let mock_top = 150
+      vi.spyOn(first_heading, `getBoundingClientRect`).mockImplementation(() => ({
+        top: mock_top,
+        bottom: mock_top + 50,
+        left: 0,
+        right: 100,
+        width: 100,
+        height: 50,
+        x: 0,
+        y: mock_top,
+        toJSON: () => ({}),
+      }))
+
+      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      first_item.click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // First scroll event establishes baseline distance
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      // User manually scrolls away - distance increases significantly (>50px threshold)
+      mock_top = 500 // user scrolled down, heading moved up in viewport
+      globalThis.dispatchEvent(new Event(`scroll`))
+      await tick()
+      // scroll_target should be cleared, normal detection resumes
+      // In JSDOM with default mocks, last heading becomes active
+      expect(active_text()).toBe(`Heading 3`)
+    })
   })
 })
 

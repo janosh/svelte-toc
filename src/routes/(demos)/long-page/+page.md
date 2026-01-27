@@ -1,7 +1,3 @@
-<script lang="ts">
-  import { Toc } from '$lib'
-</script>
-
 # VS Code November 2021 Release Notes (v1.63)
 
 Welcome to the November 2021 release of Visual Studio Code. There are many updates in this version that we hope you will like, some of the key highlights include:

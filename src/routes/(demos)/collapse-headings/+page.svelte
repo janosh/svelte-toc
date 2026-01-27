@@ -170,7 +170,6 @@
   collapseSubheadings={collapse_mode}
   headingSelector=":is(h2, h3, h4, h5, h6):not(.toc-exclude)"
   asideStyle="position: fixed; right: 9em; top: 6em; width: 22em;"
-  --toc-active-bg="rgba(100, 149, 237, 0.2)"
 />
 
 <style>

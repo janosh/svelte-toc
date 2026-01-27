@@ -111,6 +111,41 @@
   let page_has_scrolled: boolean = $state(false)
   // tracks whether TOC overlaps with any hideOnIntersect elements (desktop only)
   let intersecting: boolean = $state(false)
+  // tracks the target heading during programmatic scrolls (click/keyboard-initiated)
+  // prevents scroll events from incorrectly updating activeHeading during smooth scroll
+  let scroll_target: HTMLHeadingElement | null = $state(null)
+  // fallback timeout to clear scroll_target if scrollend doesn't fire
+  // (e.g., no scroll needed, or browser doesn't support scrollend)
+  let scroll_target_timeout: ReturnType<typeof setTimeout> | null = null
+  // tracks previous distance to scroll_target to detect manual scroll direction
+  // initialized to Infinity so first scroll event always passes the "distance increasing" check
+  let prev_scroll_target_distance: number = Infinity
+
+  // helper to clear scroll_target state and cancel fallback timeout
+  function clear_scroll_target() {
+    if (scroll_target_timeout) {
+      clearTimeout(scroll_target_timeout)
+      scroll_target_timeout = null
+    }
+    scroll_target = null
+    prev_scroll_target_distance = Infinity
+  }
+
+  // helper to immediately set active heading and track scroll target
+  function set_scroll_target(node: HTMLHeadingElement) {
+    const idx = headings.indexOf(node)
+    // only proceed if heading exists in array (could be removed between click and handler)
+    if (idx < 0) return
+    activeHeading = node
+    activeTocLi = tocItems[idx]
+    scroll_target = node
+    prev_scroll_target_distance = Infinity
+    // clear any existing timeout and set a new fallback
+    if (scroll_target_timeout) clearTimeout(scroll_target_timeout)
+    scroll_target_timeout = setTimeout(() => {
+      clear_scroll_target()
+    }, 1000)
+  }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
   let minLevel: number = $derived(Math.min(...levels) || 0)
@@ -222,6 +257,24 @@
   })
 
   function set_active_heading() {
+    // if we're in a programmatic scroll (click/keyboard initiated), keep the target active
+    // until scrollend fires to prevent highlighting intermediate headings during smooth scroll
+    if (scroll_target) {
+      // detect if user manually scrolled away from scroll_target by checking if distance
+      // is increasing (user scrolling away) rather than decreasing (smooth scroll in progress)
+      const target_rect = scroll_target.getBoundingClientRect()
+      const distance = Math.abs(target_rect.top - activeHeadingScrollOffset)
+      // threshold of 50px increase detects manual scroll while tolerating scroll jitter
+      if (distance > prev_scroll_target_distance + 50) {
+        // user manually scrolled away from target, clear and allow normal detection
+        clear_scroll_target()
+      } else {
+        // smooth scroll still in progress (distance decreasing or stable), keep target active
+        prev_scroll_target_distance = distance
+        return
+      }
+    }
+
     let idx = headings.length
     while (idx--) {
       const { top } = headings[idx].getBoundingClientRect()
@@ -262,6 +315,7 @@
         return
       }
       open = false
+      set_scroll_target(node) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
       const id = getHeadingIds(node)
@@ -335,8 +389,9 @@
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
     }
-    if (activeTocLi && [` `, `Enter`].includes(event.key)) {
-      activeHeading?.scrollIntoView({ behavior: `instant`, block: `start` })
+    if (activeTocLi && [` `, `Enter`].includes(event.key) && activeHeading) {
+      set_scroll_target(activeHeading)
+      activeHeading.scrollIntoView({ behavior: scrollBehavior, block: `start` })
     }
   }
 </script>
@@ -350,6 +405,8 @@
   }}
   onclick={close}
   onscrollend={() => {
+    // clear scroll target and cancel fallback timeout
+    clear_scroll_target()
     if (!page_has_scrolled) return
     // wait for scroll end since Chrome doesn't support multiple simultaneous scrolls,
     // smooth or otherwise (https://stackoverflow.com/a/63563437)

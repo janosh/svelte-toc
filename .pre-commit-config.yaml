@@ -42,7 +42,7 @@ repos:
         args: [--ignore-words-list, falsy, --check-filenames]
 
   - repo: https://github.com/crate-ci/typos
-    rev: v1.42.1
+    rev: v1.42.2
     hooks:
       - id: typos
         types: [text]
