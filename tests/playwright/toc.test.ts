@@ -289,8 +289,6 @@ test.describe(`hideOnIntersect`, () => {
 
     // Scroll to full-width banner - it spans 100vw so always overlaps TOC
     await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
-    await page.waitForTimeout(100)
-
     await expect(toc).toHaveClass(/intersecting/)
   })
 
@@ -302,12 +300,10 @@ test.describe(`hideOnIntersect`, () => {
 
     // Scroll to banner and verify TOC hides
     await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
-    await page.waitForTimeout(100)
     await expect(toc).toHaveClass(/intersecting/)
 
     // Scroll back to top and verify TOC reappears
     await page.evaluate(() => scrollTo(0, 0))
-    await page.waitForTimeout(100)
     await expect(toc).not.toHaveClass(/intersecting/)
   })
 
@@ -319,9 +315,7 @@ test.describe(`hideOnIntersect`, () => {
     await expect(toc).toHaveClass(/mobile/)
 
     await page.locator(`[data-testid="banner-1"]`).scrollIntoViewIfNeeded()
-    await page.waitForTimeout(100)
-
-    // hideOnIntersect is desktop-only
+    // hideOnIntersect is desktop-only, so TOC should remain visible on mobile
     await expect(toc).not.toHaveClass(/intersecting/)
   })
 
@@ -356,6 +350,8 @@ test.describe(`hideOnIntersect`, () => {
 
 test.describe(`Toc`, () => {
   test.describe.configure({ mode: `parallel` })
+
+  const toc_item_sel = `aside.toc > nav > ol > li`
 
   test(`lists the right page headings`, async ({ page }) => {
     // Test each page separately to avoid await in loop
@@ -397,21 +393,24 @@ test.describe(`Toc`, () => {
     expect(await page.evaluate(() => globalThis.scrollY)).toBe(0)
 
     await page.click(`aside.toc > nav > ol > li:last-child`)
-    await page.waitForTimeout(100) // TODO: wait for scroll to finish instead of hard-coding timeout
-    expect(await page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(0)
+    // Wait for scroll to complete
+    await expect(async () => {
+      const scroll_y = await page.evaluate(() => globalThis.scrollY)
+      expect(scroll_y).toBeGreaterThan(0)
+    }).toPass()
   })
 
   test(`correctly highlights the closest heading in the ToC when scrolling manually`, async ({ page }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
-    let active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
+    const active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
     expect(active_toc_li).toContain(`🙋 How can I help?`)
 
     // scroll to the bottom of the page
     await page.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(1000)
-
-    active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
-    expect(active_toc_li).toContain(`🆕 New release`)
+    // Wait for active heading to update to last item
+    await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
+      `🆕 New release`,
+    )
   })
 
   test(`updates when headings are added/removed from the page after load`, async ({ page }) => {
@@ -456,8 +455,6 @@ test.describe(`Toc`, () => {
 
   // Tests for issue #50: clicking ToC items should immediately highlight the correct heading
   // https://github.com/janosh/svelte-toc/issues/50
-  const toc_item_sel = `aside.toc > nav > ol > li`
-
   test(`clicking ToC item immediately highlights clicked heading`, async ({ page }) => {
     await page.goto(`/long-page`, { waitUntil: `networkidle` })
     await page.setViewportSize({ width: 1400, height: 800 })
@@ -469,12 +466,17 @@ test.describe(`Toc`, () => {
 
     // Scroll to bottom, then click middle item
     await page.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
-    await page.waitForTimeout(300) // wait for scroll to settle
+    // Wait for scroll to complete
+    await expect(async () => {
+      const at_bottom = await page.evaluate(
+        () =>
+          globalThis.scrollY + globalThis.innerHeight >= document.body.scrollHeight - 10,
+      )
+      expect(at_bottom).toBe(true)
+    }).toPass()
     await toc_items.nth(mid_idx).click()
 
     // Clicked item should be immediately active and stay active after scroll completes
-    await expect(active).toContainText(target_text, { timeout: 1000 })
-    await page.waitForTimeout(500) // wait for smooth scroll animation
     await expect(active).toContainText(target_text)
   })
 
@@ -490,10 +492,10 @@ test.describe(`Toc`, () => {
     await expect(active).toContainText(first_text)
 
     await toc_items.last().click()
-    await expect(active).toContainText(last_text, { timeout: 500 })
+    await expect(active).toContainText(last_text)
 
     await toc_items.first().click()
-    await expect(active).toContainText(first_text, { timeout: 500 })
+    await expect(active).toContainText(first_text)
   })
 
   test(`rapid ToC clicks highlight last clicked heading`, async ({ page }) => {
@@ -511,7 +513,7 @@ test.describe(`Toc`, () => {
     await toc_items.nth(mid_idx).click()
 
     const mid_text = ((await toc_items.nth(mid_idx).textContent()) ?? ``).trim()
-    await expect(active).toContainText(mid_text, { timeout: 1000 })
+    await expect(active).toContainText(mid_text)
   })
 
   test(`manual scroll after ToC click correctly updates active heading`, async ({ page }) => {
@@ -523,12 +525,10 @@ test.describe(`Toc`, () => {
     const last_text = ((await toc_items.last().textContent()) ?? ``).trim()
 
     await toc_items.last().click()
-    await page.waitForTimeout(800) // wait for smooth scroll to complete
     await expect(active).toContainText(last_text)
 
     // Manual scroll to top should update active heading
     await page.evaluate(() => globalThis.scrollTo(0, 0))
-    await page.waitForTimeout(500) // wait for scrollend event
     const first_text = ((await toc_items.first().textContent()) ?? ``).trim()
     await expect(active).toContainText(first_text)
   })

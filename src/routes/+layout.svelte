@@ -44,7 +44,7 @@
   {@render children?.()}
 </main>
 
-{#if [`/`, `/long-page`, `/changelog`, `/contributing`, `/hide-on-intersect`].includes(
+{#if ![`/collapse-headings`, `/dynamic-headings`, `/no-toc-page`].includes(
     page.url.pathname,
   )}
   <Toc
