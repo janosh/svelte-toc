@@ -120,9 +120,11 @@
 
   // helper to immediately set active heading and track scroll target
   function set_scroll_target(node: HTMLHeadingElement) {
-    activeHeading = node
     const idx = headings.indexOf(node)
-    if (idx >= 0) activeTocLi = tocItems[idx]
+    // only proceed if heading exists in array (could be removed between click and handler)
+    if (idx < 0) return
+    activeHeading = node
+    activeTocLi = tocItems[idx]
     scroll_target = node
     // clear any existing timeout and set a new fallback
     if (scroll_target_timeout) clearTimeout(scroll_target_timeout)

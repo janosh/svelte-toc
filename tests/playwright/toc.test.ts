@@ -526,6 +526,9 @@ test.describe(`Toc`, () => {
 
     await toc_items.last().click()
     await expect(active).toContainText(last_text)
+    // Wait for smooth scroll animation to complete before testing manual scroll
+    // This delay is necessary because we need scrollend to fire and clear scroll_target
+    await page.waitForTimeout(1200)
 
     // Manual scroll to top should update active heading
     await page.evaluate(() => globalThis.scrollTo(0, 0))
