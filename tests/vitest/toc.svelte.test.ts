@@ -986,6 +986,25 @@ describe(`Style and Class Props Application`, () => {
       }
     },
   )
+
+  // https://github.com/janosh/svelte-toc/issues/71
+  test(`uses a specific selector for TOC ordered lists`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2><h3>Heading 2</h3>`
+
+    mount(Toc, { target: document.body })
+    await tick()
+
+    const style_text = document.head.textContent ?? ``
+    const selector_match = style_text.match(
+      /([^\n{]+)\{\s*\n\s*list-style: var\(--toc-ol-list-style, none\);/m,
+    )
+    if (!selector_match) {
+      throw new Error(`Could not find TOC list-style rule in compiled CSS`)
+    }
+    const selector_line = selector_match[1].trim()
+    expect(selector_line.startsWith(`:where(`)).toBe(false)
+    expect(selector_line).toMatch(/aside\.toc.*> nav.*> ol/)
+  })
 })
 
 describe(`collapseSubheadings`, () => {

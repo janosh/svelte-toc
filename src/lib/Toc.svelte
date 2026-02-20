@@ -523,7 +523,7 @@
     padding: var(--toc-padding, 1em 1em 0 3em);
     position: relative;
   }
-  :where(aside.toc > nav > ol) {
+  aside.toc > nav > ol {
     list-style: var(--toc-ol-list-style, none);
     padding: var(--toc-ol-padding, 0);
     margin: var(--toc-ol-margin);
