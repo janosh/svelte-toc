@@ -528,7 +528,7 @@
     padding: var(--toc-ol-padding, 0);
     margin: var(--toc-ol-margin);
   }
-  :where(.toc-title) {
+  :where(aside.toc .toc-title) {
     padding: var(--toc-title-padding);
     margin: var(--toc-title-margin, 1em 0);
     font-size: var(--toc-title-font-size, initial);
@@ -546,11 +546,11 @@
     font: var(--toc-li-font);
     transition: var(--toc-li-transition);
   }
-  :where(aside.toc > nav > ol > li:focus-visible) {
+  aside.toc > nav > ol > li:focus-visible {
     outline: var(--toc-focus-outline, 2px solid currentColor);
     outline-offset: var(--toc-focus-outline-offset, 1px);
   }
-  :where(aside.toc.collapsible > nav > ol > li) {
+  aside.toc.collapsible > nav > ol > li {
     max-height: var(--toc-li-max-height, 10em);
     overflow: hidden;
     transition:
@@ -559,17 +559,17 @@
       padding var(--toc-collapse-duration, 0.2s) ease-out,
       margin var(--toc-collapse-duration, 0.2s) ease-out;
   }
-  :where(aside.toc.collapsible > nav > ol > li.collapsed) {
+  aside.toc.collapsible > nav > ol > li.collapsed {
     max-height: 0;
     opacity: 0;
     padding-block: 0;
     margin-block: 0;
   }
-  :where(aside.toc > nav > ol > li:hover) {
+  aside.toc > nav > ol > li:hover {
     color: var(--toc-li-hover-color);
     background: var(--toc-li-hover-bg);
   }
-  :where(aside.toc > nav > ol > li.active) {
+  aside.toc > nav > ol > li.active {
     background: var(--toc-active-bg);
     color: var(--toc-active-color);
     font: var(--toc-active-li-font);
@@ -596,12 +596,12 @@
     margin-top: var(--toc-title-margin-top, 0);
   }
 
-  :where(aside.toc.mobile) {
+  aside.toc.mobile {
     position: fixed;
     bottom: var(--toc-mobile-bottom, 1em);
     right: var(--toc-mobile-right, 1em);
   }
-  :where(aside.toc.mobile > nav) {
+  aside.toc.mobile > nav {
     border-radius: var(--toc-mobile-border-radius, 3pt);
     right: var(--toc-mobile-right, 1em);
     z-index: -1;
@@ -611,7 +611,7 @@
     box-shadow: var(--toc-mobile-shadow);
     border: var(--toc-mobile-border);
   }
-  :where(aside.toc.desktop) {
+  aside.toc.desktop {
     position: sticky;
     background: var(--toc-desktop-bg);
     margin: var(--toc-desktop-aside-margin);
@@ -619,10 +619,10 @@
     top: var(--toc-desktop-sticky-top, 2em);
   }
 
-  :where(aside.toc.desktop > nav) {
+  aside.toc.desktop > nav {
     margin: var(--toc-desktop-nav-margin);
   }
-  :where(aside.toc.intersecting) {
+  aside.toc.intersecting {
     opacity: 0;
     pointer-events: none;
   }
