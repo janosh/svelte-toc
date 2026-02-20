@@ -30,12 +30,11 @@
 </div>
 
 <style>
-  :global(body) {
-    align-content: start;
-  }
   .container {
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--toc-min-width, 15em);
+    align-items: start;
+    height: min(75vh, 48rem);
     gap: 1rem;
     margin: 1em auto;
   }
@@ -43,6 +42,7 @@
     grid-column: 1;
     max-width: none;
     min-width: 0;
+    overflow: auto;
   }
   .controls {
     display: flex;
