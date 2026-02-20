@@ -986,6 +986,59 @@ describe(`Style and Class Props Application`, () => {
       }
     },
   )
+
+  test.each([
+    {
+      rule_name: `aside base rule`,
+      declaration_pattern: /box-sizing: border-box;/,
+      expects_where: true,
+    },
+    {
+      rule_name: `nav base rule`,
+      declaration_pattern: /overflow: var\(--toc-overflow, auto\);/,
+      expects_where: true,
+    },
+    {
+      rule_name: `list item base rule`,
+      declaration_pattern: /color: var\(--toc-li-color\);/,
+      expects_where: true,
+    },
+    {
+      rule_name: `open button base rule`,
+      declaration_pattern: /bottom: var\(--toc-mobile-btn-bottom, 0\);/,
+      expects_where: true,
+    },
+    {
+      // https://github.com/janosh/svelte-toc/issues/71
+      rule_name: `ordered list structural rule`,
+      declaration_pattern: /list-style: var\(--toc-ol-list-style, none\);/,
+      expects_where: false,
+      selector_pattern: /aside\.toc.*> nav.*> ol/,
+    },
+  ])(
+    `uses expected selector specificity for $rule_name`,
+    async ({ declaration_pattern, expects_where, selector_pattern }) => {
+      document.body.innerHTML = `<h2>Heading 1</h2><h3>Heading 2</h3>`
+
+      mount(Toc, { target: document.body })
+      await tick()
+
+      const style_text = document.head.textContent ?? ``
+      const css_blocks = Array.from(style_text.matchAll(/([^{}]+)\{([^{}]+)\}/g))
+      const matching_block = css_blocks.find(([, , block_text]) =>
+        declaration_pattern.test(block_text)
+      )
+      if (!matching_block) {
+        throw new Error(
+          `Could not find CSS selector for declaration: ${declaration_pattern.source}`,
+        )
+      }
+
+      const selector_line = matching_block[1].trim()
+      expect(selector_line.startsWith(`:where(`)).toBe(expects_where)
+      if (selector_pattern) expect(selector_line).toMatch(selector_pattern)
+    },
+  )
 })
 
 describe(`collapseSubheadings`, () => {

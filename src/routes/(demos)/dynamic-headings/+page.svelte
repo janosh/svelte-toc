@@ -1,12 +1,11 @@
 <script lang="ts">
   import { Toc } from '$lib'
 
-  let main: HTMLElement
   let heading_count: number = $state(0)
 </script>
 
 <div class="container">
-  <main bind:this={main}>
+  <main>
     <h1>Dynamic Headings Demo</h1>
     <p>
       This demo shows how the TOC component reacts to DOM mutations in real-time. Use the
@@ -27,17 +26,25 @@
     {/each}
   </main>
 
-  <Toc />
+  <Toc asideStyle="grid-column: 2;" />
 </div>
 
 <style>
-  div.container {
+  .container {
     display: grid;
-    grid-template-columns: 1fr 200px;
+    grid-template-columns: minmax(0, 1fr) var(--toc-min-width, 15em);
+    align-items: start;
+    height: min(75vh, 48rem);
     gap: 1rem;
     margin: 1em auto;
   }
-  div.controls {
+  .container > main {
+    grid-column: 1;
+    max-width: none;
+    min-width: 0;
+    overflow: auto;
+  }
+  .controls {
     display: flex;
     flex-wrap: wrap;
     gap: 1ex;
