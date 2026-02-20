@@ -5,8 +5,12 @@
   "homepage": "https://janosh.github.io/svelte-toc",
   "repository": "https://github.com/janosh/svelte-toc",
   "license": "MIT",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "type": "module",
+  "scripts": {
+    "package": "svelte-package",
+    "prepublishOnly": "pnpm package"
+  },
   "svelte": "./dist/index.js",
   "bugs": "https://github.com/janosh/svelte-toc/issues",
   "dependencies": {
