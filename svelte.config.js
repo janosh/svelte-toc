@@ -4,7 +4,6 @@ import { heading_ids } from 'svelte-multiselect/heading-anchors'
 import {
   mdsvex_transform,
   starry_night_highlighter,
-  sveltePreprocess,
 } from 'svelte-multiselect/live-examples'
 
 const { default: pkg } = await import(`./package.json`, {
@@ -22,7 +21,6 @@ export default {
   extensions: [`.svelte`, `.md`],
 
   preprocess: [
-    sveltePreprocess(),
     mdsvex({
       remarkPlugins,
       extensions: [`.md`],
