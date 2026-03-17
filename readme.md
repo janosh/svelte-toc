@@ -220,7 +220,6 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
    Collapse subheadings under inactive parent headings.
-
    - `false` (default): All headings visible
    - `true`: Full nested collapse - each level collapses independently (h4s only visible when their h3 parent is active)
    - `'h3'`, `'h4'`, etc.: Threshold mode - specified level is the deepest that collapses independently. Levels below expand together when their ancestor at the threshold level is visible.
