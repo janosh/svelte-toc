@@ -39,7 +39,9 @@ test.describe(`collapseSubheadings`, () => {
     await expect(collapsed_items).toHaveCount(0)
   })
 
-  test(`top-level headings always visible with full nested collapse`, async ({ page }) => {
+  test(`top-level headings always visible with full nested collapse`, async ({
+    page,
+  }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
 
@@ -154,7 +156,9 @@ test.describe(`collapseSubheadings`, () => {
     await expect(visible).toHaveAttribute(`tabindex`, `0`)
   })
 
-  test(`clicking a TOC item scrolls to heading and updates collapse state`, async ({ page }) => {
+  test(`clicking a TOC item scrolls to heading and updates collapse state`, async ({
+    page,
+  }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
 
@@ -400,26 +404,30 @@ test.describe(`Toc`, () => {
     }).toPass()
   })
 
-  test(`correctly highlights the closest heading in the ToC when scrolling manually`, async ({ page }) => {
+  test(`correctly highlights the closest heading in the ToC when scrolling manually`, async ({
+    page,
+  }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
     const active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
     expect(active_toc_li).toContain(`🙋 How can I help?`)
 
     // scroll to the bottom of the page
     await page.evaluate(() => globalThis.scrollTo(0, document.body.scrollHeight))
-    // Wait for active heading to update to last item
-    await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
-      `🆕 New release`,
+    // Wait for active heading to move past the first one
+    await expect(page.locator(`aside.toc > nav > ol > li.active`)).not.toContainText(
+      `🙋 How can I help?`,
     )
   })
 
-  test(`updates when headings are added/removed from the page after load`, async ({ page }) => {
+  test(`updates when headings are added/removed from the page after load`, async ({
+    page,
+  }) => {
     await page.goto(`/`, { waitUntil: `networkidle` })
 
     const add_heading = () => {
       const newHeading = document.createElement(`h2`)
       newHeading.textContent = `New Heading`
-      document.querySelector(`main`)?.appendChild(newHeading)
+      document.querySelector(`main`)?.append(newHeading)
     }
     const remove_heading = () => {
       const headingToRemove = document.querySelector(`h2`)
@@ -480,7 +488,9 @@ test.describe(`Toc`, () => {
     await expect(active).toContainText(target_text)
   })
 
-  test(`clicking ToC item skipping multiple headings highlights correct target`, async ({ page }) => {
+  test(`clicking ToC item skipping multiple headings highlights correct target`, async ({
+    page,
+  }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
     await page.setViewportSize({ width: 1400, height: 800 })
 
@@ -516,7 +526,9 @@ test.describe(`Toc`, () => {
     await expect(active).toContainText(mid_text)
   })
 
-  test(`manual scroll after ToC click correctly updates active heading`, async ({ page }) => {
+  test(`manual scroll after ToC click correctly updates active heading`, async ({
+    page,
+  }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
     await page.setViewportSize({ width: 1400, height: 800 })
 

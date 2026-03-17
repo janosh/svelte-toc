@@ -62,56 +62,63 @@ describe(`Toc`, () => {
     },
   )
 
-  describe.each([true, false])(`with autoHide=%s`, (autoHide) => {
-    test.each([undefined, `foobar`, `h2:not(.toc-exclude)`, `h4`])(
-      `ToC is hidden if no headings match selector '%s'`,
-      async (headingSelector) => {
+  describe.each([undefined, `foobar`, `h2:not(.toc-exclude)`, `h4`])(
+    `with headingSelector='%s'`,
+    (headingSelector) => {
+      const setup_empty_page = () => {
         document.body.innerHTML = `
       <h1>Heading 1</h1>
       <h2 class="toc-exclude">Heading 2</h2>
       <h5>Heading 5</h5>
       <h6>Heading 6</h6>
     `
+      }
 
+      test(`autoHide=true hides ToC when no headings match`, async () => {
+        setup_empty_page()
         mount(Toc, {
           target: document.body,
-          props: { headingSelector, autoHide },
+          props: { headingSelector, autoHide: true },
         })
         await tick()
 
         const node = doc_query(`aside.toc`)
         expect(node).toBeInstanceOf(HTMLElement)
-        if (autoHide) {
-          expect(node.getAttribute(`aria-hidden`)).toBe(`true`)
-          expect(node.className).toContain(`hidden`)
-          expect(node.getAttribute(`hidden`)).toBe(``)
-        } else {
-          expect(node.className).not.toContain(`hidden`)
-          expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
-          expect(node.getAttribute(`hidden`)).toBe(null)
-        }
-      },
-    )
-  })
+        expect(node.getAttribute(`aria-hidden`)).toBe(`true`)
+        expect(node.className).toContain(`hidden`)
+        expect(node.getAttribute(`hidden`)).toBe(``)
+      })
 
-  test.each([true, false])(
-    `console.warns if empty (i.e. no headings found) and warnOnEmpty=%s`,
-    async (warnOnEmpty) => {
-      console.warn = vi.fn()
+      test(`autoHide=false keeps ToC visible when no headings match`, async () => {
+        setup_empty_page()
+        mount(Toc, {
+          target: document.body,
+          props: { headingSelector, autoHide: false },
+        })
+        await tick()
 
-      mount(Toc, { target: document.body, props: { warnOnEmpty } })
-
-      if (warnOnEmpty) {
-        await tick() // don't move this tick() outside, seems to cause console.calls
-        //  to pollute the other test if applied to warnOnEmpty=false
-        const msg =
-          `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
-        expect(console.warn).toHaveBeenCalledWith(msg)
-      } else {
-        expect(console.warn).not.toHaveBeenCalled()
-      }
+        const node = doc_query(`aside.toc`)
+        expect(node).toBeInstanceOf(HTMLElement)
+        expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
+        expect(node.className).not.toContain(`hidden`)
+        expect(node.getAttribute(`hidden`)).toBe(null)
+      })
     },
   )
+
+  test(`console.warns when empty and warnOnEmpty=true`, async () => {
+    console.warn = vi.fn()
+    mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
+    await tick()
+    const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
+    expect(console.warn).toHaveBeenCalledWith(msg)
+  })
+
+  test(`no console.warn when warnOnEmpty=false`, () => {
+    console.warn = vi.fn()
+    mount(Toc, { target: document.body, props: { warnOnEmpty: false } })
+    expect(console.warn).not.toHaveBeenCalled()
+  })
 
   test(`subheadings are indented`, async () => {
     document.body.innerHTML = `
@@ -127,45 +134,54 @@ describe(`Toc`, () => {
     const toc_list = doc_query(`aside.toc > nav > ol`)
     expect(toc_list.children.length).toBe(3)
 
-    const lis = Array.from(toc_list.children) as HTMLLIElement[]
+    const lis = toc_list.querySelectorAll<HTMLLIElement>(`:scope > li`)
     // Indent is applied via CSS calc with --toc-indent-per-level variable
     expect(lis[0].style.marginLeft).toContain(`calc(0 *`)
     expect(lis[1].style.marginLeft).toContain(`calc(1 *`)
     expect(lis[2].style.marginLeft).toContain(`calc(2 *`)
   })
 
-  describe.each([[[1, 2, 3, 4]], [[1, 5, 6]]])(`minItems`, (heading_levels) => {
-    test.each([[1], [2], [3], [4]])(
-      `only renders TOC when there are more than minItems=%s headings matching the selector`,
-      async (minItems) => {
-        document.body.innerHTML = heading_levels
-          .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
-          .join(``)
+  // heading_levels [1,2,3,4] has 3 matches for :is(h2,h3,h4), so minItems 1-3 render
+  test.each([[1], [2], [3]])(
+    `renders TOC when minItems=%s and enough headings match`,
+    async (minItems) => {
+      document.body.innerHTML = [1, 2, 3, 4]
+        .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
+        .join(``)
 
-        mount(Toc, {
-          target: document.body,
-          props: { headingSelector: `:is(h2, h3, h4)`, minItems },
-        })
-        await tick()
+      mount(Toc, {
+        target: document.body,
+        props: { headingSelector: `:is(h2, h3, h4)`, minItems },
+      })
+      await tick()
 
-        const matches = heading_levels.filter((lvl) => [2, 3, 4].includes(lvl)).length
-        if (matches >= minItems) {
-          const toc_list = doc_query(`aside.toc > nav > ol`)
+      const toc_list = doc_query(`aside.toc > nav > ol`)
+      expect(toc_list.children.length).toBeGreaterThanOrEqual(minItems)
+    },
+  )
 
-          // TODO: fix this test
-          // expect(
-          //   toc_list.children.length,
-          //   `heading_levels=${heading_levels}, minItems=${minItems}`,
-          // ).toBe(matches)
+  // heading_levels [1,2,3,4] has 3 matches, so minItems=4 hides; [1,5,6] has 0 matches
+  test.each([
+    [[1, 2, 3, 4], 4],
+    [[1, 5, 6], 1],
+    [[1, 5, 6], 2],
+  ])(
+    `hides TOC when fewer than minItems headings match (levels=%j, minItems=%s)`,
+    async (heading_levels, minItems) => {
+      document.body.innerHTML = heading_levels
+        .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
+        .join(``)
 
-          expect(toc_list.children.length).toBeGreaterThanOrEqual(minItems)
-        } else {
-          const nav = document.querySelector(`aside.toc nav`)
-          expect(nav).toBeNull()
-        }
-      },
-    )
-  })
+      mount(Toc, {
+        target: document.body,
+        props: { headingSelector: `:is(h2, h3, h4)`, minItems },
+      })
+      await tick()
+
+      const nav = document.querySelector(`aside.toc nav`)
+      expect(nav).toBeNull()
+    },
+  )
 
   test.each([
     [400, 500, 600],
@@ -210,13 +226,9 @@ describe(`Toc`, () => {
     await tick()
 
     expect(onOpen).toHaveBeenCalledOnce()
-    expect(onOpen).toHaveBeenCalledWith(
-      expect.objectContaining({ open: false }),
-    )
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ open: false }))
 
-    const button = document.querySelector(
-      `aside.toc button`,
-    ) as HTMLButtonElement
+    const button = document.querySelector<HTMLButtonElement>(`aside.toc button`)
     button?.click()
     await tick()
 
@@ -234,21 +246,16 @@ describe(`Toc`, () => {
 
     mount(Toc, { target: document.body, props: { desktop: false } })
 
-    const button = document.querySelector(
-      `aside.toc button`,
-    ) as HTMLButtonElement
-    expect(button).not.toBeNull()
+    const button = doc_query(`aside.toc button`)
 
-    if (button) {
-      const nav_before_open = document.querySelector(`aside.toc > nav`)
-      expect(nav_before_open).toBeNull()
+    const nav_before_open = document.querySelector(`aside.toc > nav`)
+    expect(nav_before_open).toBeNull()
 
-      button.click()
-      await tick()
+    button.click()
+    await tick()
 
-      const nav_after_open = document.querySelector(`aside.toc > nav`)
-      expect(nav_after_open).not.toBeNull()
-    }
+    const nav_after_open = document.querySelector(`aside.toc > nav`)
+    expect(nav_after_open).not.toBeNull()
   })
 
   test(`active heading is scrolled into view and highlighted when opening ToC on mobile`, async () => {
@@ -268,68 +275,50 @@ describe(`Toc`, () => {
     expect(active_li.textContent?.trim()).toBe(`Heading ${n_headings}`)
   })
 
-  test.each([true, false])(
-    `arrow keys navigate the active ToC on mobile item when open=%s`,
-    async (open) => {
-      document.body.innerHTML = `
+  test(`arrow keys navigate the active ToC item when open`, async () => {
+    document.body.innerHTML = `
       <h2>Heading 1</h2>
       <h2>Heading 2</h2>
       <h2>Heading 3</h2>
       <h2>Heading 4</h2>
     `
-      mount(Toc, { target: document.body, props: { open } })
-      await tick()
+    mount(Toc, { target: document.body, props: { open: true } })
+    await tick()
 
-      if (open) {
-        const toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-        expect(toc_items.length).toBe(4)
+    const toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
+    expect(toc_items.length).toBe(4)
 
-        const initial_active = doc_query(`aside.toc > nav > ol > li.active`)
-        expect(initial_active).not.toBeNull()
+    const initial_active = doc_query(`aside.toc > nav > ol > li.active`)
+    expect(initial_active).not.toBeNull()
 
-        const all_items = Array.from(
-          document.querySelectorAll(`aside.toc > nav > ol > li`),
-        )
-        const initial_active_idx = all_items.indexOf(initial_active)
+    const all_items = Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`))
+    const initial_active_idx = all_items.indexOf(initial_active)
 
-        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
 
-        const after_down = doc_query(`aside.toc > nav > ol > li.active`)
-        expect(after_down).not.toBeNull()
+    const after_down = doc_query(`aside.toc > nav > ol > li.active`)
+    expect(after_down).not.toBeNull()
 
-        const after_down_idx = all_items.indexOf(after_down)
+    const after_down_idx = all_items.indexOf(after_down)
 
-        const expected_idx = Math.min(
-          initial_active_idx + 1,
-          all_items.length - 1,
-        )
-        expect(after_down_idx).toBe(expected_idx)
+    const expected_idx = Math.min(initial_active_idx + 1, all_items.length - 1)
+    expect(after_down_idx).toBe(expected_idx)
 
-        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
 
-        const after_up = doc_query(`aside.toc > nav > ol > li.active`)
-        expect(after_up).not.toBeNull()
+    const after_up = doc_query(`aside.toc > nav > ol > li.active`)
+    expect(after_up).not.toBeNull()
 
-        const after_up_idx = all_items.indexOf(after_up)
-        expect(after_up_idx).toBe(initial_active_idx)
-      } else {
-        // If ToC is closed, no items should be active and arrow keys should not navigate
-        globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
-        // expect no active item
-        // TODO: fix this test
-        // expect(doc_query(`aside.toc > nav > ol > li.active`)).toBeNull()
-      }
-    },
-  )
+    const after_up_idx = all_items.indexOf(after_up)
+    expect(after_up_idx).toBe(initial_active_idx)
+  })
 
-  test.each(
-    [
-      [` `, `smooth`],
-      [`Enter`, `smooth`],
-      [` `, `auto`],
-      [`Enter`, `auto`],
-    ] as const,
-  )(
+  test.each([
+    [` `, `smooth`],
+    [`Enter`, `smooth`],
+    [` `, `auto`],
+    [`Enter`, `auto`],
+  ] as const)(
     `%s key with scrollBehavior=%s uses prop value for scroll`,
     async (key, scroll_behavior) => {
       document.body.innerHTML = `
@@ -384,33 +373,41 @@ describe(`Toc`, () => {
     })
   })
 
-  test.each([[[]], [[`Escape`]]])(
-    `Escape key closes ToC on mobile if reactToKeys=%s includes 'Escape'`,
-    async (reactToKeys) => {
-      document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
-      globalThis.innerWidth = 600
-      const onOpen = vi.fn()
+  test(`Escape key closes ToC on mobile when reactToKeys includes Escape`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
+    globalThis.innerWidth = 600
+    const onOpen = vi.fn()
 
-      mount(Toc, {
-        target: document.body,
-        props: { open: true, reactToKeys, onOpen },
-      })
-      await tick()
+    mount(Toc, {
+      target: document.body,
+      props: { open: true, reactToKeys: [`Escape`], onOpen },
+    })
+    await tick()
+    onOpen.mockClear()
 
-      onOpen.mockClear() // Clear previous calls
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+    await tick()
 
-      // Simulate pressing Escape
-      globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
-      await tick()
+    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ open: false }))
+  })
 
-      if (reactToKeys.includes(`Escape`)) {
-        // Should have called onOpen with open:false when Escape is in reactToKeys
-        expect(onOpen).toHaveBeenCalledWith(
-          expect.objectContaining({ open: false }),
-        )
-      } else expect(onOpen).not.toHaveBeenCalled()
-    },
-  )
+  test(`Escape key does nothing when reactToKeys is empty`, async () => {
+    document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
+    globalThis.innerWidth = 600
+    const onOpen = vi.fn()
+
+    mount(Toc, {
+      target: document.body,
+      props: { open: true, reactToKeys: [], onOpen },
+    })
+    await tick()
+    onOpen.mockClear()
+
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+    await tick()
+
+    expect(onOpen).not.toHaveBeenCalled()
+  })
 
   test(`updates ToC when page content changes`, async () => {
     document.body.innerHTML = `
@@ -492,7 +489,7 @@ describe(`Toc`, () => {
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
-    document.getElementById(`content`)?.appendChild(new_heading)
+    document.getElementById(`content`)?.append(new_heading)
 
     await tick()
 
@@ -527,7 +524,7 @@ describe(`Toc`, () => {
       expect(active_text()).toBe(`Heading 3`)
 
       // Click first heading - should be immediately active
-      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -539,7 +536,7 @@ describe(`Toc`, () => {
       await tick()
 
       // Click first item (differs from JSDOM's default of last)
-      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -554,7 +551,7 @@ describe(`Toc`, () => {
       mount(Toc, { target: document.body, props: { open: true } })
       await tick()
 
-      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -576,10 +573,10 @@ describe(`Toc`, () => {
       mount(Toc, { target: document.body, props: { open: true } })
       await tick()
 
-      const items = document.querySelectorAll(`aside.toc ol li`)
-      const item_0 = items[0] as HTMLLIElement
-      const item_1 = items[1] as HTMLLIElement
-      const item_2 = items[2] as HTMLLIElement
+      const items = document.querySelectorAll<HTMLLIElement>(`aside.toc ol li`)
+      const item_0 = items[0]
+      const item_1 = items[1]
+      const item_2 = items[2]
       item_2.click()
       item_0.click()
       item_1.click()
@@ -594,7 +591,7 @@ describe(`Toc`, () => {
       await tick()
 
       const headings = document.querySelectorAll(`h2`)
-      const first_heading = headings[0] as HTMLHeadingElement
+      const first_heading = headings[0]
 
       // Mock heading starting far from destination (simulating start of smooth scroll)
       // First call: heading is at y=2000 (far from activeHeadingScrollOffset=100)
@@ -612,7 +609,7 @@ describe(`Toc`, () => {
       }))
 
       // Click first heading - should be immediately active
-      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -640,7 +637,7 @@ describe(`Toc`, () => {
       await tick()
 
       const headings = document.querySelectorAll(`h2`)
-      const first_heading = headings[0] as HTMLHeadingElement
+      const first_heading = headings[0]
 
       // Start with heading near destination
       let mock_top = 150
@@ -656,7 +653,7 @@ describe(`Toc`, () => {
         toJSON: () => ({}),
       }))
 
-      const first_item = document.querySelectorAll(`aside.toc ol li`)[0] as HTMLLIElement
+      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -745,11 +742,12 @@ describe(`hideOnIntersect`, () => {
   })
 
   test(`accepts HTMLElement array`, async () => {
-    document.body.innerHTML =
-      `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
+    document.body.innerHTML = `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
     globalThis.innerWidth = 1200
 
-    const [b1, b2] = [`b1`, `b2`].map((id) => document.getElementById(id) as HTMLElement)
+    const b1 = document.getElementById(`b1`)
+    const b2 = document.getElementById(`b2`)
+    if (!b1 || !b2) throw new Error(`Elements b1 or b2 not found`)
     mount(Toc, { target: document.body, props: { hideOnIntersect: [b1, b2] } })
     await tick()
 
@@ -924,13 +922,47 @@ describe(`Style and Class Props Application`, () => {
     },
   ]
 
-  test.each(test_cases)(
-    `applies $propName to $elementName element ($check)`,
+  const style_cases = test_cases.filter((tc) => tc.check === `style`)
+  const class_cases = test_cases.filter((tc) => tc.check === `class`)
+
+  test.each(style_cases)(
+    `applies $propName style to $elementName element`,
+    async ({ propName, value, selector, setupFn, extraProps = {} }) => {
+      if (setupFn) setupFn()
+
+      mount(Toc, {
+        target: document.body,
+        props: { ...extraProps, [propName]: value },
+      })
+      await tick()
+
+      const element = doc_query(selector)
+      const style_attribute = element.getAttribute(`style`)
+      expect(style_attribute).not.toBeNull()
+      expect(style_attribute).toContain(value)
+    },
+  )
+
+  test(`liStyle preserves existing margin-left and font-size styles`, async () => {
+    ensure_content_for_toc_elements([`<h2>Single Heading</h2>`])
+
+    mount(Toc, {
+      target: document.body,
+      props: { liStyle: `padding-left: 10px;` },
+    })
+    await tick()
+
+    const style_attribute = doc_query(`aside.toc nav ol li`).getAttribute(`style`)
+    expect(style_attribute).toContain(`margin-left`)
+    expect(style_attribute).toContain(`font-size`)
+  })
+
+  test.each(class_cases)(
+    `applies $propName class to $elementName element`,
     async ({
       propName,
       value,
       selector,
-      check,
       setupFn,
       extraProps = {},
       additionalClassChecks,
@@ -943,46 +975,10 @@ describe(`Style and Class Props Application`, () => {
       })
       await tick()
 
-      const element = doc_query(selector) as HTMLElement
-      expect(element, `${selector} should exist`).not.toBeNull()
-
-      if (check === `style`) {
-        const style_attribute = element.getAttribute(`style`)
-        expect(
-          style_attribute,
-          `${selector} style attribute should exist`,
-        ).not.toBeNull()
-        if (style_attribute) {
-          // Type guard for style_attribute
-          expect(
-            style_attribute,
-            `${selector} style should contain '${value}'`,
-          ).toContain(value)
-          // Special check for liStyle to ensure existing styles are preserved
-          if (propName === `liStyle`) {
-            expect(
-              style_attribute,
-              `${selector} style should contain 'margin-left'`,
-            ).toContain(`margin-left`)
-            expect(
-              style_attribute,
-              `${selector} style should contain 'font-size'`,
-            ).toContain(`font-size`)
-          }
-        }
-      } else if (check === `class`) {
-        expect(
-          element.classList.contains(value),
-          `${selector} should have class '${value}'`,
-        ).toBe(true)
-        if (additionalClassChecks) {
-          additionalClassChecks.forEach((cls) => {
-            expect(
-              element.classList.contains(cls),
-              `${selector} should retain class '${cls}'`,
-            ).toBe(true)
-          })
-        }
+      const element = doc_query(selector)
+      expect(element.classList.contains(value)).toBe(true)
+      for (const cls of additionalClassChecks ?? []) {
+        expect(element.classList.contains(cls)).toBe(true)
       }
     },
   )
@@ -1026,17 +1022,14 @@ describe(`Style and Class Props Application`, () => {
       const style_text = document.head.textContent ?? ``
       const css_blocks = Array.from(style_text.matchAll(/([^{}]+)\{([^{}]+)\}/g))
       const matching_block = css_blocks.find(([, , block_text]) =>
-        declaration_pattern.test(block_text)
+        declaration_pattern.test(block_text),
       )
-      if (!matching_block) {
-        throw new Error(
-          `Could not find CSS selector for declaration: ${declaration_pattern.source}`,
-        )
-      }
+      expect(matching_block).toBeTruthy()
+      const [, selector_raw] = matching_block ?? []
 
-      const selector_line = matching_block[1].trim()
+      const selector_line = (selector_raw ?? ``).trim()
       expect(selector_line.startsWith(`:where(`)).toBe(expects_where)
-      if (selector_pattern) expect(selector_line).toMatch(selector_pattern)
+      expect(selector_line).toMatch(selector_pattern ?? /.*/)
     },
   )
 })
@@ -1077,8 +1070,9 @@ describe(`collapseSubheadings`, () => {
 
   // Get collapsed state as array of booleans for easy assertion
   const get_collapsed_states = () =>
-    Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`))
-      .map((li) => li.classList.contains(`collapsed`))
+    Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`)).map((li) =>
+      li.classList.contains(`collapsed`),
+    )
 
   test(`all items visible when collapseSubheadings=false`, async () => {
     setup_nested_headings()
@@ -1099,61 +1093,40 @@ describe(`collapseSubheadings`, () => {
   })
 
   // Parameterized test for collapse behavior with different modes and active headings
-  test.each(
+  test.each([
+    // [description, mode, active_id, expected_collapsed_states]
     [
-      // [description, mode, active_id, expected_collapsed_states]
-      [`full nesting with h2 active`, true, `section-1`, [
-        false,
-        false,
-        true,
-        true,
-        false,
-        true,
-        false,
-        true,
-      ]],
-      [`full nesting with h3 active`, true, `sub-1-1`, [
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        true,
-      ]],
-      [`full nesting with h4 active`, true, `detail-1-1-1`, [
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        true,
-      ]],
-      [`h3 threshold with h2 active`, `h3`, `section-1`, [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        true,
-      ]],
-    ] as const,
-  )(
-    `%s`,
-    async (_, mode, active_id, expected) => {
-      setup_nested_headings()
-      mock_active_heading(active_id)
-      mount(Toc, { target: document.body, props: { collapseSubheadings: mode } })
-      await tick()
+      `full nesting with h2 active`,
+      true,
+      `section-1`,
+      [false, false, true, true, false, true, false, true],
+    ],
+    [
+      `full nesting with h3 active`,
+      true,
+      `sub-1-1`,
+      [false, false, false, false, false, true, false, true],
+    ],
+    [
+      `full nesting with h4 active`,
+      true,
+      `detail-1-1-1`,
+      [false, false, false, false, false, true, false, true],
+    ],
+    [
+      `h3 threshold with h2 active`,
+      `h3`,
+      `section-1`,
+      [false, false, false, false, false, false, false, true],
+    ],
+  ] as const)(`%s`, async (_, mode, active_id, expected) => {
+    setup_nested_headings()
+    mock_active_heading(active_id)
+    mount(Toc, { target: document.body, props: { collapseSubheadings: mode } })
+    await tick()
 
-      expect(get_collapsed_states()).toEqual(expected)
-    },
-  )
+    expect(get_collapsed_states()).toEqual(expected)
+  })
 
   test(`collapsed items have aria-hidden=true and tabindex=-1`, async () => {
     setup_nested_headings()
@@ -1161,9 +1134,9 @@ describe(`collapseSubheadings`, () => {
     mount(Toc, { target: document.body, props: { collapseSubheadings: true } })
     await tick()
 
-    const items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    const collapsed = items[2] as HTMLLIElement
-    const visible = items[0] as HTMLLIElement
+    const items = document.querySelectorAll<HTMLLIElement>(`aside.toc > nav > ol > li`)
+    const collapsed = items[2]
+    const visible = items[0]
 
     expect(collapsed.getAttribute(`aria-hidden`)).toBe(`true`)
     expect(collapsed.getAttribute(`tabindex`)).toBe(`-1`)
