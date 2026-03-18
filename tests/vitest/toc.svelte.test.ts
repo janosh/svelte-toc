@@ -260,10 +260,10 @@ describe(`Toc`, () => {
 
   test(`active heading is scrolled into view and highlighted when opening ToC on mobile`, async () => {
     const n_headings = 100
-    document.body.innerHTML = Array(n_headings)
-      .fill(0)
-      .map((_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`)
-      .join(`\n`)
+    document.body.innerHTML = Array.from(
+      { length: n_headings },
+      (_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`,
+    ).join(`\n`)
 
     globalThis.innerWidth = 600
 
@@ -425,7 +425,7 @@ describe(`Toc`, () => {
     expect(toc_items[0].textContent?.trim()).toBe(`First Page Heading 1`)
     expect(toc_items[1].textContent?.trim()).toBe(`First Page Heading 2`)
 
-    const container = document.getElementById(`content-container`)
+    const container = document.querySelector(`#content-container`)
     if (container) {
       container.innerHTML = `
         <h2>Second Page Heading 1</h2>
@@ -489,7 +489,7 @@ describe(`Toc`, () => {
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
-    document.getElementById(`content`)?.append(new_heading)
+    document.querySelector(`#content`)?.append(new_heading)
 
     await tick()
 
@@ -745,8 +745,8 @@ describe(`hideOnIntersect`, () => {
     document.body.innerHTML = `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
     globalThis.innerWidth = 1200
 
-    const b1 = document.getElementById(`b1`)
-    const b2 = document.getElementById(`b2`)
+    const b1 = document.querySelector(`#b1`)
+    const b2 = document.querySelector(`#b2`)
     if (!b1 || !b2) throw new Error(`Elements b1 or b2 not found`)
     mount(Toc, { target: document.body, props: { hideOnIntersect: [b1, b2] } })
     await tick()
@@ -1079,7 +1079,7 @@ describe(`collapseSubheadings`, () => {
     mount(Toc, { target: document.body })
     await tick()
 
-    expect(get_collapsed_states()).toEqual(Array(8).fill(false))
+    expect(get_collapsed_states()).toEqual(Array.from({ length: 8 }, () => false))
   })
 
   test(`top-level h2s never collapse with collapseSubheadings=true`, async () => {

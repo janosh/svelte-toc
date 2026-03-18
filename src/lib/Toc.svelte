@@ -172,7 +172,7 @@
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
     if (!collapseSubheadings || activeHeading === null) {
-      return Array(headings.length).fill(true)
+      return Array.from({ length: headings.length }, () => true)
     }
 
     const visible: boolean[] = []
