@@ -21,7 +21,7 @@
       <span>Total headings: {heading_count}</span>
     </div>
 
-    {#each Array(heading_count).fill(0) as _, idx (idx)}
+    {#each Array.from({ length: heading_count }, (_, idx) => idx) as idx (idx)}
       <h2>Heading {idx + 1}</h2>
     {/each}
   </main>

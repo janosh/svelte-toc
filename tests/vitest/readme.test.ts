@@ -2,18 +2,22 @@ import src from '$lib/Toc.svelte?raw'
 import readme from '$root/readme.md?raw'
 import { expect, test } from 'vitest'
 
+const props_block_regex = /}: \{([\s\S]*?)\} & HTMLAttributes/
+const prop_type_line_regex = /^\s+(\w+)\??:/
+const readme_prop_line_regex = /^\s+(\w+)/
+
 // Extract prop names from Svelte 5 type definition block
-const source_props = (src.match(/}: \{([\s\S]*?)\} & HTMLAttributes/)?.[1] ?? ``)
+const source_props = (props_block_regex.exec(src)?.[1] ?? ``)
   .split(`\n`)
-  .map((line) => line.match(/^\s+(\w+)\??:/)?.[1])
+  .map((line) => prop_type_line_regex.exec(line)?.[1])
   .filter((x): x is string => Boolean(x))
 
 // Extract prop names from readme (format: "1. ```ts\n   propName:")
-const readme_props = readme
-  .split(`\n`)
-  .flatMap((line, idx, lines) =>
-    line.trim() === `1. \`\`\`ts` ? (lines[idx + 1]?.match(/^\s+(\w+)/)?.[1] ?? []) : [],
-  )
+const readme_props = readme.split(`\n`).flatMap((line, idx, lines) => {
+  if (line.trim() !== `1. \`\`\`ts`) return []
+  const prop = readme_prop_line_regex.exec(lines[idx + 1] ?? ``)?.[1]
+  return prop ? [prop] : []
+})
 
 // Extract unique CSS variable names (null coalesce for no matches)
 const extract_css_vars = (text: string) =>

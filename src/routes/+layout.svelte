@@ -6,6 +6,7 @@
   import type { Snippet } from 'svelte'
   import { CmdPalette, CopyButton, GitHubCorner, Nav } from 'svelte-multiselect'
   import { heading_anchors } from 'svelte-multiselect/heading-anchors'
+  // oxlint-disable-next-line import/no-unassigned-import -- global app styles
   import '../app.css'
 
   let { children }: { children?: Snippet<[]> } = $props()

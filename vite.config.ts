@@ -1,8 +1,6 @@
 import { sveltekit } from '@sveltejs/kit/vite'
 import { defineConfig } from 'vite-plus'
 
-declare const process: { env: Record<string, string | undefined> }
-
 export default defineConfig({
   fmt: {
     semi: false,
@@ -10,22 +8,27 @@ export default defineConfig({
     printWidth: 90,
   },
   lint: {
-    plugins: [`oxc`, `typescript`, `unicorn`, `import`, `jest`],
-    options: {
-      typeAware: true,
-      typeCheck: true,
-    },
+    plugins: [`oxc`, `typescript`, `unicorn`, `import`, `vitest`],
+    options: { typeAware: true, typeCheck: true },
     categories: {
       correctness: `error`,
       suspicious: `error`,
       perf: `error`,
     },
-    ignorePatterns: [`build/`, `.svelte-kit/`, `package/`, `dist/`],
+    ignorePatterns: [`build/**`, `.svelte-kit/**`, `package/**`, `dist/**`],
     rules: {
+      // Extra rules not in the enabled categories
+      '@typescript-eslint/no-unused-vars': [
+        `error`,
+        { argsIgnorePattern: `^_`, varsIgnorePattern: `^_` },
+      ],
       '@typescript-eslint/no-explicit-any': `error`,
       '@typescript-eslint/no-non-null-asserted-optional-chain': `error`,
       '@typescript-eslint/no-non-null-assertion': `error`,
-      'no-unused-vars': `error`,
+      '@typescript-eslint/prefer-string-starts-ends-with': `error`,
+      '@typescript-eslint/prefer-readonly': `error`,
+      '@typescript-eslint/prefer-regexp-exec': `error`,
+      '@typescript-eslint/prefer-find': `error`,
       'no-eval': `error`,
       eqeqeq: `error`,
       'no-var': `error`,
@@ -39,6 +42,7 @@ export default defineConfig({
       'default-param-last': `error`,
       'guard-for-in': `error`,
       'require-await': `error`,
+      'no-useless-computed-key': `error`,
       'eslint-plugin-unicorn/no-useless-spread': `error`,
       'eslint-plugin-unicorn/prefer-string-replace-all': `error`,
       'eslint-plugin-unicorn/catch-error-name': `error`,
@@ -59,15 +63,19 @@ export default defineConfig({
       'eslint-plugin-unicorn/prefer-date-now': `error`,
       'eslint-plugin-unicorn/require-number-to-fixed-digits-argument': `error`,
       'eslint-plugin-unicorn/no-useless-promise-resolve-reject': `error`,
+      'eslint-plugin-unicorn/custom-error-definition': `error`,
       'eslint-plugin-import/no-duplicates': `error`,
-      // Rules in enabled categories that are too noisy for this codebase
-      'no-self-assign': `off`, // Svelte reactive `x = x` assignments
-      'no-await-in-loop': `off`, // test code uses sequential await tick() in loops
-      'no-shadow': `off`, // closures intentionally shadow outer names
-      'eslint-plugin-unicorn/consistent-function-scoping': `off`, // test helpers + Svelte reactive closures
-      'eslint-plugin-import/no-self-import': `off`,
-      'eslint-plugin-import/no-unassigned-import': `off`, // CSS imports are side-effect-only
+      'eslint-plugin-vitest/prefer-strict-boolean-matchers': `error`,
+      'eslint-plugin-vitest/prefer-called-exactly-once-with': `error`,
+      'eslint-plugin-vitest/require-awaited-expect-poll': `error`,
+
+      'eslint-plugin-vitest/valid-expect': [`error`, { maxArgs: 2 }], // Vitest supports expect(actual, message)
     },
+  },
+  staged: {
+    '*.{js,ts,svelte,html,css,md,json,yaml}': `vp check --fix`,
+    '*.{ts,svelte}': `sh -c 'npx svelte-kit sync && npx svelte-check-rs --threshold error'`,
+    '*.test.ts': `sh -c '! grep -E "(test|describe)\\.only\\(" "$@"' --`,
   },
   plugins: [sveltekit()],
 
@@ -89,7 +97,13 @@ export default defineConfig({
     port: 3000,
   },
 
+  build: {
+    // Default cssTarget is chrome111 which doesn't support light-dark(),
+    cssTarget: `esnext`, // causing LightningCSS to polyfill it with broken space toggles
+  },
+
   resolve: {
-    conditions: process.env.TEST ? [`browser`] : undefined,
+    // Vitest component tests need Svelte's browser build for mount().
+    conditions: [`browser`],
   },
 })

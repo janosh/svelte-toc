@@ -3,11 +3,86 @@ import { mount, tick } from 'svelte'
 import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
+type OnOpenHandler = (event: { open: boolean }) => void
+
+const set_body = (html: string) => {
+  document.body.innerHTML = html
+}
+
+const setup_empty_page = () =>
+  set_body(`
+      <h1>Heading 1</h1>
+      <h2 class="toc-exclude">Heading 2</h2>
+      <h5>Heading 5</h5>
+      <h6>Heading 6</h6>
+    `)
+
+const set_window_width = (width: number) => {
+  globalThis.innerWidth = width
+  globalThis.dispatchEvent(new Event(`resize`))
+}
+
+const ensure_content_for_toc_elements = (
+  headings = [`<h2>Content Heading 1</h2>`, `<h3>Content Heading 2</h3>`],
+) => set_body(headings.join(`\n`))
+
+const ensure_single_heading = () =>
+  ensure_content_for_toc_elements([`<h2>Single Heading</h2>`])
+
+const ensure_mobile_button_is_visible = () => {
+  ensure_content_for_toc_elements() // Need headings for the button to appear
+  set_window_width(500) // Simulate mobile (default breakpoint is 1000px)
+}
+
+const setup_nested_headings = () =>
+  set_body(`
+      <h2 id="section-1">Section 1</h2>
+      <h3 id="sub-1-1">Sub 1.1</h3>
+      <h4 id="detail-1-1-1">Detail 1.1.1</h4>
+      <h4 id="detail-1-1-2">Detail 1.1.2</h4>
+      <h3 id="sub-1-2">Sub 1.2</h3>
+      <h4 id="detail-1-2-1">Detail 1.2.1</h4>
+      <h2 id="section-2">Section 2</h2>
+      <h3 id="sub-2-1">Sub 2.1</h3>
+    `)
+
+// Mock scroll position to make a specific heading "active" (scrolled past viewport top)
+const mock_active_heading = (active_id: string) => {
+  const headings = Array.from(document.querySelectorAll(`h2, h3, h4`))
+  const active_idx = headings.findIndex((heading) => heading.id === active_id)
+  headings.forEach((heading, idx) => {
+    // Active heading and all before it are scrolled past (negative top)
+    const top =
+      idx <= active_idx ? -10 * (active_idx - idx + 1) : 100 * (idx - active_idx)
+    const zero_rect = { bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0 }
+    vi.spyOn(heading, `getBoundingClientRect`).mockReturnValue({
+      top,
+      ...zero_rect,
+      toJSON: () => ({}),
+    } as DOMRect)
+  })
+}
+
+// Get collapsed state as array of booleans for easy assertion
+const get_collapsed_states = () =>
+  Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`)).map((li) =>
+    li.classList.contains(`collapsed`),
+  )
+
+const find_matching_css_selector = (style_text: string, declaration_pattern: RegExp) => {
+  const matching_block = Array.from(style_text.matchAll(/([^{}]+)\{([^{}]+)\}/g)).find(
+    ([, , block_text]) => declaration_pattern.test(block_text),
+  )
+  if (!matching_block) throw new Error(`No CSS block matched ${declaration_pattern}`)
+  return matching_block[1].trim()
+}
+
 beforeAll(() => {
   // Mock animate API with cancel method
-  Element.prototype.animate = vi.fn().mockImplementation(() => ({
-    cancel: vi.fn(),
-  }))
+  Element.prototype.animate = vi.fn<Element[`animate`]>(() => {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- jsdom lacks Animation
+    return { cancel: vi.fn<() => void>() } as unknown as Animation
+  })
 })
 
 describe(`Toc`, () => {
@@ -65,15 +140,6 @@ describe(`Toc`, () => {
   describe.each([undefined, `foobar`, `h2:not(.toc-exclude)`, `h4`])(
     `with headingSelector='%s'`,
     (headingSelector) => {
-      const setup_empty_page = () => {
-        document.body.innerHTML = `
-      <h1>Heading 1</h1>
-      <h2 class="toc-exclude">Heading 2</h2>
-      <h5>Heading 5</h5>
-      <h6>Heading 6</h6>
-    `
-      }
-
       test(`autoHide=true hides ToC when no headings match`, async () => {
         setup_empty_page()
         mount(Toc, {
@@ -107,7 +173,7 @@ describe(`Toc`, () => {
   )
 
   test(`console.warns when empty and warnOnEmpty=true`, async () => {
-    console.warn = vi.fn()
+    console.warn = vi.fn<typeof console.warn>()
     mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
     await tick()
     const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
@@ -115,7 +181,7 @@ describe(`Toc`, () => {
   })
 
   test(`no console.warn when warnOnEmpty=false`, () => {
-    console.warn = vi.fn()
+    console.warn = vi.fn<typeof console.warn>()
     mount(Toc, { target: document.body, props: { warnOnEmpty: false } })
     expect(console.warn).not.toHaveBeenCalled()
   })
@@ -190,11 +256,6 @@ describe(`Toc`, () => {
   ])(
     `should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
     async (smaller, breakpoint, larger) => {
-      const set_window_width = (width: number) => {
-        globalThis.innerWidth = width
-        globalThis.dispatchEvent(new Event(`resize`))
-      }
-
       mount(Toc, {
         target: document.body,
         props: { breakpoint },
@@ -220,7 +281,7 @@ describe(`Toc`, () => {
       <h2>Heading 1</h2>
       <h2>Heading 2</h2>
     `
-    const onOpen = vi.fn()
+    const onOpen = vi.fn<OnOpenHandler>()
 
     mount(Toc, { target: document.body, props: { onOpen, open: false } })
     await tick()
@@ -260,10 +321,10 @@ describe(`Toc`, () => {
 
   test(`active heading is scrolled into view and highlighted when opening ToC on mobile`, async () => {
     const n_headings = 100
-    document.body.innerHTML = Array(n_headings)
-      .fill(0)
-      .map((_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`)
-      .join(`\n`)
+    document.body.innerHTML = Array.from(
+      { length: n_headings },
+      (_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`,
+    ).join(`\n`)
 
     globalThis.innerWidth = 600
 
@@ -271,7 +332,7 @@ describe(`Toc`, () => {
     await tick()
 
     const active_li = doc_query(`aside.toc ol li.active`)
-    expect(active_li).toBeTruthy()
+    expect(active_li).not.toBeNull()
     expect(active_li.textContent?.trim()).toBe(`Heading ${n_headings}`)
   })
 
@@ -326,7 +387,7 @@ describe(`Toc`, () => {
         <h2 id="heading-2">Heading 2</h2>
       `
 
-      const scroll_into_view_mock = vi.fn()
+      const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
       Element.prototype.scrollIntoView = scroll_into_view_mock
 
       // Use breakpoint higher than JSDOM's default width to simulate mobile mode
@@ -338,7 +399,7 @@ describe(`Toc`, () => {
       await tick()
 
       const active_item = doc_query(`aside.toc ol li.active`)
-      expect(active_item).toBeTruthy()
+      expect(active_item).not.toBeNull()
 
       globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
 
@@ -355,7 +416,7 @@ describe(`Toc`, () => {
       <h2 id="heading-2">Heading 2</h2>
     `
 
-    const scroll_into_view_mock = vi.fn()
+    const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
     Element.prototype.scrollIntoView = scroll_into_view_mock
 
     // Mount without specifying scrollBehavior - should use default 'smooth'
@@ -376,7 +437,7 @@ describe(`Toc`, () => {
   test(`Escape key closes ToC on mobile when reactToKeys includes Escape`, async () => {
     document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
     globalThis.innerWidth = 600
-    const onOpen = vi.fn()
+    const onOpen = vi.fn<OnOpenHandler>()
 
     mount(Toc, {
       target: document.body,
@@ -394,7 +455,7 @@ describe(`Toc`, () => {
   test(`Escape key does nothing when reactToKeys is empty`, async () => {
     document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
     globalThis.innerWidth = 600
-    const onOpen = vi.fn()
+    const onOpen = vi.fn<OnOpenHandler>()
 
     mount(Toc, {
       target: document.body,
@@ -425,7 +486,7 @@ describe(`Toc`, () => {
     expect(toc_items[0].textContent?.trim()).toBe(`First Page Heading 1`)
     expect(toc_items[1].textContent?.trim()).toBe(`First Page Heading 2`)
 
-    const container = document.getElementById(`content-container`)
+    const container = document.querySelector(`#content-container`)
     if (container) {
       container.innerHTML = `
         <h2>Second Page Heading 1</h2>
@@ -451,7 +512,7 @@ describe(`Toc`, () => {
         <h2 id="heading-2">Heading 2</h2>
       `
 
-      const scroll_into_view_mock = vi.fn()
+      const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
       Element.prototype.scrollIntoView = scroll_into_view_mock
 
       mount(Toc, {
@@ -489,7 +550,7 @@ describe(`Toc`, () => {
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
-    document.getElementById(`content`)?.append(new_heading)
+    document.querySelector(`#content`)?.append(new_heading)
 
     await tick()
 
@@ -502,7 +563,7 @@ describe(`Toc`, () => {
   // https://github.com/janosh/svelte-toc/issues/50
   describe(`scroll_target behavior`, () => {
     const active_text = () => doc_query(`aside.toc ol li.active`).textContent?.trim()
-    const scroll_mock = vi.fn()
+    const scroll_mock = vi.fn<Element[`scrollIntoView`]>()
 
     beforeEach(() => {
       document.body.innerHTML = `
@@ -524,7 +585,7 @@ describe(`Toc`, () => {
       expect(active_text()).toBe(`Heading 3`)
 
       // Click first heading - should be immediately active
-      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
+      const first_item = doc_query(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -536,7 +597,7 @@ describe(`Toc`, () => {
       await tick()
 
       // Click first item (differs from JSDOM's default of last)
-      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
+      const first_item = doc_query(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -551,7 +612,7 @@ describe(`Toc`, () => {
       mount(Toc, { target: document.body, props: { open: true } })
       await tick()
 
-      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
+      const first_item = doc_query(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -609,7 +670,7 @@ describe(`Toc`, () => {
       }))
 
       // Click first heading - should be immediately active
-      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
+      const first_item = doc_query(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -653,7 +714,7 @@ describe(`Toc`, () => {
         toJSON: () => ({}),
       }))
 
-      const first_item = doc_query<HTMLLIElement>(`aside.toc ol li`)
+      const first_item = doc_query(`aside.toc ol li`)
       first_item.click()
       await tick()
       expect(active_text()).toBe(`Heading 1`)
@@ -745,9 +806,8 @@ describe(`hideOnIntersect`, () => {
     document.body.innerHTML = `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
     globalThis.innerWidth = 1200
 
-    const b1 = document.getElementById(`b1`)
-    const b2 = document.getElementById(`b2`)
-    if (!b1 || !b2) throw new Error(`Elements b1 or b2 not found`)
+    const b1 = doc_query(`#b1`)
+    const b2 = doc_query(`#b2`)
     mount(Toc, { target: document.body, props: { hideOnIntersect: [b1, b2] } })
     await tick()
 
@@ -799,17 +859,6 @@ describe(`hideOnIntersect`, () => {
 })
 
 describe(`Style and Class Props Application`, () => {
-  const ensure_content_for_toc_elements = (
-    headings = [`<h2>Content Heading 1</h2>`, `<h3>Content Heading 2</h3>`],
-  ) => {
-    document.body.innerHTML = headings.join(`\n`)
-  }
-
-  const ensure_mobile_button_is_visible = () => {
-    ensure_content_for_toc_elements() // Need headings for the button to appear
-    globalThis.innerWidth = 500 // Simulate mobile (default breakpoint is 1000px)
-  }
-
   const test_cases = [
     // Aside tests
     {
@@ -891,7 +940,7 @@ describe(`Style and Class Props Application`, () => {
       value: `padding-left: 10px;`,
       selector: `aside.toc nav ol li`,
       check: `style`,
-      setupFn: () => ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+      setupFn: ensure_single_heading,
     },
     {
       elementName: `li`,
@@ -899,7 +948,7 @@ describe(`Style and Class Props Application`, () => {
       value: `custom-li-class`,
       selector: `aside.toc nav ol li`,
       check: `class`,
-      setupFn: () => ensure_content_for_toc_elements([`<h2>Single Heading</h2>`]),
+      setupFn: ensure_single_heading,
     },
     // Open button tests
     {
@@ -928,7 +977,7 @@ describe(`Style and Class Props Application`, () => {
   test.each(style_cases)(
     `applies $propName style to $elementName element`,
     async ({ propName, value, selector, setupFn, extraProps = {} }) => {
-      if (setupFn) setupFn()
+      setupFn()
 
       mount(Toc, {
         target: document.body,
@@ -965,9 +1014,9 @@ describe(`Style and Class Props Application`, () => {
       selector,
       setupFn,
       extraProps = {},
-      additionalClassChecks,
+      additionalClassChecks = [],
     }) => {
-      if (setupFn) setupFn()
+      setupFn()
 
       mount(Toc, {
         target: document.body,
@@ -1013,73 +1062,29 @@ describe(`Style and Class Props Application`, () => {
     },
   ])(
     `uses expected selector specificity for $rule_name`,
-    async ({ declaration_pattern, expects_where, selector_pattern }) => {
+    async ({ declaration_pattern, expects_where, selector_pattern = /.*/ }) => {
       document.body.innerHTML = `<h2>Heading 1</h2><h3>Heading 2</h3>`
 
       mount(Toc, { target: document.body })
       await tick()
 
-      const style_text = document.head.textContent ?? ``
-      const css_blocks = Array.from(style_text.matchAll(/([^{}]+)\{([^{}]+)\}/g))
-      const matching_block = css_blocks.find(([, , block_text]) =>
-        declaration_pattern.test(block_text),
+      const selector_line = find_matching_css_selector(
+        document.head.textContent ?? ``,
+        declaration_pattern,
       )
-      expect(matching_block).toBeTruthy()
-      const [, selector_raw] = matching_block ?? []
-
-      const selector_line = (selector_raw ?? ``).trim()
       expect(selector_line.startsWith(`:where(`)).toBe(expects_where)
-      expect(selector_line).toMatch(selector_pattern ?? /.*/)
+      expect(selector_line).toMatch(selector_pattern)
     },
   )
 })
 
 describe(`collapseSubheadings`, () => {
-  const setup_nested_headings = () => {
-    document.body.innerHTML = `
-      <h2 id="section-1">Section 1</h2>
-      <h3 id="sub-1-1">Sub 1.1</h3>
-      <h4 id="detail-1-1-1">Detail 1.1.1</h4>
-      <h4 id="detail-1-1-2">Detail 1.1.2</h4>
-      <h3 id="sub-1-2">Sub 1.2</h3>
-      <h4 id="detail-1-2-1">Detail 1.2.1</h4>
-      <h2 id="section-2">Section 2</h2>
-      <h3 id="sub-2-1">Sub 2.1</h3>
-    `
-  }
-
-  // Mock scroll position to make a specific heading "active" (scrolled past viewport top)
-  const mock_active_heading = (active_id: string) => {
-    const headings = Array.from(document.querySelectorAll(`h2, h3, h4`))
-    const active_idx = headings.findIndex((h) => h.id === active_id)
-    headings.forEach((heading, idx) => {
-      vi.spyOn(heading, `getBoundingClientRect`).mockReturnValue({
-        // Active heading and all before it are scrolled past (negative top)
-        top: idx <= active_idx ? -10 * (active_idx - idx + 1) : 100 * (idx - active_idx),
-        bottom: 0,
-        left: 0,
-        right: 0,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      } as DOMRect)
-    })
-  }
-
-  // Get collapsed state as array of booleans for easy assertion
-  const get_collapsed_states = () =>
-    Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`)).map((li) =>
-      li.classList.contains(`collapsed`),
-    )
-
   test(`all items visible when collapseSubheadings=false`, async () => {
     setup_nested_headings()
     mount(Toc, { target: document.body })
     await tick()
 
-    expect(get_collapsed_states()).toEqual(Array(8).fill(false))
+    expect(get_collapsed_states()).toEqual(Array.from({ length: 8 }, () => false))
   })
 
   test(`top-level h2s never collapse with collapseSubheadings=true`, async () => {

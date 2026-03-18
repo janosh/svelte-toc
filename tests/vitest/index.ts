@@ -6,8 +6,8 @@ beforeEach(() => {
   globalThis.innerWidth = 1024
 })
 
-export function doc_query<T extends HTMLElement>(selector: string): T {
-  const node = document.querySelector<T>(selector)
-  if (!node) throw new Error(`No element found for selector: ${selector}`)
+export function doc_query(selector: string): HTMLElement {
+  const node = document.querySelector(selector)
+  if (!(node instanceof HTMLElement)) throw new Error(`No HTMLElement found: ${selector}`)
   return node
 }
