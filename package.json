@@ -50,31 +50,25 @@
     "changelog": "npx tsx https://github.com/janosh/workflows/raw/refs/heads/main/scripts/make-release-notes.ts"
   },
   "devDependencies": {
-    "@playwright/test": "1.58.2",
+    "@playwright/test": "1.60.0",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.53.4",
+    "@sveltejs/kit": "^2.60.1",
     "@sveltejs/package": "^2.5.7",
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@vitest/coverage-v8": "^4.1.7",
     "@wooorm/starry-night": "^3.9.0",
     "abstract-syntax-tree": "^2.22.0",
     "acorn": "^8.16.0",
-    "jsdom": "^28.1.0",
+    "jsdom": "^29.1.1",
     "mdsvex": "^0.12.7",
-    "svelte": "^5.53.12",
-    "svelte-multiselect": "^11.6.3",
-    "svelte-preprocess": "^6.0.3",
-    "typescript": "^5.9.3",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
+    "svelte": "^5.55.9",
+    "svelte-multiselect": "^11.7.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.14",
     "vite-plus": "latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
+    "vitest": "^4.1.7"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"
-  },
-  "overrides": {
-    "svelte": "$svelte",
-    "vite": "npm:@voidzero-dev/vite-plus-core@latest",
-    "vitest": "npm:@voidzero-dev/vite-plus-test@latest"
   }
 }

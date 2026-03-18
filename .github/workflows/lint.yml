@@ -10,10 +10,12 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
       - run: npm install
       - name: Lint and format check
         run: npx vp check
+      - name: Svelte type check
+        run: npx svelte-kit sync && npx svelte-check-rs --threshold error

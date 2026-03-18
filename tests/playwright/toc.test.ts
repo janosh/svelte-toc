@@ -424,18 +424,12 @@ test.describe(`Toc`, () => {
   }) => {
     await page.goto(`/`, { waitUntil: `networkidle` })
 
-    const add_heading = () => {
-      const newHeading = document.createElement(`h2`)
-      newHeading.textContent = `New Heading`
-      document.querySelector(`main`)?.append(newHeading)
-    }
-    const remove_heading = () => {
-      const headingToRemove = document.querySelector(`h2`)
-      headingToRemove?.remove()
-    }
-
     // Test adding a heading
-    await page.evaluate(add_heading)
+    await page.evaluate(() => {
+      const new_heading = document.createElement(`h2`)
+      new_heading.textContent = `New Heading`
+      document.querySelector(`main`)?.append(new_heading)
+    })
 
     const page_headings_after_add = await page
       .locator(`main :where(h2, h3):not(.toc-exclude)`)
@@ -448,7 +442,9 @@ test.describe(`Toc`, () => {
     expect(toc_headings_after_add).toEqual(page_headings_after_add)
 
     // Test removing a heading
-    await page.evaluate(remove_heading)
+    await page.evaluate(() => {
+      document.querySelector(`h2`)?.remove()
+    })
 
     const page_headings_after_remove = await page
       .locator(`main :where(h2, h3):not(.toc-exclude)`)
