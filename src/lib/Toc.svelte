@@ -3,7 +3,7 @@
   import { untrack } from 'svelte'
   import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
-  import type { CollapseMode } from './index'
+  import type { CollapseMode, OpenChangeHandler, OpenChangeTrigger } from './index'
 
   let {
     activeHeading = $bindable(null),
@@ -17,7 +17,8 @@
     getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
     getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
     headings = $bindable([]),
-    headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
+    headingSelector = `:is(h2, h3, h4)`,
+    excludeSelector = `.toc-exclude`,
     hide = $bindable(false),
     hideOnIntersect = null,
     autoHide = true,
@@ -29,7 +30,6 @@
     reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
     scrollBehavior = `smooth`,
     title = `On this page`,
-    titleTag = `h2`,
     tocItems = $bindable([]),
     warnOnEmpty = false,
     collapseSubheadings = false,
@@ -37,7 +37,7 @@
     openTocIcon,
     titleSnippet,
     tocItem,
-    onOpen,
+    onOpenChange,
     asideStyle = ``,
     asideClass = ``,
     navStyle = ``,
@@ -66,6 +66,7 @@
     // the result of document.querySelectorAll(headingSelector). can be useful for binding
     headings?: HTMLHeadingElement[]
     headingSelector?: string
+    excludeSelector?: string
     hide?: boolean
     hideOnIntersect?: string | HTMLElement[] | null
     autoHide?: boolean
@@ -77,7 +78,6 @@
     reactToKeys?: string[]
     scrollBehavior?: `auto` | `smooth`
     title?: string
-    titleTag?: string
     tocItems?: HTMLLIElement[]
     warnOnEmpty?: boolean
     // collapse subheadings under inactive parent headings
@@ -88,8 +88,7 @@
     openTocIcon?: Snippet
     titleSnippet?: Snippet
     tocItem?: Snippet<[HTMLHeadingElement]>
-    // Add callback prop for open event
-    onOpen?: (event: { open: boolean }) => void
+    onOpenChange?: OpenChangeHandler
     asideStyle?: string
     asideClass?: string
     navStyle?: string
@@ -120,6 +119,8 @@
   // tracks previous distance to scroll_target to detect manual scroll direction
   // initialized to Infinity so first scroll event always passes the "distance increasing" check
   let prev_scroll_target_distance: number = Infinity
+  let last_invalid_selector_warning: string | null = null
+  let last_reported_open: boolean | undefined = undefined
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -145,6 +146,12 @@
     scroll_target_timeout = setTimeout(() => {
       clear_scroll_target()
     }, 1000)
+  }
+
+  function set_open(value: boolean, trigger: OpenChangeTrigger) {
+    if ((last_reported_open ?? open) === value) return
+    open = last_reported_open = value
+    onOpenChange?.({ open: value, desktop, trigger })
   }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
@@ -200,9 +207,16 @@
     return visible
   })
 
-  $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
+  })
+  $effect(() => {
+    const current_open = open
+    if (current_open === last_reported_open) return
+    untrack(() => {
+      last_reported_open = current_open
+      onOpenChange?.({ open: current_open, desktop, trigger: `programmatic` })
+    })
   })
 
   // Re-check overlap when headings or hideOnIntersect change
@@ -213,25 +227,76 @@
   })
 
   function close(event: MouseEvent) {
-    if (!aside?.contains(event.target as Node)) open = false
+    if (!(event.target instanceof Node) || !aside?.contains(event.target)) set_open(false, `outside-click`)
+  }
+
+  function visible_toc_sibling(
+    node: HTMLLIElement,
+    prop: `nextElementSibling` | `previousElementSibling`,
+  ) {
+    for (
+      let sibling = node[prop];
+      sibling instanceof HTMLLIElement;
+      sibling = sibling[prop]
+    ) {
+      if (!sibling.classList.contains(`collapsed`)) return sibling
+    }
+    return null
+  }
+
+  function selector_is_valid(
+    selector_name: `headingSelector` | `excludeSelector`,
+    selector: string,
+  ) {
+    if (selector_name === `excludeSelector` && selector === ``) return true
+
+    const warning_key = `${selector_name}:${selector}`
+    try {
+      document.querySelector(selector)
+      return true
+    } catch {
+      if (last_invalid_selector_warning !== warning_key) {
+        last_invalid_selector_warning = warning_key
+        console.warn(
+          `svelte-toc received invalid ${selector_name}='${selector}'. Showing empty table of contents.`,
+        )
+      }
+      return false
+    }
+  }
+
+  function query_toc_headings() {
+    if (
+      !selector_is_valid(`headingSelector`, headingSelector) ||
+      !selector_is_valid(`excludeSelector`, excludeSelector)
+    ) return null
+
+    last_invalid_selector_warning = null
+    return Array.from(document.querySelectorAll<HTMLHeadingElement>(headingSelector)).filter(
+      (heading) =>
+        !heading.closest(`aside.toc`) &&
+        (!excludeSelector || !heading.closest(excludeSelector)),
+    )
   }
 
   // (re-)query headings on mount and on route changes
   function update_toc_headings() {
     if (typeof document === `undefined`) return // for SSR
 
-    const new_headings = Array.from(
-      document.querySelectorAll(headingSelector),
-    ) as HTMLHeadingElement[]
+    const new_headings = query_toc_headings()
+    const invalid_selector = new_headings === null
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
-      headings = new_headings
+      headings = new_headings ?? []
       set_active_heading()
       if (headings.length === 0) {
-        if (warnOnEmpty) {
+        if (warnOnEmpty && !invalid_selector) {
+          const exclude_msg = excludeSelector
+            ? ` after applying excludeSelector='${excludeSelector}'`
+            : ``
           console.warn(
-            `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
+            `svelte-toc found no headings for headingSelector='${headingSelector}'${exclude_msg}. ${
               autoHide ? `Hiding` : `Showing empty`
             } table of contents.`,
           )
@@ -314,7 +379,7 @@
       if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) {
         return
       }
-      open = false
+      set_open(false, `toc-item`)
       set_scroll_target(node) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
@@ -355,37 +420,31 @@
     // `:hover`.at(-1) returns the most deeply nested hovered element
     const hovered = [...document.querySelectorAll(`:hover`)].at(-1)
     const toc_is_hovered = hovered && nav?.contains(hovered)
+    const toc_has_focus = nav?.contains(document.activeElement)
+    const is_open = last_reported_open ?? open
 
     if (
-      // return early if ToC does not have focus
-      (event.key === `Tab` && !nav?.contains(document.activeElement)) ||
-      // ignore keyboard events when ToC is closed on mobile or when ToC is not currently hovered on desktop
-      (!desktop && !open) ||
-      (desktop && !toc_is_hovered)
+      // ignore keyboard events when ToC is closed on mobile or inactive on desktop
+      (!desktop && !is_open) ||
+      (desktop && !toc_is_hovered && !toc_has_focus)
     ) return
 
-    event.preventDefault()
+    if (event.key === `Tab`) {
+      if (toc_has_focus) set_open(false, `tab`)
+      return
+    }
 
-    if (event.key === `Escape` && open) open = false
-    else if (event.key === `Tab` && !aside?.contains(document.activeElement)) {
-      open = false
-    } else if (activeTocLi) {
-      if (event.key === `ArrowDown`) {
-        let next = activeTocLi.nextElementSibling as HTMLLIElement | null
-        // skip collapsed items when collapseSubheadings is enabled
-        while (next?.classList.contains(`collapsed`)) {
-          next = next.nextElementSibling as HTMLLIElement | null
-        }
-        if (next) activeTocLi = next
-      }
-      if (event.key === `ArrowUp`) {
-        let prev = activeTocLi.previousElementSibling as HTMLLIElement | null
-        // skip collapsed items when collapseSubheadings is enabled
-        while (prev?.classList.contains(`collapsed`)) {
-          prev = prev.previousElementSibling as HTMLLIElement | null
-        }
-        if (prev) activeTocLi = prev
-      }
+    event.preventDefault()
+    const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
+
+    if (event.key === `Escape` && is_open) set_open(false, `escape`)
+    else if (current_toc_li) {
+      const sibling_prop =
+        event.key === `ArrowDown` ? `nextElementSibling` :
+        event.key === `ArrowUp` ? `previousElementSibling` : null
+      activeTocLi = sibling_prop
+        ? visible_toc_sibling(current_toc_li, sibling_prop) ?? current_toc_li
+        : current_toc_li
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
     }
@@ -438,7 +497,7 @@
       onclick={(event) => {
         event.stopPropagation()
         event.preventDefault()
-        open = true
+        set_open(true, `button`)
       }}
       aria-label={openButtonLabel}
       class={openButtonClass || null}
@@ -461,18 +520,15 @@
       class={navClass || null}
       style={navStyle || null}
     >
-      {#if title}
-        {#if titleSnippet}
-          {@render titleSnippet()}
-        {:else}
-          <svelte:element
-            this={titleTag}
-            class="toc-title toc-exclude {titleElementClass || null}"
-            style={titleElementStyle || null}
-          >
-            {title}
-          </svelte:element>
-        {/if}
+      {#if titleSnippet}
+        {@render titleSnippet()}
+      {:else if title}
+        <h2
+          class="toc-title toc-exclude {titleElementClass || null}"
+          style={titleElementStyle || null}
+        >
+          {title}
+        </h2>
       {/if}
       <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
