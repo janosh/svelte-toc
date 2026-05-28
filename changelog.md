@@ -1,5 +1,36 @@
 # Changelog
 
+## [v0.7.0](https://github.com/janosh/svelte-toc/compare/v0.6.3...v0.7.0)
+
+> 28 May 2026
+
+- Make Svelte a peer dependency to avoid version conflicts, closing https://github.com/janosh/svelte-toc/issues/73
+- Add `excludeSelector`, remove `titleTag`, rename `onOpen` to `onOpenChange` by @janosh in https://github.com/janosh/svelte-toc/pull/74
+- Replace style props with prop bags and heading data API by @janosh in https://github.com/janosh/svelte-toc/pull/75
+- Migrate from Deno and ESLint to the Vite+ toolchain
+- Enable pedantic linting and staged hooks
+
+### Breaking Changes
+
+- Replaced per-element style/class props with element prop bags:
+  - `asideStyle`/`asideClass` -> `asideProps`
+  - `navStyle`/`navClass` -> `navProps`
+  - `titleElementStyle`/`titleElementClass` -> `titleProps`
+  - `olStyle`/`olClass` -> `olProps`
+  - `liStyle`/`liClass` -> `liProps`
+  - `openButtonStyle`/`openButtonClass` -> `openButtonProps`
+- Replaced `getHeadingIds`, `getHeadingLevels`, and `getHeadingTitles` with `getHeadingData`
+- Removed `titleTag`
+- Renamed `onOpen` to `onOpenChange`
+
+### Changes
+
+- Added `excludeSelector` to filter matched headings and excluded ancestors after `headingSelector`
+- Added `TocHeadingData` type export
+- Added support for filtering headings by returning `null` from `getHeadingData`
+- Composed user-provided click/keyboard handlers with internal ToC behavior so `event.preventDefault()` can opt out
+- Updated demos, README docs, and tests for the new customization APIs
+
 ## [v0.6.3](https://github.com/janosh/svelte-toc/compare/v0.6.2...v0.6.3)
 
 > 20 February 2026
