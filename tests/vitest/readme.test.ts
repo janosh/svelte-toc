@@ -16,7 +16,7 @@ const source_props = (props_block_regex.exec(src)?.[1] ?? ``)
 const readme_props = readme.split(`\n`).flatMap((line, idx, lines) => {
   if (line.trim() !== `1. \`\`\`ts`) return []
   const prop = readme_prop_line_regex.exec(lines[idx + 1] ?? ``)?.[1]
-  return prop ? [prop] : []
+  return prop === undefined ? [] : [prop]
 })
 
 // Extract unique CSS variable names (null coalesce for no matches)
@@ -39,7 +39,6 @@ const undocumented_props = new Set([
   `openTocIcon`,
   `titleSnippet`,
   `tocItem`,
-  `onOpen`,
   ...style_class_props,
   `openButtonIconProps`,
 ])

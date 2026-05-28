@@ -23,6 +23,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   color: #eee;
   font-size: 12pt;
+  line-height: 1.6;
   min-height: 100vh;
   box-sizing: border-box;
   display: grid;
@@ -86,9 +87,6 @@ blockquote {
 /* Highlight heading on fragment navigation or ToC click */
 :is(h2, h3, h4, h5, h6):is(:target, .toc-clicked) {
   color: cornflowerblue;
-}
-:is(ul, ol) > li {
-  line-height: 3ex;
 }
 /* Heading anchor links (heading_anchors attachment) */
 :is(h2, h3, h4, h5, h6) a[aria-hidden='true'] {

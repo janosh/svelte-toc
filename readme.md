@@ -36,6 +36,9 @@ npm install --dev svelte-toc
   <h3>Subsection</h3>
   <h2>Next Section</h2>
   <h3 class="toc-exclude">Another Subsection</h3>
+  <section class="toc-exclude">
+    <h2>Ignored Section</h2>
+  </section>
 </main>
 ```
 
@@ -122,13 +125,31 @@ Full list of props and bindable variables for this component (all of them option
    headings: HTMLHeadingElement[] = []
    ```
 
-   Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
+   Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector` and `excludeSelector`.
 
 1. ```ts
-   headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
+   headingSelector: string = `:is(h2, h3, h4)`
    ```
 
-   CSS selector that matches all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h2 class="toc-exclude">Section Title</h2>` will not be listed.
+   CSS selector that matches candidate headings to list in the ToC. The default selector `:is(h2, h3, h4)` excludes `h5` and `h6` headings. After matching, `excludeSelector` is applied so headings with class `toc-exclude` or inside excluded ancestors are removed.
+
+   To debug what the ToC will list on a live page, run:
+
+   ```js
+   const headingSelector = `:is(h2, h3, h4)`
+   const excludeSelector = `.toc-exclude`
+   ;[...document.querySelectorAll(headingSelector)].filter(
+     (heading) =>
+       !heading.closest(`aside.toc`) &&
+       (!excludeSelector || !heading.closest(excludeSelector)),
+   )
+   ```
+
+1. ```ts
+   excludeSelector: string = `.toc-exclude`
+   ```
+
+   CSS selector for headings and ancestor elements to exclude after `headingSelector` has matched candidate headings. With the default, both `<h2 class="toc-exclude">Section Title</h2>` and any heading inside `<section class="toc-exclude">...</section>` will not be listed. Set to an empty string to disable this second filtering step, or pass a custom selector like `.skip-toc`.
 
 1. ```ts
    hide: boolean = false
@@ -180,6 +201,12 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
+   onOpenChange: OpenChangeHandler
+   ```
+
+   Callback fired when the ToC open state changes. Receives an `OpenChangeEvent` with `open`, `desktop`, and `trigger`.
+
+1. ```ts
    reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
    ```
 
@@ -195,19 +222,13 @@ Full list of props and bindable variables for this component (all of them option
    title: string = `On this page`
    ```
 
-   ToC title to display above the list of headings. Set `title=''` to hide.
-
-1. ```ts
-   titleTag: string = `h2`
-   ```
-
-   Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`.
+   ToC title to display above the list of headings. Set `title=''` to hide the default title. Use `titleSnippet` to render custom title markup.
 
 1. ```ts
    tocItems: HTMLLIElement[] = []
    ```
 
-   Array of rendered Toc list items DOM nodes. Essentially the result of `document.querySelectorAll(headingSelector)`. Can be useful for binding.
+   Array of rendered ToC list item (`<li>`) DOM nodes. Headings are discovered with `document.querySelectorAll(headingSelector)`, filtered by `excludeSelector`, and rendered into these list items. Use `bind:tocItems` to access the rendered ToC items for DOM manipulation or event handling.
 
 1. ```ts
    warnOnEmpty: boolean = true
@@ -235,22 +256,31 @@ To control how far from the viewport top headings come to rest when scrolled int
 }
 ```
 
-## 🎰 &nbsp; Slots
+## 🎰 &nbsp; Snippets
 
-`Toc.svelte` has 3 named slots:
+`Toc.svelte` accepts 3 named snippets:
 
-- `slot="toc-item"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents via `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+- `tocItem(heading)` customizes how individual headings are rendered inside the ToC.
 
   ```svelte
   <Toc>
-    <span let:idx let:heading slot="toc-item">
-      {idx + 1}. {heading.innerText}
-    </span>
+    {#snippet tocItem(heading)}
+      <span>{heading.innerText}</span>
+    {/snippet}
   </Toc>
   ```
 
-- `slot="title"`: Title shown above the list of ToC entries. Props `title` and `titleTag` have no effect when filling this slot.
-- `slot="open-toc-icon"`: Icon shown on mobile screens which opens the ToC on clicks.
+- `titleSnippet()` replaces the default title markup.
+
+  ```svelte
+  <Toc>
+    {#snippet titleSnippet()}
+      <strong class="toc-title toc-exclude">Contents</strong>
+    {/snippet}
+  </Toc>
+  ```
+
+- `openTocIcon()` replaces the mobile button icon that opens the ToC.
 
 ## ✨ &nbsp; Styling
 
