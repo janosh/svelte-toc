@@ -120,14 +120,14 @@ describe(`Toc`, () => {
       <h6>Heading 6</h6>
     `
       let props = {}
-      if (headingSelector) props = { headingSelector }
+      if (headingSelector !== null) props = { headingSelector }
 
       mount(Toc, { target: document.body, props })
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
       expect(toc_list.children.length).toBe(expected_lis)
-      expect(toc_list.textContent?.trim()).toBe(expected_text?.join(``))
+      expect(toc_list.textContent.trim()).toBe(expected_text.join(``))
     },
   )
 
@@ -164,7 +164,7 @@ describe(`Toc`, () => {
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
       expect(toc_list.children.length).toBe(expected_headings.length)
-      expect(toc_list.textContent?.trim()).toBe(expected_headings.join(``))
+      expect(toc_list.textContent.trim()).toBe(expected_headings.join(``))
     },
   )
 
@@ -349,6 +349,25 @@ describe(`Toc`, () => {
     expect(on_open_change).toHaveBeenCalledWith(
       expect.objectContaining({ desktop: false, open: true, trigger: `button` }),
     )
+
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+    await tick()
+    on_open_change.mockClear()
+
+    // Same-tick open changes should emit each internal trigger separately.
+    doc_query(`aside.toc button`).click()
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+    await tick()
+
+    expect(on_open_change).toHaveBeenCalledTimes(2)
+    expect(on_open_change).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ desktop: false, open: true, trigger: `button` }),
+    )
+    expect(on_open_change).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ desktop: false, open: false, trigger: `escape` }),
+    )
   })
 
   test(`should toggle mobile ToC visibility`, async () => {
@@ -386,7 +405,7 @@ describe(`Toc`, () => {
 
     const active_li = doc_query(`aside.toc ol li.active`)
     expect(active_li).not.toBeNull()
-    expect(active_li.textContent?.trim()).toBe(`Heading ${n_headings}`)
+    expect(active_li.textContent.trim()).toBe(`Heading ${n_headings}`)
   })
 
   test(`arrow keys navigate the active ToC item when open`, async () => {
@@ -503,25 +522,34 @@ describe(`Toc`, () => {
     })
   })
 
-  test(`Escape key closes ToC on mobile when reactToKeys includes Escape`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
-    globalThis.innerWidth = 600
-    const on_open_change = vi.fn<OpenChangeHandler>()
+  test.each([
+    { key: `Escape`, trigger: `escape`, focus_toc: false, default_prevented: true },
+    { key: `Tab`, trigger: `tab`, focus_toc: true, default_prevented: false },
+  ] as const)(
+    `$key key closes ToC on mobile when reactToKeys includes it`,
+    async ({ key, trigger, focus_toc, default_prevented }) => {
+      document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
+      set_window_width(600)
+      const on_open_change = vi.fn<OpenChangeHandler>()
 
-    mount(Toc, {
-      target: document.body,
-      props: { open: true, reactToKeys: [`Escape`], onOpenChange: on_open_change },
-    })
-    await tick()
-    on_open_change.mockClear()
+      mount(Toc, {
+        target: document.body,
+        props: { open: true, reactToKeys: [key], onOpenChange: on_open_change },
+      })
+      await tick()
+      on_open_change.mockClear()
 
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
-    await tick()
+      if (focus_toc) doc_query(`aside.toc > nav > ol > li.active`).focus()
+      const key_event = new KeyboardEvent(`keydown`, { key, cancelable: true })
+      globalThis.dispatchEvent(key_event)
+      await tick()
 
-    expect(on_open_change).toHaveBeenCalledWith(
-      expect.objectContaining({ desktop: false, open: false, trigger: `escape` }),
-    )
-  })
+      expect(key_event.defaultPrevented).toBe(default_prevented)
+      expect(on_open_change).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ desktop: false, open: false, trigger }),
+      )
+    },
+  )
 
   test(`Escape key does nothing when reactToKeys is empty`, async () => {
     document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
@@ -554,8 +582,8 @@ describe(`Toc`, () => {
 
     let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(2)
-    expect(toc_items[0].textContent?.trim()).toBe(`First Page Heading 1`)
-    expect(toc_items[1].textContent?.trim()).toBe(`First Page Heading 2`)
+    expect(toc_items[0].textContent.trim()).toBe(`First Page Heading 1`)
+    expect(toc_items[1].textContent.trim()).toBe(`First Page Heading 2`)
 
     const container = document.querySelector(`#content-container`)
     if (container) {
@@ -570,9 +598,9 @@ describe(`Toc`, () => {
 
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(3)
-    expect(toc_items[0].textContent?.trim()).toBe(`Second Page Heading 1`)
-    expect(toc_items[1].textContent?.trim()).toBe(`Second Page Heading 2`)
-    expect(toc_items[2].textContent?.trim()).toBe(`Second Page Heading 3`)
+    expect(toc_items[0].textContent.trim()).toBe(`Second Page Heading 1`)
+    expect(toc_items[1].textContent.trim()).toBe(`Second Page Heading 2`)
+    expect(toc_items[2].textContent.trim()).toBe(`Second Page Heading 3`)
   })
 
   test.each([`auto`, `smooth`] as const)(
@@ -617,7 +645,7 @@ describe(`Toc`, () => {
 
     let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(1)
-    expect(toc_items[0].textContent?.trim()).toBe(`Initial Heading`)
+    expect(toc_items[0].textContent.trim()).toBe(`Initial Heading`)
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
@@ -627,13 +655,13 @@ describe(`Toc`, () => {
 
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
     expect(toc_items.length).toBe(2)
-    expect(toc_items[1].textContent?.trim()).toBe(`Dynamically Added Heading`)
+    expect(toc_items[1].textContent.trim()).toBe(`Dynamically Added Heading`)
   })
 
   // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
   // https://github.com/janosh/svelte-toc/issues/50
   describe(`scroll_target behavior`, () => {
-    const active_text = () => doc_query(`aside.toc ol li.active`).textContent?.trim()
+    const active_text = () => doc_query(`aside.toc ol li.active`).textContent.trim()
     const scroll_mock = vi.fn<Element[`scrollIntoView`]>()
 
     beforeEach(() => {
@@ -1098,7 +1126,7 @@ describe(`Style and Class Props Application`, () => {
 
       const element = doc_query(selector)
       expect(element.classList.contains(value)).toBe(true)
-      for (const cls of additionalClassChecks ?? []) {
+      for (const cls of additionalClassChecks) {
         expect(element.classList.contains(cls)).toBe(true)
       }
     },
@@ -1141,7 +1169,7 @@ describe(`Style and Class Props Application`, () => {
       await tick()
 
       const selector_line = find_matching_css_selector(
-        document.head.textContent ?? ``,
+        document.head.textContent,
         declaration_pattern,
       )
       expect(selector_line.startsWith(`:where(`)).toBe(expects_where)

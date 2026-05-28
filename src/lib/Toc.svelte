@@ -120,7 +120,7 @@
   // initialized to Infinity so first scroll event always passes the "distance increasing" check
   let prev_scroll_target_distance: number = Infinity
   let last_invalid_selector_warning: string | null = null
-  let open_change_trigger: OpenChangeTrigger = `programmatic`
+  let last_reported_open: boolean | undefined = undefined
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -149,9 +149,9 @@
   }
 
   function set_open(value: boolean, trigger: OpenChangeTrigger) {
-    if (open === value) return
-    open_change_trigger = trigger
-    open = value
+    if ((last_reported_open ?? open) === value) return
+    open = last_reported_open = value
+    onOpenChange?.({ open: value, desktop, trigger })
   }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
@@ -212,13 +212,10 @@
   })
   $effect(() => {
     const current_open = open
+    if (current_open === last_reported_open) return
     untrack(() => {
-      onOpenChange?.({
-        open: current_open,
-        desktop,
-        trigger: open_change_trigger,
-      })
-      open_change_trigger = `programmatic`
+      last_reported_open = current_open
+      onOpenChange?.({ open: current_open, desktop, trigger: `programmatic` })
     })
   })
 
@@ -424,22 +421,24 @@
     const hovered = [...document.querySelectorAll(`:hover`)].at(-1)
     const toc_is_hovered = hovered && nav?.contains(hovered)
     const toc_has_focus = nav?.contains(document.activeElement)
-    const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
+    const is_open = last_reported_open ?? open
 
     if (
-      // return early when tabbing outside the ToC
-      (event.key === `Tab` && !toc_has_focus) ||
       // ignore keyboard events when ToC is closed on mobile or inactive on desktop
-      (!desktop && !open) ||
+      (!desktop && !is_open) ||
       (desktop && !toc_is_hovered && !toc_has_focus)
     ) return
 
-    event.preventDefault()
+    if (event.key === `Tab`) {
+      if (toc_has_focus) set_open(false, `tab`)
+      return
+    }
 
-    if (event.key === `Escape` && open) set_open(false, `escape`)
-    else if (event.key === `Tab` && !aside?.contains(document.activeElement)) {
-      set_open(false, `tab`)
-    } else if (current_toc_li) {
+    event.preventDefault()
+    const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
+
+    if (event.key === `Escape` && is_open) set_open(false, `escape`)
+    else if (current_toc_li) {
       const sibling_prop =
         event.key === `ArrowDown` ? `nextElementSibling` :
         event.key === `ArrowUp` ? `previousElementSibling` : null
