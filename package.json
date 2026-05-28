@@ -1,6 +1,6 @@
 {
   "name": "svelte-toc",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "description": "Sticky responsive table of contents component written in Svelte",
   "keywords": [
     "component",
@@ -38,13 +38,7 @@
     "access": "public"
   },
   "scripts": {
-    "dev": "vp dev",
-    "build": "vp build",
-    "preview": "vp preview",
     "test": "vp test --run && playwright test",
-    "check": "vp check",
-    "lint": "vp lint",
-    "fmt": "vp fmt --write",
     "package": "svelte-package",
     "prepublishOnly": "npm run package",
     "changelog": "npx tsx https://github.com/janosh/workflows/raw/refs/heads/main/scripts/make-release-notes.ts"
@@ -52,7 +46,7 @@
   "devDependencies": {
     "@playwright/test": "1.60.0",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.60.1",
+    "@sveltejs/kit": "^2.61.1",
     "@sveltejs/package": "^2.5.7",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@vitest/coverage-v8": "^4.1.7",
@@ -61,7 +55,7 @@
     "acorn": "^8.16.0",
     "jsdom": "^29.1.1",
     "mdsvex": "^0.12.7",
-    "svelte": "^5.55.9",
+    "svelte": "^5.55.10",
     "svelte-multiselect": "^11.7.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.14",

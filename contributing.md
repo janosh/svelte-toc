@@ -12,7 +12,7 @@ To submit a pull request, clone the repo, install dependencies and start the dev
 git clone https://github.com/janosh/svelte-toc
 cd svelte-toc
 npm install
-npm run dev
+npx vp dev
 ```
 
 Before you start committing, create and check out a descriptively named branch:
@@ -25,10 +25,11 @@ git checkout -b docs-on-something
 git checkout -b test-some-feature
 ```
 
-To ensure your changes didn't break anything, run the full test suite (which also runs in CI):
+To ensure your changes didn't break anything, run the same checks that run in CI:
 
 ```sh
-npm test
+npx vp check
+npm run test
 ```
 
 Any new features should come with corresponding tests. If you fix a bug, please add a test that fails under the old code and passes with your changes. If you're having trouble writing tests, you can submit your PR anyway. Others might be able to help with tests but chances are your code will take longer to get merged.
@@ -37,9 +38,9 @@ Any new features should come with corresponding tests. If you fix a bug, please 
 
 This repo has 3 required CI checks that have to pass for every PR before merging:
 
-- tests: run as [GitHub Action](https://github.com/janosh/svelte-toc/actions/workflows/test.yml) ([workflow code](https://github.com/janosh/svelte-toc/blob/main/.github/workflows/test.yml))
-- linting: handled by [pre-commit.ci](https://results.pre-commit.ci/latest/github/janosh/svelte-toc/main)
-- docs: [continuous deployment](https://github.com/janosh/svelte-toc/blob/main/.github/workflows/gh-pages.yml) through GitHub Pages
+- tests: [`npm run test`](https://github.com/janosh/svelte-toc/actions/workflows/test.yml)
+- linting/type checking: [`npx vp check`](https://github.com/janosh/svelte-toc/actions/workflows/lint.yml)
+- docs: [`npx vp build`](https://github.com/janosh/svelte-toc/actions/workflows/gh-pages.yml) and GitHub Pages deployment
 
 ## 🆕 New release
 
@@ -55,10 +56,10 @@ Now run the `changelog` script from `package.json` to update `changelog.md`.
 npm run changelog
 ```
 
-Then commit `package.json`, `changelog.md` and `readme.md` files to the `main` branch using the new version number prefixed by `'v'` as commit message and tag:
+Before committing, run the CI checks above. Then commit the release files to the `main` branch using the new version number prefixed by `v` as commit message and tag:
 
 ```sh
-git add package.json changelog.md readme.md
+git add package.json changelog.md
 git commit -m vx.y.z
 git tag $(git log -1 --pretty=%B)
 ```
