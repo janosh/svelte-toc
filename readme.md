@@ -125,7 +125,7 @@ Full list of props and bindable variables for this component (all of them option
    headings: HTMLHeadingElement[] = []
    ```
 
-   Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
+   Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector` and `excludeSelector`.
 
 1. ```ts
    headingSelector: string = `:is(h2, h3, h4)`
@@ -216,19 +216,13 @@ Full list of props and bindable variables for this component (all of them option
    title: string = `On this page`
    ```
 
-   ToC title to display above the list of headings. Set `title=''` to hide.
-
-1. ```ts
-   titleTag: string = `h2`
-   ```
-
-   Change the HTML tag to be used for the ToC title. For example, to get `<strong>{title}</strong>`, set `titleTag='strong'`.
+   ToC title to display above the list of headings. Set `title=''` to hide the default title. Use `titleSnippet` to render custom title markup.
 
 1. ```ts
    tocItems: HTMLLIElement[] = []
    ```
 
-   Array of rendered Toc list items DOM nodes. Essentially the result of `document.querySelectorAll(headingSelector)`. Can be useful for binding.
+   Array of rendered Toc list items DOM nodes. Essentially the result of `document.querySelectorAll(headingSelector)` after filtering with `excludeSelector`. Can be useful for binding.
 
 1. ```ts
    warnOnEmpty: boolean = true
@@ -256,22 +250,31 @@ To control how far from the viewport top headings come to rest when scrolled int
 }
 ```
 
-## 🎰 &nbsp; Slots
+## 🎰 &nbsp; Snippets
 
-`Toc.svelte` has 3 named slots:
+`Toc.svelte` accepts 3 named snippets:
 
-- `slot="toc-item"` to customize how individual headings are rendered inside the ToC. It has access to the DOM node it represents via `let:heading` as well as the list index `let:idx` (counting from 0) at which it appears in the ToC.
+- `tocItem(heading)` customizes how individual headings are rendered inside the ToC.
 
   ```svelte
   <Toc>
-    <span let:idx let:heading slot="toc-item">
-      {idx + 1}. {heading.innerText}
-    </span>
+    {#snippet tocItem(heading)}
+      <span>{heading.innerText}</span>
+    {/snippet}
   </Toc>
   ```
 
-- `slot="title"`: Title shown above the list of ToC entries. Props `title` and `titleTag` have no effect when filling this slot.
-- `slot="open-toc-icon"`: Icon shown on mobile screens which opens the ToC on clicks.
+- `titleSnippet()` replaces the default title markup.
+
+  ```svelte
+  <Toc>
+    {#snippet titleSnippet()}
+      <strong class="toc-title toc-exclude">Contents</strong>
+    {/snippet}
+  </Toc>
+  ```
+
+- `openTocIcon()` replaces the mobile button icon that opens the ToC.
 
 ## ✨ &nbsp; Styling
 

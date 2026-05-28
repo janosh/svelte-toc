@@ -89,22 +89,11 @@ beforeAll(() => {
 })
 
 describe(`Toc`, () => {
-  test.each([
-    [`Custom title`, `h2`],
-    [`Another custom title`, `strong`],
-  ])(`renders title with titleTag`, (title, titleTag) => {
-    mount(Toc, { target: document.body, props: { title, titleTag } })
+  test(`renders default title element`, () => {
+    mount(Toc, { target: document.body, props: { title: `Custom title` } })
 
-    expect(doc_query(titleTag).textContent).toBe(title)
-  })
-
-  test.each([
-    [`Title with classes`, `h2`],
-    [`Custom title with classes`, `h3`],
-  ])(`title element has expected CSS classes`, (title, titleTag) => {
-    mount(Toc, { target: document.body, props: { title, titleTag } })
-
-    const title_node = doc_query(titleTag)
+    const title_node = doc_query(`h2`)
+    expect(title_node.textContent).toBe(`Custom title`)
     expect(title_node.classList.contains(`toc-title`)).toBe(true)
     expect(title_node.classList.contains(`toc-exclude`)).toBe(true)
   })
@@ -166,6 +155,25 @@ describe(`Toc`, () => {
     },
   )
 
+  test(`empty excludeSelector disables exclusion filtering`, async () => {
+    document.body.innerHTML = `
+      <h2 class="toc-exclude">Included by disabled filter</h2>
+      <h2>Regular heading</h2>
+    `
+
+    mount(Toc, {
+      target: document.body,
+      props: { excludeSelector: `` },
+    })
+    await tick()
+
+    const toc_list = doc_query(`aside.toc > nav > ol`)
+    expect(toc_list.children.length).toBe(2)
+    expect(toc_list.textContent?.trim()).toBe(
+      `Included by disabled filterRegular heading`,
+    )
+  })
+
   describe.each([undefined, `foobar`, `h2`, `h4`])(
     `with headingSelector='%s'`,
     (headingSelector) => {
@@ -205,7 +213,7 @@ describe(`Toc`, () => {
     console.warn = vi.fn<typeof console.warn>()
     mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
     await tick()
-    const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4)'. Hiding table of contents.`
+    const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4)' after applying excludeSelector='.toc-exclude'. Hiding table of contents.`
     expect(console.warn).toHaveBeenCalledWith(msg)
   })
 

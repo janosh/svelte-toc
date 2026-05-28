@@ -30,7 +30,6 @@
     reactToKeys = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`],
     scrollBehavior = `smooth`,
     title = `On this page`,
-    titleTag = `h2`,
     tocItems = $bindable([]),
     warnOnEmpty = false,
     collapseSubheadings = false,
@@ -79,7 +78,6 @@
     reactToKeys?: string[]
     scrollBehavior?: `auto` | `smooth`
     title?: string
-    titleTag?: string
     tocItems?: HTMLLIElement[]
     warnOnEmpty?: boolean
     // collapse subheadings under inactive parent headings
@@ -248,8 +246,11 @@
       set_active_heading()
       if (headings.length === 0) {
         if (warnOnEmpty) {
+          const exclude_msg = excludeSelector
+            ? ` after applying excludeSelector='${excludeSelector}'`
+            : ``
           console.warn(
-            `svelte-toc found no headings for headingSelector='${headingSelector}'. ${
+            `svelte-toc found no headings for headingSelector='${headingSelector}'${exclude_msg}. ${
               autoHide ? `Hiding` : `Showing empty`
             } table of contents.`,
           )
@@ -470,18 +471,15 @@
       class={navClass || null}
       style={navStyle || null}
     >
-      {#if title}
-        {#if titleSnippet}
-          {@render titleSnippet()}
-        {:else}
-          <svelte:element
-            this={titleTag}
-            class="toc-title toc-exclude {titleElementClass || null}"
-            style={titleElementStyle || null}
-          >
-            {title}
-          </svelte:element>
-        {/if}
+      {#if titleSnippet}
+        {@render titleSnippet()}
+      {:else if title}
+        <h2
+          class="toc-title toc-exclude {titleElementClass || null}"
+          style={titleElementStyle || null}
+        >
+          {title}
+        </h2>
       {/if}
       <ol role="menu" class={olClass || null} style={olStyle || null}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
