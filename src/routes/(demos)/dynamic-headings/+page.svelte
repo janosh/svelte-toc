@@ -26,7 +26,7 @@
     {/each}
   </main>
 
-  <Toc asideStyle="grid-column: 2;" />
+  <Toc asideProps={{ style: `grid-column: 2;` }} />
 </div>
 
 <style>

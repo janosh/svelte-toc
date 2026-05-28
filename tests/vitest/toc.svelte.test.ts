@@ -168,6 +168,30 @@ describe(`Toc`, () => {
     },
   )
 
+  test(`getHeadingData customizes listed headings`, async () => {
+    set_body(`<h2>Keep</h2><h3>Skip</h3>`)
+    const replace_state_mock = vi.spyOn(history, `replaceState`)
+    mount(Toc, {
+      target: document.body,
+      props: {
+        getHeadingData: (node: HTMLHeadingElement) =>
+          node.textContent === `Skip`
+            ? null
+            : { id: `custom`, level: 2, title: `Custom` },
+        headingSelector: `:is(h2, h3)`,
+      },
+    })
+    await tick()
+
+    const toc_items = document.querySelectorAll(`aside.toc li`)
+    expect(toc_items).toHaveLength(1)
+    const toc_item = toc_items[0]
+    expect(toc_item.textContent).toBe(`Custom`)
+
+    toc_item.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+    expect(replace_state_mock).toHaveBeenCalledWith({}, ``, `#custom`)
+  })
+
   test.each([
     [`headingSelector`, { headingSelector: `[` }],
     [`excludeSelector`, { excludeSelector: `[` }],
@@ -633,29 +657,39 @@ describe(`Toc`, () => {
     },
   )
 
-  test(`mutation observer updates ToC when heading is dynamically added`, async () => {
+  test(`mutation observer updates ToC when headings change`, async () => {
     document.body.innerHTML = `
       <div id="content">
-        <h2>Initial Heading</h2>
+        <h2 id="initial">Initial Heading</h2>
       </div>
     `
+    const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
+    Element.prototype.scrollIntoView = scroll_into_view_mock
 
     mount(Toc, { target: document.body })
     await tick()
 
     let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(1)
+    expect(toc_items).toHaveLength(1)
     expect(toc_items[0].textContent.trim()).toBe(`Initial Heading`)
+    const stale_item = toc_items[0]
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
-    document.querySelector(`#content`)?.append(new_heading)
+    doc_query(`#content`).append(new_heading)
 
     await tick()
 
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(2)
+    expect(toc_items).toHaveLength(2)
     expect(toc_items[1].textContent.trim()).toBe(`Dynamically Added Heading`)
+
+    doc_query(`#initial`).remove()
+    await tick()
+    expect(doc_query(`aside.toc ol li`).textContent).toBe(`Dynamically Added Heading`)
+
+    stale_item.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+    expect(scroll_into_view_mock).not.toHaveBeenCalled()
   })
 
   // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
@@ -726,6 +760,20 @@ describe(`Toc`, () => {
       globalThis.dispatchEvent(new Event(`scroll`))
       await tick()
       // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+      expect(active_text()).toBe(`Heading 3`)
+    })
+
+    test(`removing scroll target activates a remaining heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      doc_query(`aside.toc ol li`).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      doc_query(`#heading-1`).remove()
+      await tick()
+
       expect(active_text()).toBe(`Heading 3`)
     })
 
@@ -958,179 +1006,165 @@ describe(`hideOnIntersect`, () => {
   })
 })
 
-describe(`Style and Class Props Application`, () => {
-  const test_cases = [
-    // Aside tests
+describe(`Element Prop Bags`, () => {
+  const prop_bag_cases = [
     {
-      elementName: `aside`,
-      propName: `asideStyle`,
-      value: `color: rgb(255, 0, 0);`,
+      element_name: `aside`,
+      prop_name: `asideProps`,
+      bag: {
+        class: [`custom-aside-class`, { 'custom-aside-object-class': true }],
+        style: `color: rgb(255, 0, 0);`,
+        'data-testid': `toc-aside`,
+      },
+      extra_props: { hide: true, autoHide: false },
       selector: `aside.toc`,
-      check: `style`,
-      setupFn: ensure_content_for_toc_elements,
+      expected_classes: [`toc`, `custom-aside-class`, `custom-aside-object-class`],
+      expected_attributes: { hidden: ``, 'aria-hidden': `true` },
+      setup: ensure_content_for_toc_elements,
     },
     {
-      elementName: `aside`,
-      propName: `asideClass`,
-      value: `custom-aside-class`,
-      selector: `aside.toc`,
-      check: `class`,
-      setupFn: ensure_content_for_toc_elements,
-    },
-    // Nav tests
-    {
-      elementName: `nav`,
-      propName: `navStyle`,
-      value: `background-color: rgb(0, 0, 255);`,
+      element_name: `nav`,
+      prop_name: `navProps`,
+      bag: {
+        class: `custom-nav-class`,
+        style: `background-color: rgb(0, 0, 255);`,
+        'data-testid': `toc-nav`,
+      },
       selector: `aside.toc nav`,
-      check: `style`,
-      setupFn: ensure_content_for_toc_elements,
-      extraProps: { title: `Test Title` }, // Nav needs title or items to render
+      expected_classes: [`custom-nav-class`],
+      setup: ensure_content_for_toc_elements,
     },
     {
-      elementName: `nav`,
-      propName: `navClass`,
-      value: `custom-nav-class`,
-      selector: `aside.toc nav`,
-      check: `class`,
-      setupFn: ensure_content_for_toc_elements,
-      extraProps: { title: `Test Title` },
-    },
-    // Title element tests
-    {
-      elementName: `title`,
-      propName: `titleElementStyle`,
-      value: `font-style: italic;`,
+      element_name: `title`,
+      prop_name: `titleProps`,
+      bag: {
+        class: { 'custom-title-class': true },
+        style: `font-style: italic;`,
+        'data-testid': `toc-title`,
+      },
+      extra_props: { title: `Test Custom Title` },
       selector: `aside.toc nav .toc-title`,
-      check: `style`,
-      setupFn: ensure_content_for_toc_elements,
-      extraProps: { title: `Test Custom Title` },
+      expected_classes: [`toc-title`, `toc-exclude`, `custom-title-class`],
+      setup: ensure_content_for_toc_elements,
     },
     {
-      elementName: `title`,
-      propName: `titleElementClass`,
-      value: `custom-title-class`,
-      selector: `aside.toc nav .toc-title`,
-      check: `class`,
-      setupFn: ensure_content_for_toc_elements,
-      extraProps: { title: `Test Custom Title` },
-      additionalClassChecks: [`toc-title`, `toc-exclude`],
-    },
-    // OL tests
-    {
-      elementName: `ol`,
-      propName: `olStyle`,
-      value: `list-style-type: square;`,
+      element_name: `ol`,
+      prop_name: `olProps`,
+      bag: {
+        class: `custom-ol-class`,
+        style: `list-style-type: square;`,
+        'data-testid': `toc-list`,
+        start: 3,
+        reversed: true,
+      },
       selector: `aside.toc nav ol`,
-      check: `style`,
-      setupFn: ensure_content_for_toc_elements,
+      expected_classes: [`custom-ol-class`],
+      expected_attributes: { role: `menu`, start: `3`, reversed: `` },
+      setup: ensure_content_for_toc_elements,
     },
     {
-      elementName: `ol`,
-      propName: `olClass`,
-      value: `custom-ol-class`,
-      selector: `aside.toc nav ol`,
-      check: `class`,
-      setupFn: ensure_content_for_toc_elements,
-    },
-    // LI tests
-    {
-      elementName: `li`,
-      propName: `liStyle`,
-      value: `padding-left: 10px;`,
+      element_name: `li`,
+      prop_name: `liProps`,
+      bag: {
+        class: `custom-li-class`,
+        style: `padding-left: 10px;`,
+        'data-testid': `toc-item`,
+        onclick: vi.fn<() => void>(),
+        value: 7,
+      },
       selector: `aside.toc nav ol li`,
-      check: `style`,
-      setupFn: ensure_single_heading,
+      expected_classes: [`active`, `custom-li-class`],
+      expected_attributes: { role: `menuitem`, tabindex: `0`, value: `7` },
+      expected_open_changes: 0,
+      setup: ensure_single_heading,
     },
     {
-      elementName: `li`,
-      propName: `liClass`,
-      value: `custom-li-class`,
-      selector: `aside.toc nav ol li`,
-      check: `class`,
-      setupFn: ensure_single_heading,
-    },
-    // Open button tests
-    {
-      elementName: `open button`,
-      propName: `openButtonStyle`,
-      value: `border: 1px solid rgb(0, 128, 0);`,
+      element_name: `open button`,
+      prop_name: `openButtonProps`,
+      bag: {
+        class: `custom-button-class`,
+        style: `border: 1px solid rgb(0, 128, 0);`,
+        'data-testid': `toc-open-button`,
+        disabled: true,
+        onclick: vi.fn<(event: MouseEvent) => void>((event) => event.preventDefault()),
+        type: `button`,
+      },
+      extra_props: { desktop: false },
       selector: `aside.toc > button`,
-      check: `style`,
-      setupFn: ensure_mobile_button_is_visible,
-      extraProps: { desktop: false }, // Ensure button context
-    },
-    {
-      elementName: `open button`,
-      propName: `openButtonClass`,
-      value: `custom-button-class`,
-      selector: `aside.toc > button`,
-      check: `class`,
-      setupFn: ensure_mobile_button_is_visible,
-      extraProps: { desktop: false },
+      expected_classes: [`custom-button-class`],
+      expected_attributes: {
+        'aria-label': `Open table of contents`,
+        disabled: ``,
+        type: `button`,
+      },
+      expected_open_changes: 0,
+      setup: ensure_mobile_button_is_visible,
     },
   ]
 
-  const style_cases = test_cases.filter((tc) => tc.check === `style`)
-  const class_cases = test_cases.filter((tc) => tc.check === `class`)
-
-  test.each(style_cases)(
-    `applies $propName style to $elementName element`,
-    async ({ propName, value, selector, setupFn, extraProps = {} }) => {
-      setupFn()
+  test.each(prop_bag_cases)(
+    `applies $element_name prop bag attributes`,
+    async ({
+      prop_name,
+      bag,
+      extra_props = {},
+      selector,
+      expected_classes,
+      expected_attributes = {},
+      expected_open_changes,
+      setup,
+    }) => {
+      setup()
+      const has_user_click = `onclick` in bag
+      const user_click = has_user_click ? bag.onclick : vi.fn<() => void>()
+      const on_open_change = vi.fn<OpenChangeHandler>()
+      const expected_open_change_count = expected_open_changes ?? (has_user_click ? 1 : 0)
 
       mount(Toc, {
         target: document.body,
-        props: { ...extraProps, [propName]: value },
+        props: {
+          ...extra_props,
+          ...(has_user_click ? { onOpenChange: on_open_change } : {}),
+          [prop_name]: bag,
+        },
       })
       await tick()
+      on_open_change.mockClear()
 
       const element = doc_query(selector)
-      const style_attribute = element.getAttribute(`style`)
-      expect(style_attribute).not.toBeNull()
-      expect(style_attribute).toContain(value)
+      expect(element.getAttribute(`style`)).toContain(bag.style)
+      expect(element.getAttribute(`data-testid`)).toBe(bag[`data-testid`])
+      for (const cls of expected_classes) {
+        expect(element.classList.contains(cls)).toBe(true)
+      }
+      for (const [attribute, value] of Object.entries(expected_attributes)) {
+        expect(element.getAttribute(attribute)).toBe(value)
+      }
+      if (`onclick` in bag) {
+        element.dispatchEvent(
+          new MouseEvent(`click`, { bubbles: true, cancelable: true }),
+        )
+        await tick()
+      }
+      expect(user_click).toHaveBeenCalledTimes(has_user_click ? 1 : 0)
+      expect(on_open_change).toHaveBeenCalledTimes(expected_open_change_count)
     },
   )
 
-  test(`liStyle preserves existing margin-left and font-size styles`, async () => {
+  test(`liProps.style preserves generated margin-left and font-size styles`, async () => {
     ensure_content_for_toc_elements([`<h2>Single Heading</h2>`])
 
     mount(Toc, {
       target: document.body,
-      props: { liStyle: `padding-left: 10px;` },
+      props: { liProps: { style: `padding-left: 10px;` } },
     })
     await tick()
 
     const style_attribute = doc_query(`aside.toc nav ol li`).getAttribute(`style`)
+    expect(style_attribute).toContain(`padding-left: 10px;`)
     expect(style_attribute).toContain(`margin-left`)
     expect(style_attribute).toContain(`font-size`)
   })
-
-  test.each(class_cases)(
-    `applies $propName class to $elementName element`,
-    async ({
-      propName,
-      value,
-      selector,
-      setupFn,
-      extraProps = {},
-      additionalClassChecks = [],
-    }) => {
-      setupFn()
-
-      mount(Toc, {
-        target: document.body,
-        props: { ...extraProps, [propName]: value },
-      })
-      await tick()
-
-      const element = doc_query(selector)
-      expect(element.classList.contains(value)).toBe(true)
-      for (const cls of additionalClassChecks) {
-        expect(element.classList.contains(cls)).toBe(true)
-      }
-    },
-  )
 
   test.each([
     {
