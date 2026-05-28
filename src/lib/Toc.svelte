@@ -17,7 +17,8 @@
     getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
     getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
     headings = $bindable([]),
-    headingSelector = `:is(h2, h3, h4):not(.toc-exclude)`,
+    headingSelector = `:is(h2, h3, h4)`,
+    excludeSelector = `.toc-exclude`,
     hide = $bindable(false),
     hideOnIntersect = null,
     autoHide = true,
@@ -66,6 +67,7 @@
     // the result of document.querySelectorAll(headingSelector). can be useful for binding
     headings?: HTMLHeadingElement[]
     headingSelector?: string
+    excludeSelector?: string
     hide?: boolean
     hideOnIntersect?: string | HTMLElement[] | null
     autoHide?: boolean
@@ -213,7 +215,21 @@
   })
 
   function close(event: MouseEvent) {
-    if (!aside?.contains(event.target as Node)) open = false
+    if (!(event.target instanceof Node) || !aside?.contains(event.target)) open = false
+  }
+
+  function visible_toc_sibling(
+    node: HTMLLIElement,
+    prop: `nextElementSibling` | `previousElementSibling`,
+  ) {
+    for (
+      let sibling = node[prop];
+      sibling instanceof HTMLLIElement;
+      sibling = sibling[prop]
+    ) {
+      if (!sibling.classList.contains(`collapsed`)) return sibling
+    }
+    return null
   }
 
   // (re-)query headings on mount and on route changes
@@ -221,8 +237,10 @@
     if (typeof document === `undefined`) return // for SSR
 
     const new_headings = Array.from(
-      document.querySelectorAll(headingSelector),
-    ) as HTMLHeadingElement[]
+      document.querySelectorAll<HTMLHeadingElement>(headingSelector),
+    ).filter((heading) =>
+      !heading.closest(`aside.toc`) && (!excludeSelector || !heading.closest(excludeSelector))
+    )
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
@@ -355,6 +373,7 @@
     // `:hover`.at(-1) returns the most deeply nested hovered element
     const hovered = [...document.querySelectorAll(`:hover`)].at(-1)
     const toc_is_hovered = hovered && nav?.contains(hovered)
+    const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
 
     if (
       // return early if ToC does not have focus
@@ -369,23 +388,13 @@
     if (event.key === `Escape` && open) open = false
     else if (event.key === `Tab` && !aside?.contains(document.activeElement)) {
       open = false
-    } else if (activeTocLi) {
-      if (event.key === `ArrowDown`) {
-        let next = activeTocLi.nextElementSibling as HTMLLIElement | null
-        // skip collapsed items when collapseSubheadings is enabled
-        while (next?.classList.contains(`collapsed`)) {
-          next = next.nextElementSibling as HTMLLIElement | null
-        }
-        if (next) activeTocLi = next
-      }
-      if (event.key === `ArrowUp`) {
-        let prev = activeTocLi.previousElementSibling as HTMLLIElement | null
-        // skip collapsed items when collapseSubheadings is enabled
-        while (prev?.classList.contains(`collapsed`)) {
-          prev = prev.previousElementSibling as HTMLLIElement | null
-        }
-        if (prev) activeTocLi = prev
-      }
+    } else if (current_toc_li) {
+      const sibling_prop =
+        event.key === `ArrowDown` ? `nextElementSibling` :
+        event.key === `ArrowUp` ? `previousElementSibling` : null
+      activeTocLi = sibling_prop
+        ? visible_toc_sibling(current_toc_li, sibling_prop) ?? current_toc_li
+        : current_toc_li
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
     }

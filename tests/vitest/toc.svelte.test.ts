@@ -46,6 +46,14 @@ const setup_nested_headings = () =>
       <h3 id="sub-2-1">Sub 2.1</h3>
     `)
 
+const dom_rect = (rect: Partial<DOMRect> = {}): DOMRect => {
+  const x = rect.left ?? rect.x ?? 0
+  const y = rect.top ?? rect.y ?? 0
+  const width = rect.right === undefined ? (rect.width ?? 0) : rect.right - x
+  const height = rect.bottom === undefined ? (rect.height ?? 0) : rect.bottom - y
+  return DOMRect.fromRect({ x, y, width, height })
+}
+
 // Mock scroll position to make a specific heading "active" (scrolled past viewport top)
 const mock_active_heading = (active_id: string) => {
   const headings = Array.from(document.querySelectorAll(`h2, h3, h4`))
@@ -54,12 +62,7 @@ const mock_active_heading = (active_id: string) => {
     // Active heading and all before it are scrolled past (negative top)
     const top =
       idx <= active_idx ? -10 * (active_idx - idx + 1) : 100 * (idx - active_idx)
-    const zero_rect = { bottom: 0, left: 0, right: 0, width: 0, height: 0, x: 0, y: 0 }
-    vi.spyOn(heading, `getBoundingClientRect`).mockReturnValue({
-      top,
-      ...zero_rect,
-      toJSON: () => ({}),
-    } as DOMRect)
+    vi.spyOn(heading, `getBoundingClientRect`).mockReturnValue(dom_rect({ top }))
   })
 }
 
@@ -78,10 +81,10 @@ const find_matching_css_selector = (style_text: string, declaration_pattern: Reg
 }
 
 beforeAll(() => {
-  // Mock animate API with cancel method
-  Element.prototype.animate = vi.fn<Element[`animate`]>(() => {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- jsdom lacks Animation
-    return { cancel: vi.fn<() => void>() } as unknown as Animation
+  // Mock enough of the animate API for Svelte transitions in jsdom.
+  Object.defineProperty(Element.prototype, `animate`, {
+    configurable: true,
+    value: vi.fn<() => { cancel: () => void }>(() => ({ cancel: vi.fn<() => void>() })),
   })
 })
 
@@ -110,10 +113,10 @@ describe(`Toc`, () => {
     [null, 3, [0, 1, 2].map((lvl) => `Heading ${lvl + 2}`)],
     [
       `body > :is(h1, h2, h3, h4, h5, h6)`,
-      6,
-      Array.from({ length: 6 }, (_, lvl) => `Heading ${lvl + 1}`),
+      5,
+      Array.from({ length: 5 }, (_, lvl) => `Heading ${lvl + 2}`),
     ],
-    [`h1:not(.toc-exclude)`, 0, []],
+    [`h1`, 0, []],
   ])(
     `ToC lists expected headings for headingSelector='%s'`,
     async (headingSelector, expected_lis, expected_text) => {
@@ -137,7 +140,33 @@ describe(`Toc`, () => {
     },
   )
 
-  describe.each([undefined, `foobar`, `h2:not(.toc-exclude)`, `h4`])(
+  test.each([
+    [`toc-exclude`, {}],
+    [`skip-toc`, { excludeSelector: `.skip-toc` }],
+  ])(
+    `ignores headings below .%s with custom headingSelector`,
+    async (class_name, props) => {
+      document.body.innerHTML = `
+      <section class="${class_name}">
+        <h2>Excluded child heading</h2>
+        <div><h3>Excluded nested heading</h3></div>
+      </section>
+      <h2>Included heading</h2>
+    `
+
+      mount(Toc, {
+        target: document.body,
+        props: { headingSelector: `:is(h2, h3)`, ...props },
+      })
+      await tick()
+
+      const toc_list = doc_query(`aside.toc > nav > ol`)
+      expect(toc_list.children.length).toBe(1)
+      expect(toc_list.textContent?.trim()).toBe(`Included heading`)
+    },
+  )
+
+  describe.each([undefined, `foobar`, `h2`, `h4`])(
     `with headingSelector='%s'`,
     (headingSelector) => {
       test(`autoHide=true hides ToC when no headings match`, async () => {
@@ -176,7 +205,7 @@ describe(`Toc`, () => {
     console.warn = vi.fn<typeof console.warn>()
     mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
     await tick()
-    const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4):not(.toc-exclude)'. Hiding table of contents.`
+    const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4)'. Hiding table of contents.`
     expect(console.warn).toHaveBeenCalledWith(msg)
   })
 
@@ -338,40 +367,38 @@ describe(`Toc`, () => {
 
   test(`arrow keys navigate the active ToC item when open`, async () => {
     document.body.innerHTML = `
-      <h2>Heading 1</h2>
-      <h2>Heading 2</h2>
-      <h2>Heading 3</h2>
-      <h2>Heading 4</h2>
+      <h2 id="heading-1">Heading 1</h2>
+      <h2 id="heading-2">Heading 2</h2>
+      <h2 id="heading-3">Heading 3</h2>
+      <h2 id="heading-4">Heading 4</h2>
     `
-    mount(Toc, { target: document.body, props: { open: true } })
+    set_window_width(600)
+    mock_active_heading(`heading-1`)
+    mount(Toc, {
+      target: document.body,
+      props: { breakpoint: 10_000, desktop: false, open: true },
+    })
     await tick()
 
-    const toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(4)
-
     const initial_active = doc_query(`aside.toc > nav > ol > li.active`)
-    expect(initial_active).not.toBeNull()
-
-    const all_items = Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`))
-    const initial_active_idx = all_items.indexOf(initial_active)
+    initial_active.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+    await tick()
+    doc_query(`aside.toc button`).dispatchEvent(
+      new MouseEvent(`click`, { bubbles: true }),
+    )
+    await tick()
 
     globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+    await tick()
 
     const after_down = doc_query(`aside.toc > nav > ol > li.active`)
-    expect(after_down).not.toBeNull()
-
-    const after_down_idx = all_items.indexOf(after_down)
-
-    const expected_idx = Math.min(initial_active_idx + 1, all_items.length - 1)
-    expect(after_down_idx).toBe(expected_idx)
+    expect(after_down.textContent).toBe(`Heading 2`)
 
     globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
+    await tick()
 
     const after_up = doc_query(`aside.toc > nav > ol > li.active`)
-    expect(after_up).not.toBeNull()
-
-    const after_up_idx = all_items.indexOf(after_up)
-    expect(after_up_idx).toBe(initial_active_idx)
+    expect(after_up.textContent).toBe(`Heading 1`)
   })
 
   test.each([
@@ -739,18 +766,19 @@ describe(`hideOnIntersect`, () => {
   // Mocks getBoundingClientRect. Note: width/height are independent defaults—overlap
   // detection only uses top/bottom/left/right, so geometry consistency isn't required.
   const mock_bounding_rect = (element: Element, rect: Partial<DOMRect>) => {
-    vi.spyOn(element, `getBoundingClientRect`).mockReturnValue({
-      top: 0,
-      left: 0,
-      bottom: 100,
-      right: 100,
-      width: 100,
-      height: 100,
-      x: 0,
-      y: 0,
-      toJSON: () => ({}),
-      ...rect,
-    } as DOMRect)
+    vi.spyOn(element, `getBoundingClientRect`).mockReturnValue(
+      dom_rect({
+        top: 0,
+        left: 0,
+        bottom: 100,
+        right: 100,
+        width: 100,
+        height: 100,
+        x: 0,
+        y: 0,
+        ...rect,
+      }),
+    )
   }
 
   // Parameterized test for overlap detection on desktop

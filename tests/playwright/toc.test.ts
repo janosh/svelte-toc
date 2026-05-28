@@ -361,9 +361,7 @@ test.describe(`Toc`, () => {
     // Test each page separately to avoid await in loop
     await page.goto(`/`, { waitUntil: `networkidle` })
 
-    let expected_headings = await page
-      .locator(`main :where(h2, h3):not(.toc-exclude)`)
-      .allTextContents()
+    let expected_headings = await page.locator(`main :where(h2, h3)`).allTextContents()
 
     // wait for ToC to render headings
     await page.waitForSelector(`aside.toc > nav > ol > li`)
@@ -377,9 +375,7 @@ test.describe(`Toc`, () => {
     // Test long-page
     await page.goto(`/long-page`, { waitUntil: `networkidle` })
 
-    expected_headings = await page
-      .locator(`main :where(h2, h3):not(.toc-exclude)`)
-      .allTextContents()
+    expected_headings = await page.locator(`main :where(h2, h3)`).allTextContents()
 
     // wait for ToC to render headings
     await page.waitForSelector(`aside.toc > nav > ol > li`)
@@ -432,7 +428,7 @@ test.describe(`Toc`, () => {
     })
 
     const page_headings_after_add = await page
-      .locator(`main :where(h2, h3):not(.toc-exclude)`)
+      .locator(`main :where(h2, h3)`)
       .allTextContents()
 
     const toc_headings_after_add = (
@@ -447,7 +443,7 @@ test.describe(`Toc`, () => {
     })
 
     const page_headings_after_remove = await page
-      .locator(`main :where(h2, h3):not(.toc-exclude)`)
+      .locator(`main :where(h2, h3)`)
       .allTextContents()
 
     const toc_headings_after_remove = (

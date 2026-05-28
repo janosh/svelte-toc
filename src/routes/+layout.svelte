@@ -11,13 +11,6 @@
 
   let { children }: { children?: Snippet<[]> } = $props()
 
-  let headingSelector = $derived(
-    {
-      '/contributing': `main > h2`,
-      '/changelog': `main > h4`,
-    }[page.url.pathname as string] ?? `main :where(h2, h3):not(.toc-exclude)`,
-  )
-
   const all_routes = Object.keys(import.meta.glob(`./**/+page.{svelte,md}`))
     .map((filename) => {
       const parts = filename.split(`/`).filter((part) => !part.startsWith(`(`))
@@ -49,7 +42,7 @@
     page.url.pathname,
   )}
   <Toc
-    {headingSelector}
+    headingSelector={page.url.pathname === `/changelog` ? `main > h2` : `main :where(h2, h3)`}
     hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .info-banner` : null}
   />
 {/if}

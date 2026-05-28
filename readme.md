@@ -36,6 +36,9 @@ npm install --dev svelte-toc
   <h3>Subsection</h3>
   <h2>Next Section</h2>
   <h3 class="toc-exclude">Another Subsection</h3>
+  <section class="toc-exclude">
+    <h2>Ignored Section</h2>
+  </section>
 </main>
 ```
 
@@ -125,10 +128,28 @@ Full list of props and bindable variables for this component (all of them option
    Array of DOM heading nodes currently listed and tracked by the ToC. Is bindable but mostly meant for reading, not writing. Deciding which headings to list should be left to the ToC and controlled via `headingSelector`.
 
 1. ```ts
-   headingSelector: string = `:is(h2, h3, h4):not(.toc-exclude)`
+   headingSelector: string = `:is(h2, h3, h4)`
    ```
 
-   CSS selector that matches all headings to list in the ToC. You can try out selectors in the dev console of your live page to make sure they return what you want by passing it into `[...document.querySelectorAll(headingSelector)]`. The default selector `:is(h2, h3, h4):not(.toc-exclude)` excludes `h5` and `h6` headings as well as any node with a class of `toc-exclude`. For example `<h2 class="toc-exclude">Section Title</h2>` will not be listed.
+   CSS selector that matches candidate headings to list in the ToC. The default selector `:is(h2, h3, h4)` excludes `h5` and `h6` headings. After matching, `excludeSelector` is applied so headings with class `toc-exclude` or inside excluded ancestors are removed.
+
+   To debug what the ToC will list on a live page, run:
+
+   ```js
+   const headingSelector = `:is(h2, h3, h4)`
+   const excludeSelector = `.toc-exclude`
+   ;[...document.querySelectorAll(headingSelector)].filter(
+     (heading) =>
+       !heading.closest(`aside.toc`) &&
+       (!excludeSelector || !heading.closest(excludeSelector)),
+   )
+   ```
+
+1. ```ts
+   excludeSelector: string = `.toc-exclude`
+   ```
+
+   CSS selector for headings and ancestor elements to exclude after `headingSelector` has matched candidate headings. With the default, both `<h2 class="toc-exclude">Section Title</h2>` and any heading inside `<section class="toc-exclude">...</section>` will not be listed. Set to an empty string to disable this second filtering step, or pass a custom selector like `.skip-toc`.
 
 1. ```ts
    hide: boolean = false
