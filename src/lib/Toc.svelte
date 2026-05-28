@@ -3,7 +3,7 @@
   import { untrack } from 'svelte'
   import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
-  import type { CollapseMode } from './index'
+  import type { CollapseMode, OpenChangeHandler, OpenChangeTrigger } from './index'
 
   let {
     activeHeading = $bindable(null),
@@ -37,7 +37,7 @@
     openTocIcon,
     titleSnippet,
     tocItem,
-    onOpen,
+    onOpenChange,
     asideStyle = ``,
     asideClass = ``,
     navStyle = ``,
@@ -88,8 +88,7 @@
     openTocIcon?: Snippet
     titleSnippet?: Snippet
     tocItem?: Snippet<[HTMLHeadingElement]>
-    // Add callback prop for open event
-    onOpen?: (event: { open: boolean }) => void
+    onOpenChange?: OpenChangeHandler
     asideStyle?: string
     asideClass?: string
     navStyle?: string
@@ -121,6 +120,7 @@
   // initialized to Infinity so first scroll event always passes the "distance increasing" check
   let prev_scroll_target_distance: number = Infinity
   let last_invalid_selector_warning: string | null = null
+  let open_change_trigger: OpenChangeTrigger = `programmatic`
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -146,6 +146,12 @@
     scroll_target_timeout = setTimeout(() => {
       clear_scroll_target()
     }, 1000)
+  }
+
+  function set_open(value: boolean, trigger: OpenChangeTrigger) {
+    if (open === value) return
+    open_change_trigger = trigger
+    open = value
   }
 
   let levels: number[] = $derived(headings.map(getHeadingLevels))
@@ -201,9 +207,19 @@
     return visible
   })
 
-  $effect(() => onOpen?.({ open }))
   $effect(() => {
     desktop = window_width > breakpoint
+  })
+  $effect(() => {
+    const current_open = open
+    untrack(() => {
+      onOpenChange?.({
+        open: current_open,
+        desktop,
+        trigger: open_change_trigger,
+      })
+      open_change_trigger = `programmatic`
+    })
   })
 
   // Re-check overlap when headings or hideOnIntersect change
@@ -214,7 +230,7 @@
   })
 
   function close(event: MouseEvent) {
-    if (!(event.target instanceof Node) || !aside?.contains(event.target)) open = false
+    if (!(event.target instanceof Node) || !aside?.contains(event.target)) set_open(false, `outside-click`)
   }
 
   function visible_toc_sibling(
@@ -366,7 +382,7 @@
       if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) {
         return
       }
-      open = false
+      set_open(false, `toc-item`)
       set_scroll_target(node) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
@@ -411,18 +427,18 @@
     const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
 
     if (
-      // return early if ToC does not have focus
+      // return early when tabbing outside the ToC
       (event.key === `Tab` && !toc_has_focus) ||
-      // ignore keyboard events when ToC is closed on mobile or when ToC is not currently hovered on desktop
+      // ignore keyboard events when ToC is closed on mobile or inactive on desktop
       (!desktop && !open) ||
       (desktop && !toc_is_hovered && !toc_has_focus)
     ) return
 
     event.preventDefault()
 
-    if (event.key === `Escape` && open) open = false
+    if (event.key === `Escape` && open) set_open(false, `escape`)
     else if (event.key === `Tab` && !aside?.contains(document.activeElement)) {
-      open = false
+      set_open(false, `tab`)
     } else if (current_toc_li) {
       const sibling_prop =
         event.key === `ArrowDown` ? `nextElementSibling` :
@@ -482,7 +498,7 @@
       onclick={(event) => {
         event.stopPropagation()
         event.preventDefault()
-        open = true
+        set_open(true, `button`)
       }}
       aria-label={openButtonLabel}
       class={openButtonClass || null}

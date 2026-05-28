@@ -1,9 +1,7 @@
-import Toc from '$lib'
+import Toc, { type OpenChangeHandler } from '$lib'
 import { mount, tick } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
-
-type OnOpenHandler = (event: { open: boolean }) => void
 
 const set_body = (html: string) => {
   document.body.innerHTML = html
@@ -327,27 +325,30 @@ describe(`Toc`, () => {
     },
   )
 
-  test(`onOpen handler receives correct open value`, async () => {
-    globalThis.innerWidth = 600
-    document.body.innerHTML = `
-      <h2>Heading 1</h2>
-      <h2>Heading 2</h2>
-    `
-    const onOpen = vi.fn<OnOpenHandler>()
+  test(`onOpenChange handler receives open state, desktop state, and trigger`, async () => {
+    set_window_width(1200)
+    ensure_content_for_toc_elements()
+    const on_open_change = vi.fn<OpenChangeHandler>()
 
-    mount(Toc, { target: document.body, props: { onOpen, open: false } })
+    mount(Toc, {
+      target: document.body,
+      props: { onOpenChange: on_open_change, open: false },
+    })
     await tick()
 
-    expect(onOpen).toHaveBeenCalledOnce()
-    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ open: false }))
+    expect(on_open_change).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ desktop: true, open: false, trigger: `programmatic` }),
+    )
 
-    const button = document.querySelector<HTMLButtonElement>(`aside.toc button`)
-    button?.click()
+    set_window_width(600)
+    await tick()
+    doc_query(`aside.toc button`).click()
     await tick()
 
-    // Check that onOpen was called again with the new open state
-    expect(onOpen).toHaveBeenCalledTimes(2)
-    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ open: true }))
+    expect(on_open_change).toHaveBeenCalledTimes(2)
+    expect(on_open_change).toHaveBeenCalledWith(
+      expect.objectContaining({ desktop: false, open: true, trigger: `button` }),
+    )
   })
 
   test(`should toggle mobile ToC visibility`, async () => {
@@ -505,37 +506,39 @@ describe(`Toc`, () => {
   test(`Escape key closes ToC on mobile when reactToKeys includes Escape`, async () => {
     document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
     globalThis.innerWidth = 600
-    const onOpen = vi.fn<OnOpenHandler>()
+    const on_open_change = vi.fn<OpenChangeHandler>()
 
     mount(Toc, {
       target: document.body,
-      props: { open: true, reactToKeys: [`Escape`], onOpen },
+      props: { open: true, reactToKeys: [`Escape`], onOpenChange: on_open_change },
     })
     await tick()
-    onOpen.mockClear()
+    on_open_change.mockClear()
 
     globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
     await tick()
 
-    expect(onOpen).toHaveBeenCalledWith(expect.objectContaining({ open: false }))
+    expect(on_open_change).toHaveBeenCalledWith(
+      expect.objectContaining({ desktop: false, open: false, trigger: `escape` }),
+    )
   })
 
   test(`Escape key does nothing when reactToKeys is empty`, async () => {
     document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
     globalThis.innerWidth = 600
-    const onOpen = vi.fn<OnOpenHandler>()
+    const on_open_change = vi.fn<OpenChangeHandler>()
 
     mount(Toc, {
       target: document.body,
-      props: { open: true, reactToKeys: [], onOpen },
+      props: { open: true, reactToKeys: [], onOpenChange: on_open_change },
     })
     await tick()
-    onOpen.mockClear()
+    on_open_change.mockClear()
 
     globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
     await tick()
 
-    expect(onOpen).not.toHaveBeenCalled()
+    expect(on_open_change).not.toHaveBeenCalled()
   })
 
   test(`updates ToC when page content changes`, async () => {

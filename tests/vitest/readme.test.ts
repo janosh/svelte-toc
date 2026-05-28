@@ -39,7 +39,6 @@ const undocumented_props = new Set([
   `openTocIcon`,
   `titleSnippet`,
   `tocItem`,
-  `onOpen`,
   ...style_class_props,
   `openButtonIconProps`,
 ])

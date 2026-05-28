@@ -201,6 +201,12 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
+   onOpenChange: OpenChangeHandler
+   ```
+
+   Callback fired when the ToC open state changes. Receives an `OpenChangeEvent` with `open`, `desktop`, and `trigger`.
+
+1. ```ts
    reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
    ```
 
