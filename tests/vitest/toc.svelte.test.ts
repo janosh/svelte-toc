@@ -424,6 +424,24 @@ describe(`Toc`, () => {
     expect(after_up.textContent).toBe(`Heading 1`)
   })
 
+  test(`arrow keys navigate focused ToC item on desktop without hover`, async () => {
+    document.body.innerHTML = `
+      <h2 id="heading-1">Heading 1</h2>
+      <h2 id="heading-2">Heading 2</h2>
+    `
+    set_window_width(1200)
+    mock_active_heading(`heading-1`)
+
+    mount(Toc, { target: document.body })
+    await tick()
+
+    doc_query(`aside.toc > nav > ol > li.active`).focus()
+    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+    await tick()
+
+    expect(doc_query(`aside.toc > nav > ol > li.active`).textContent).toBe(`Heading 2`)
+  })
+
   test.each([
     [` `, `smooth`],
     [`Enter`, `smooth`],

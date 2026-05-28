@@ -222,7 +222,7 @@ Full list of props and bindable variables for this component (all of them option
    tocItems: HTMLLIElement[] = []
    ```
 
-   Array of rendered Toc list items DOM nodes. Essentially the result of `document.querySelectorAll(headingSelector)` after filtering with `excludeSelector`. Can be useful for binding.
+   Array of rendered ToC list item (`<li>`) DOM nodes. Headings are discovered with `document.querySelectorAll(headingSelector)`, filtered by `excludeSelector`, and rendered into these list items. Use `bind:tocItems` to access the rendered ToC items for DOM manipulation or event handling.
 
 1. ```ts
    warnOnEmpty: boolean = true

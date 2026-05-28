@@ -407,14 +407,15 @@
     // `:hover`.at(-1) returns the most deeply nested hovered element
     const hovered = [...document.querySelectorAll(`:hover`)].at(-1)
     const toc_is_hovered = hovered && nav?.contains(hovered)
+    const toc_has_focus = nav?.contains(document.activeElement)
     const current_toc_li = activeTocLi ?? nav?.querySelector<HTMLLIElement>(`li.active`)
 
     if (
       // return early if ToC does not have focus
-      (event.key === `Tab` && !nav?.contains(document.activeElement)) ||
+      (event.key === `Tab` && !toc_has_focus) ||
       // ignore keyboard events when ToC is closed on mobile or when ToC is not currently hovered on desktop
       (!desktop && !open) ||
-      (desktop && !toc_is_hovered)
+      (desktop && !toc_is_hovered && !toc_has_focus)
     ) return
 
     event.preventDefault()
