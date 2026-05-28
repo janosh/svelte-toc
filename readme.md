@@ -201,6 +201,49 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
+   asideProps: HTMLAttributes<HTMLElementTagNameMap[`aside`]> = {}
+   ```
+
+   Props passed to the outer `<aside>` element. Use this for custom classes, styles, ARIA attributes, and data attributes. Required ToC classes and managed attributes still take precedence.
+
+1. ```ts
+   navProps: HTMLAttributes<HTMLElementTagNameMap[`nav`]> = {}
+   ```
+
+   Props passed to the `<nav>` element wrapping the ToC title and list.
+
+1. ```ts
+   titleProps: HTMLAttributes<HTMLHeadingElement> = {}
+   ```
+
+   Props passed to the default title `<h2>`. Has no effect when using `titleSnippet`.
+
+1. ```ts
+   olProps: HTMLAttributes<HTMLOListElement> = {}
+   ```
+
+   Props passed to the ToC `<ol>` element.
+
+1. ```ts
+   liProps: HTMLAttributes<HTMLLIElement> = {}
+   ```
+
+   Props passed to every rendered ToC `<li>` item. Internal role, focus, active/collapsed classes, and generated indentation styles are preserved.
+
+1. ```ts
+   openButtonProps: HTMLAttributes<HTMLButtonElement> = {}
+   ```
+
+   Props passed to the mobile open button. The internal click handler and `openButtonLabel` ARIA label still take precedence.
+
+   ```svelte
+   <Toc
+     asideProps={{ class: `right-sidebar`, style: `width: 20em;` }}
+     liProps={{ class: `toc-item`, style: `padding-left: 10px;` }}
+   />
+   ```
+
+1. ```ts
    onOpenChange: OpenChangeHandler
    ```
 

@@ -38,18 +38,12 @@
     titleSnippet,
     tocItem,
     onOpenChange,
-    asideStyle = ``,
-    asideClass = ``,
-    navStyle = ``,
-    navClass = ``,
-    titleElementStyle = ``,
-    titleElementClass = ``,
-    olStyle = ``,
-    olClass = ``,
-    liStyle = ``,
-    liClass = ``,
-    openButtonStyle = ``,
-    openButtonClass = ``,
+    asideProps = {},
+    navProps = {},
+    titleProps = {},
+    olProps = {},
+    liProps = {},
+    openButtonProps = {},
     openButtonIconProps = {},
     ...rest
   }: {
@@ -89,18 +83,12 @@
     titleSnippet?: Snippet
     tocItem?: Snippet<[HTMLHeadingElement]>
     onOpenChange?: OpenChangeHandler
-    asideStyle?: string
-    asideClass?: string
-    navStyle?: string
-    navClass?: string
-    titleElementStyle?: string
-    titleElementClass?: string
-    olStyle?: string
-    olClass?: string
-    liStyle?: string
-    liClass?: string
-    openButtonStyle?: string
-    openButtonClass?: string
+    asideProps?: HTMLAttributes<HTMLElementTagNameMap[`aside`]>
+    navProps?: HTMLAttributes<HTMLElementTagNameMap[`nav`]>
+    titleProps?: HTMLAttributes<HTMLHeadingElement>
+    olProps?: HTMLAttributes<HTMLOListElement>
+    liProps?: HTMLAttributes<HTMLLIElement>
+    openButtonProps?: HTMLAttributes<HTMLButtonElement>
     openButtonIconProps?: SVGAttributes<SVGSVGElement>
   } & HTMLAttributes<HTMLElementTagNameMap[`aside`]> = $props()
 
@@ -481,7 +469,8 @@
 
 <aside
   {...rest}
-  class="toc {asideClass || null}"
+  {...asideProps}
+  class="toc {asideProps.class ?? null}"
   class:collapsible={collapseSubheadings}
   class:desktop
   class:hidden={hide}
@@ -490,18 +479,19 @@
   bind:this={aside}
   hidden={hide}
   aria-hidden={hide || intersecting}
-  style={asideStyle || null}
+  style={asideProps.style ?? null}
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
+      {...openButtonProps}
       onclick={(event) => {
         event.stopPropagation()
         event.preventDefault()
         set_open(true, `button`)
       }}
       aria-label={openButtonLabel}
-      class={openButtonClass || null}
-      style={openButtonStyle || null}
+      class={openButtonProps.class ?? null}
+      style={openButtonProps.style ?? null}
     >
       {#if openTocIcon}{@render openTocIcon()}{:else}
         <!-- https://iconify.design/icon-sets/heroicons-solid/menu.html -->
@@ -515,34 +505,42 @@
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
     <nav
+      {...navProps}
       transition:blur={blurParams}
       bind:this={nav}
-      class={navClass || null}
-      style={navStyle || null}
+      class={navProps.class ?? null}
+      style={navProps.style ?? null}
     >
       {#if titleSnippet}
         {@render titleSnippet()}
       {:else if title}
         <h2
-          class="toc-title toc-exclude {titleElementClass || null}"
-          style={titleElementStyle || null}
+          {...titleProps}
+          class="toc-title toc-exclude {titleProps.class ?? null}"
+          style={titleProps.style ?? null}
         >
           {title}
         </h2>
       {/if}
-      <ol role="menu" class={olClass || null} style={olStyle || null}>
+      <ol
+        {...olProps}
+        role="menu"
+        class={olProps.class ?? null}
+        style={olProps.style ?? null}
+      >
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const indent = levels[idx] - minLevel}
           {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
           <li
+            {...liProps}
             role="menuitem"
             tabindex={collapsed ? -1 : 0}
             class:active={heading === activeHeading}
             class:collapsed
             aria-hidden={collapsed || undefined}
-            class={liClass || null}
+            class={liProps.class ?? null}
             bind:this={tocItems[idx]}
-            style={liStyle || null}
+            style={liProps.style ?? null}
             style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
             style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
             onclick={li_click_key_handler(heading)}

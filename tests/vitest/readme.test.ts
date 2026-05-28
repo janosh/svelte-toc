@@ -26,24 +26,15 @@ const extract_css_vars = (text: string) =>
 const source_css_vars = extract_css_vars(src)
 const readme_css_vars = extract_css_vars(readme)
 
-// Props intentionally not documented (snippets/style/class props)
-const style_class_props = [
-  `aside`,
-  `nav`,
-  `titleElement`,
-  `ol`,
-  `li`,
-  `openButton`,
-].flatMap((el) => [`${el}Style`, `${el}Class`])
-const undocumented_props = new Set([
+// Props documented outside the numbered props list.
+const separately_documented_props = new Set([
   `openTocIcon`,
   `titleSnippet`,
   `tocItem`,
-  ...style_class_props,
   `openButtonIconProps`,
 ])
 
-test.each(source_props.filter((p) => !undocumented_props.has(p)))(
+test.each(source_props.filter((p) => !separately_documented_props.has(p)))(
   `readme documents prop '%s'`,
   (prop) => {
     expect(readme_props).toContain(prop)
