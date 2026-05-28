@@ -120,6 +120,7 @@
   // tracks previous distance to scroll_target to detect manual scroll direction
   // initialized to Infinity so first scroll event always passes the "distance increasing" check
   let prev_scroll_target_distance: number = Infinity
+  let last_invalid_selector_warning: string | null = null
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -230,22 +231,54 @@
     return null
   }
 
+  function selector_is_valid(
+    selector_name: `headingSelector` | `excludeSelector`,
+    selector: string,
+  ) {
+    if (selector_name === `excludeSelector` && selector === ``) return true
+
+    const warning_key = `${selector_name}:${selector}`
+    try {
+      document.querySelector(selector)
+      return true
+    } catch {
+      if (last_invalid_selector_warning !== warning_key) {
+        last_invalid_selector_warning = warning_key
+        console.warn(
+          `svelte-toc received invalid ${selector_name}='${selector}'. Showing empty table of contents.`,
+        )
+      }
+      return false
+    }
+  }
+
+  function query_toc_headings() {
+    if (
+      !selector_is_valid(`headingSelector`, headingSelector) ||
+      !selector_is_valid(`excludeSelector`, excludeSelector)
+    ) return null
+
+    last_invalid_selector_warning = null
+    return Array.from(document.querySelectorAll<HTMLHeadingElement>(headingSelector)).filter(
+      (heading) =>
+        !heading.closest(`aside.toc`) &&
+        (!excludeSelector || !heading.closest(excludeSelector)),
+    )
+  }
+
   // (re-)query headings on mount and on route changes
   function update_toc_headings() {
     if (typeof document === `undefined`) return // for SSR
 
-    const new_headings = Array.from(
-      document.querySelectorAll<HTMLHeadingElement>(headingSelector),
-    ).filter((heading) =>
-      !heading.closest(`aside.toc`) && (!excludeSelector || !heading.closest(excludeSelector))
-    )
+    const new_headings = query_toc_headings()
+    const invalid_selector = new_headings === null
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
-      headings = new_headings
+      headings = new_headings ?? []
       set_active_heading()
       if (headings.length === 0) {
-        if (warnOnEmpty) {
+        if (warnOnEmpty && !invalid_selector) {
           const exclude_msg = excludeSelector
             ? ` after applying excludeSelector='${excludeSelector}'`
             : ``

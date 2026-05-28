@@ -68,8 +68,6 @@ export default defineConfig({
       'eslint-plugin-vitest/prefer-strict-boolean-matchers': `error`,
       'eslint-plugin-vitest/prefer-called-exactly-once-with': `error`,
       'eslint-plugin-vitest/require-awaited-expect-poll': `error`,
-
-      'eslint-plugin-vitest/valid-expect': [`error`, { maxArgs: 2 }], // Vitest supports expect(actual, message)
     },
   },
   staged: {

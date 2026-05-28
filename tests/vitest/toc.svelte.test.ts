@@ -1,6 +1,6 @@
 import Toc from '$lib'
 import { mount, tick } from 'svelte'
-import { beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
 type OnOpenHandler = (event: { open: boolean }) => void
@@ -88,6 +88,10 @@ beforeAll(() => {
   })
 })
 
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
 describe(`Toc`, () => {
   test(`renders default title element`, () => {
     mount(Toc, { target: document.body, props: { title: `Custom title` } })
@@ -130,18 +134,29 @@ describe(`Toc`, () => {
   )
 
   test.each([
-    [`toc-exclude`, {}],
-    [`skip-toc`, { excludeSelector: `.skip-toc` }],
+    [`default exclusion`, `toc-exclude`, {}, [`Included heading`]],
+    [
+      `custom exclusion`,
+      `skip-toc`,
+      { excludeSelector: `.skip-toc` },
+      [`Included heading`],
+    ],
+    [
+      `disabled exclusion`,
+      `toc-exclude`,
+      { excludeSelector: `` },
+      [`Excluded child heading`, `Excluded nested heading`, `Included heading`],
+    ],
   ])(
-    `ignores headings below .%s with custom headingSelector`,
-    async (class_name, props) => {
-      document.body.innerHTML = `
+    `%s with custom headingSelector`,
+    async (_test_case, class_name, props, expected_headings) => {
+      set_body(`
       <section class="${class_name}">
         <h2>Excluded child heading</h2>
         <div><h3>Excluded nested heading</h3></div>
       </section>
       <h2>Included heading</h2>
-    `
+    `)
 
       mount(Toc, {
         target: document.body,
@@ -150,28 +165,28 @@ describe(`Toc`, () => {
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
-      expect(toc_list.children.length).toBe(1)
-      expect(toc_list.textContent?.trim()).toBe(`Included heading`)
+      expect(toc_list.children.length).toBe(expected_headings.length)
+      expect(toc_list.textContent?.trim()).toBe(expected_headings.join(``))
     },
   )
 
-  test(`empty excludeSelector disables exclusion filtering`, async () => {
-    document.body.innerHTML = `
-      <h2 class="toc-exclude">Included by disabled filter</h2>
-      <h2>Regular heading</h2>
-    `
+  test.each([
+    [`headingSelector`, { headingSelector: `[` }],
+    [`excludeSelector`, { excludeSelector: `[` }],
+  ])(`warns once and hides for invalid %s`, async (selector_name, props) => {
+    document.body.innerHTML = `<h2>Visible heading</h2>`
+    const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
 
     mount(Toc, {
       target: document.body,
-      props: { excludeSelector: `` },
+      props: { warnOnEmpty: true, ...props },
     })
     await tick()
 
-    const toc_list = doc_query(`aside.toc > nav > ol`)
-    expect(toc_list.children.length).toBe(2)
-    expect(toc_list.textContent?.trim()).toBe(
-      `Included by disabled filterRegular heading`,
+    expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
+      expect.stringContaining(`invalid ${selector_name}='['`),
     )
+    expect(doc_query(`aside.toc`).getAttribute(`hidden`)).toBe(``)
   })
 
   describe.each([undefined, `foobar`, `h2`, `h4`])(
@@ -210,17 +225,17 @@ describe(`Toc`, () => {
   )
 
   test(`console.warns when empty and warnOnEmpty=true`, async () => {
-    console.warn = vi.fn<typeof console.warn>()
+    const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
     mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
     await tick()
     const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4)' after applying excludeSelector='.toc-exclude'. Hiding table of contents.`
-    expect(console.warn).toHaveBeenCalledWith(msg)
+    expect(warn_mock).toHaveBeenCalledWith(msg)
   })
 
   test(`no console.warn when warnOnEmpty=false`, () => {
-    console.warn = vi.fn<typeof console.warn>()
+    const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
     mount(Toc, { target: document.body, props: { warnOnEmpty: false } })
-    expect(console.warn).not.toHaveBeenCalled()
+    expect(warn_mock).not.toHaveBeenCalled()
   })
 
   test(`subheadings are indented`, async () => {
