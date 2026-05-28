@@ -1,22 +1,19 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 
 test.describe(`collapseSubheadings`, () => {
   test.describe.configure({ mode: `parallel` })
   // Helper to scroll to element and wait for TOC to update
-  async function scroll_to_element(
-    page: import('@playwright/test').Page,
-    selector: string,
-  ) {
+  async function scroll_to_element(page: Page, selector: string) {
     const heading_text = await page.evaluate((sel) => {
       const element = document.querySelector(sel)
       if (element) {
         element.scrollIntoView({ behavior: `instant`, block: `start` })
-        return element.textContent?.trim()
+        return element.textContent.trim()
       }
       return null
     }, selector)
     // Wait for active heading to update in TOC
-    if (heading_text) {
+    if (heading_text !== null && heading_text !== ``) {
       await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
         heading_text,
         { timeout: 1000 },
@@ -221,9 +218,7 @@ test.describe(`collapseSubheadings`, () => {
     // Either the h4 or its h3 parent should be active (depends on scroll position)
     const active_item = page.locator(`aside.toc > nav > ol > li.active`)
     const active_text = await active_item.textContent()
-    expect(active_text?.includes(`NPM`) || active_text?.includes(`Installation`)).toBe(
-      true,
-    )
+    expect(active_text ?? ``).toMatch(/NPM|Installation/)
   })
 
   test(`h4 threshold mode behavior`, async ({ page }) => {
