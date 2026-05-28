@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { untrack } from 'svelte'
-  import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
+  import type { SVGAttributes, SvelteHTMLElements } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
   import type { CollapseMode, OpenChangeHandler, OpenChangeTrigger } from './index'
 
@@ -83,14 +83,14 @@
     titleSnippet?: Snippet
     tocItem?: Snippet<[HTMLHeadingElement]>
     onOpenChange?: OpenChangeHandler
-    asideProps?: HTMLAttributes<HTMLElementTagNameMap[`aside`]>
-    navProps?: HTMLAttributes<HTMLElementTagNameMap[`nav`]>
-    titleProps?: HTMLAttributes<HTMLHeadingElement>
-    olProps?: HTMLAttributes<HTMLOListElement>
-    liProps?: HTMLAttributes<HTMLLIElement>
-    openButtonProps?: HTMLAttributes<HTMLButtonElement>
+    asideProps?: SvelteHTMLElements[`aside`]
+    navProps?: SvelteHTMLElements[`nav`]
+    titleProps?: SvelteHTMLElements[`h2`]
+    olProps?: SvelteHTMLElements[`ol`]
+    liProps?: SvelteHTMLElements[`li`]
+    openButtonProps?: SvelteHTMLElements[`button`]
     openButtonIconProps?: SVGAttributes<SVGSVGElement>
-  } & HTMLAttributes<HTMLElementTagNameMap[`aside`]> = $props()
+  } & SvelteHTMLElements[`aside`] = $props()
 
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
@@ -470,7 +470,7 @@
 <aside
   {...rest}
   {...asideProps}
-  class="toc {asideProps.class ?? null}"
+  class={[`toc`, asideProps.class]}
   class:collapsible={collapseSubheadings}
   class:desktop
   class:hidden={hide}
@@ -516,7 +516,7 @@
       {:else if title}
         <h2
           {...titleProps}
-          class="toc-title toc-exclude {titleProps.class ?? null}"
+          class={[`toc-title`, `toc-exclude`, titleProps.class]}
           style={titleProps.style ?? null}
         >
           {title}

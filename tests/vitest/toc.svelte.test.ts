@@ -964,7 +964,7 @@ describe(`Element Prop Bags`, () => {
       element_name: `aside`,
       prop_name: `asideProps`,
       bag: {
-        class: `custom-aside-class`,
+        class: [`custom-aside-class`, { 'custom-aside-object-class': true }],
         style: `color: rgb(255, 0, 0);`,
         'data-testid': `toc-aside`,
         hidden: false,
@@ -972,7 +972,7 @@ describe(`Element Prop Bags`, () => {
       },
       extra_props: { hide: true, autoHide: false },
       selector: `aside.toc`,
-      required_classes: [`toc`],
+      expected_classes: [`toc`, `custom-aside-class`, `custom-aside-object-class`],
       expected_attributes: { hidden: ``, 'aria-hidden': `true` },
       setup: ensure_content_for_toc_elements,
     },
@@ -985,20 +985,20 @@ describe(`Element Prop Bags`, () => {
         'data-testid': `toc-nav`,
       },
       selector: `aside.toc nav`,
-      required_classes: [],
+      expected_classes: [`custom-nav-class`],
       setup: ensure_content_for_toc_elements,
     },
     {
       element_name: `title`,
       prop_name: `titleProps`,
       bag: {
-        class: `custom-title-class`,
+        class: { 'custom-title-class': true },
         style: `font-style: italic;`,
         'data-testid': `toc-title`,
       },
       extra_props: { title: `Test Custom Title` },
       selector: `aside.toc nav .toc-title`,
-      required_classes: [`toc-title`, `toc-exclude`],
+      expected_classes: [`toc-title`, `toc-exclude`, `custom-title-class`],
       setup: ensure_content_for_toc_elements,
     },
     {
@@ -1009,10 +1009,12 @@ describe(`Element Prop Bags`, () => {
         style: `list-style-type: square;`,
         'data-testid': `toc-list`,
         role: `list`,
+        start: 3,
+        reversed: true,
       },
       selector: `aside.toc nav ol`,
-      required_classes: [],
-      expected_attributes: { role: `menu` },
+      expected_classes: [`custom-ol-class`],
+      expected_attributes: { role: `menu`, start: `3`, reversed: `` },
       setup: ensure_content_for_toc_elements,
     },
     {
@@ -1024,10 +1026,11 @@ describe(`Element Prop Bags`, () => {
         'data-testid': `toc-item`,
         role: `presentation`,
         tabindex: -1,
+        value: 7,
       },
       selector: `aside.toc nav ol li`,
-      required_classes: [`active`],
-      expected_attributes: { role: `menuitem`, tabindex: `0` },
+      expected_classes: [`active`, `custom-li-class`],
+      expected_attributes: { role: `menuitem`, tabindex: `0`, value: `7` },
       setup: ensure_single_heading,
     },
     {
@@ -1038,12 +1041,18 @@ describe(`Element Prop Bags`, () => {
         style: `border: 1px solid rgb(0, 128, 0);`,
         'data-testid': `toc-open-button`,
         'aria-label': `Wrong label`,
+        disabled: true,
+        onclick: vi.fn<() => void>(),
+        type: `button`,
       },
       extra_props: { desktop: false },
       selector: `aside.toc > button`,
-      required_classes: [],
-      expected_attributes: { 'aria-label': `Open table of contents` },
-      blocks_user_click: true,
+      expected_classes: [`custom-button-class`],
+      expected_attributes: {
+        'aria-label': `Open table of contents`,
+        disabled: ``,
+        type: `button`,
+      },
       setup: ensure_mobile_button_is_visible,
     },
   ]
@@ -1055,36 +1064,33 @@ describe(`Element Prop Bags`, () => {
       bag,
       extra_props = {},
       selector,
-      required_classes,
+      expected_classes,
       expected_attributes = {},
-      blocks_user_click = false,
       setup,
     }) => {
       setup()
-      const user_click = vi.fn<() => void>()
-      const actual_bag = blocks_user_click ? { ...bag, onclick: user_click } : bag
+      const blocked_click = `onclick` in bag ? bag.onclick : vi.fn<() => void>()
 
       mount(Toc, {
         target: document.body,
-        props: { ...extra_props, [prop_name]: actual_bag },
+        props: { ...extra_props, [prop_name]: bag },
       })
       await tick()
 
       const element = doc_query(selector)
       expect(element.getAttribute(`style`)).toContain(bag.style)
-      expect(element.classList.contains(bag.class)).toBe(true)
       expect(element.getAttribute(`data-testid`)).toBe(bag[`data-testid`])
-      for (const cls of required_classes) {
+      for (const cls of expected_classes) {
         expect(element.classList.contains(cls)).toBe(true)
       }
       for (const [attribute, value] of Object.entries(expected_attributes)) {
         expect(element.getAttribute(attribute)).toBe(value)
       }
-      if (blocks_user_click) {
+      if (`onclick` in bag) {
         element.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
         await tick()
       }
-      expect(user_click).not.toHaveBeenCalled()
+      expect(blocked_click).not.toHaveBeenCalled()
     },
   )
 

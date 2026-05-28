@@ -201,37 +201,37 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
-   asideProps: HTMLAttributes<HTMLElementTagNameMap[`aside`]> = {}
+   asideProps: SvelteHTMLElements[`aside`] = {}
    ```
 
    Props passed to the outer `<aside>` element. Use this for custom classes, styles, ARIA attributes, and data attributes. Required ToC classes and managed attributes still take precedence.
 
 1. ```ts
-   navProps: HTMLAttributes<HTMLElementTagNameMap[`nav`]> = {}
+   navProps: SvelteHTMLElements[`nav`] = {}
    ```
 
    Props passed to the `<nav>` element wrapping the ToC title and list.
 
 1. ```ts
-   titleProps: HTMLAttributes<HTMLHeadingElement> = {}
+   titleProps: SvelteHTMLElements[`h2`] = {}
    ```
 
    Props passed to the default title `<h2>`. Has no effect when using `titleSnippet`.
 
 1. ```ts
-   olProps: HTMLAttributes<HTMLOListElement> = {}
+   olProps: SvelteHTMLElements[`ol`] = {}
    ```
 
    Props passed to the ToC `<ol>` element.
 
 1. ```ts
-   liProps: HTMLAttributes<HTMLLIElement> = {}
+   liProps: SvelteHTMLElements[`li`] = {}
    ```
 
    Props passed to every rendered ToC `<li>` item. Internal role, focus, active/collapsed classes, and generated indentation styles are preserved.
 
 1. ```ts
-   openButtonProps: HTMLAttributes<HTMLButtonElement> = {}
+   openButtonProps: SvelteHTMLElements[`button`] = {}
    ```
 
    Props passed to the mobile open button. The internal click handler and `openButtonLabel` ARIA label still take precedence.
