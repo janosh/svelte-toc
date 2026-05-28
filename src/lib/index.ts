@@ -14,3 +14,5 @@ export type OpenChangeEvent = {
   trigger: OpenChangeTrigger
 }
 export type OpenChangeHandler = (event: OpenChangeEvent) => void
+
+export type TocHeadingData = { id: string; level: number; title: string }

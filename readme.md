@@ -104,22 +104,14 @@ Full list of props and bindable variables for this component (all of them option
    ```
 
 1. ```ts
-   getHeadingIds = (node: HTMLHeadingElement): string => node.id
+   getHeadingData = (node: HTMLHeadingElement): TocHeadingData | null => ({
+     id: node.id,
+     level: Number(node.nodeName[1]),
+     title: node.textContent ?? ``,
+   })
    ```
 
-   Function that receives each DOM node matching `headingSelector` and returns the string to set the URL hash to when clicking the associated ToC entry. Set to `null` to prevent updating the URL hash on ToC clicks if e.g. your headings don't have IDs.
-
-1. ```ts
-   getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]) // get the number from H1, H2, ...
-   ```
-
-   Function that receives each DOM node matching `headingSelector` and returns an integer from 1 to 6 for the ToC depth (determines indentation and font-size).
-
-1. ```ts
-   getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``
-   ```
-
-   Function that receives each DOM node matching `headingSelector` and returns the string to display in the TOC.
+   Function that receives each DOM node matching `headingSelector` and returns the data used for the URL hash, ToC depth, and displayed ToC text. Return `null` to exclude a matched heading.
 
 1. ```ts
    headings: HTMLHeadingElement[] = []
@@ -201,6 +193,57 @@ Full list of props and bindable variables for this component (all of them option
    What to use as ARIA label for the button shown on mobile screens to open the ToC. Not used on desktop screens.
 
 1. ```ts
+   asideProps: SvelteHTMLElements[`aside`] = {}
+   ```
+
+   Element prop bags spread user props first, then ToC-managed attributes take precedence where needed. Classes are combined with internal classes, and user styles pass through except for generated ToC item indentation/font-size styles. User event handlers run before internal handlers; call `event.preventDefault()` to skip the internal behavior.
+
+   TypeScript users can import `SvelteHTMLElements` from `svelte/elements` to type these prop bags.
+
+   ```ts
+   import type { SvelteHTMLElements } from 'svelte/elements'
+   ```
+
+   Props passed to the outer `<aside>` element. Use this for custom classes, styles, ARIA attributes, and data attributes.
+
+1. ```ts
+   navProps: SvelteHTMLElements[`nav`] = {}
+   ```
+
+   Props passed to the `<nav>` element wrapping the ToC title and list.
+
+1. ```ts
+   titleProps: SvelteHTMLElements[`h2`] = {}
+   ```
+
+   Props passed to the default title `<h2>`. Has no effect when using `titleSnippet`.
+
+1. ```ts
+   olProps: SvelteHTMLElements[`ol`] = {}
+   ```
+
+   Props passed to the ToC `<ol>` element.
+
+1. ```ts
+   liProps: SvelteHTMLElements[`li`] = {}
+   ```
+
+   Props passed to every rendered ToC `<li>` item. Internal role, focus, active/collapsed classes, and generated indentation styles are preserved.
+
+1. ```ts
+   openButtonProps: SvelteHTMLElements[`button`] = {}
+   ```
+
+   Props passed to the mobile open button. `openButtonLabel` still controls the ARIA label.
+
+   ```svelte
+   <Toc
+     asideProps={{ class: `right-sidebar`, style: `width: 20em;` }}
+     liProps={{ class: `toc-item`, style: `padding-left: 10px;` }}
+   />
+   ```
+
+1. ```ts
    onOpenChange: OpenChangeHandler
    ```
 
@@ -231,7 +274,7 @@ Full list of props and bindable variables for this component (all of them option
    Array of rendered ToC list item (`<li>`) DOM nodes. Headings are discovered with `document.querySelectorAll(headingSelector)`, filtered by `excludeSelector`, and rendered into these list items. Use `bind:tocItems` to access the rendered ToC items for DOM manipulation or event handling.
 
 1. ```ts
-   warnOnEmpty: boolean = true
+   warnOnEmpty: boolean = false
    ```
 
    Whether to issue a console warning if the ToC is empty.

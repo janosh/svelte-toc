@@ -1,9 +1,14 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
   import { untrack } from 'svelte'
-  import type { HTMLAttributes, SVGAttributes } from 'svelte/elements'
+  import type { SVGAttributes, SvelteHTMLElements } from 'svelte/elements'
   import { blur, type BlurParams } from 'svelte/transition'
-  import type { CollapseMode, OpenChangeHandler, OpenChangeTrigger } from './index'
+  import type {
+    CollapseMode,
+    OpenChangeHandler,
+    OpenChangeTrigger,
+    TocHeadingData,
+  } from './index'
 
   let {
     activeHeading = $bindable(null),
@@ -13,9 +18,11 @@
     breakpoint = 1000,
     desktop = $bindable(true),
     flashClickedHeadingsFor = 1500,
-    getHeadingIds = (node: HTMLHeadingElement): string => node.id,
-    getHeadingLevels = (node: HTMLHeadingElement): number => Number(node.nodeName[1]),
-    getHeadingTitles = (node: HTMLHeadingElement): string => node.textContent ?? ``,
+    getHeadingData = (node: HTMLHeadingElement): TocHeadingData => ({
+      id: node.id,
+      level: Number(node.nodeName[1]),
+      title: node.textContent ?? ``,
+    }),
     headings = $bindable([]),
     headingSelector = `:is(h2, h3, h4)`,
     excludeSelector = `.toc-exclude`,
@@ -38,20 +45,13 @@
     titleSnippet,
     tocItem,
     onOpenChange,
-    asideStyle = ``,
-    asideClass = ``,
-    navStyle = ``,
-    navClass = ``,
-    titleElementStyle = ``,
-    titleElementClass = ``,
-    olStyle = ``,
-    olClass = ``,
-    liStyle = ``,
-    liClass = ``,
-    openButtonStyle = ``,
-    openButtonClass = ``,
+    asideProps = {},
+    navProps = {},
+    titleProps = {},
+    olProps = {},
+    liProps = {},
+    openButtonProps = {},
     openButtonIconProps = {},
-    ...rest
   }: {
     activeHeading?: HTMLHeadingElement | null
     activeHeadingScrollOffset?: number
@@ -60,9 +60,7 @@
     breakpoint?: number // in pixels (smaller window width is considered mobile, larger is desktop)
     desktop?: boolean
     flashClickedHeadingsFor?: number
-    getHeadingIds?: (node: HTMLHeadingElement) => string
-    getHeadingLevels?: (node: HTMLHeadingElement) => number
-    getHeadingTitles?: (node: HTMLHeadingElement) => string
+    getHeadingData?: (node: HTMLHeadingElement) => TocHeadingData | null
     // the result of document.querySelectorAll(headingSelector). can be useful for binding
     headings?: HTMLHeadingElement[]
     headingSelector?: string
@@ -89,20 +87,14 @@
     titleSnippet?: Snippet
     tocItem?: Snippet<[HTMLHeadingElement]>
     onOpenChange?: OpenChangeHandler
-    asideStyle?: string
-    asideClass?: string
-    navStyle?: string
-    navClass?: string
-    titleElementStyle?: string
-    titleElementClass?: string
-    olStyle?: string
-    olClass?: string
-    liStyle?: string
-    liClass?: string
-    openButtonStyle?: string
-    openButtonClass?: string
+    asideProps?: SvelteHTMLElements[`aside`]
+    navProps?: SvelteHTMLElements[`nav`]
+    titleProps?: SvelteHTMLElements[`h2`]
+    olProps?: SvelteHTMLElements[`ol`]
+    liProps?: SvelteHTMLElements[`li`]
+    openButtonProps?: SvelteHTMLElements[`button`]
     openButtonIconProps?: SVGAttributes<SVGSVGElement>
-  } & HTMLAttributes<HTMLElementTagNameMap[`aside`]> = $props()
+  } = $props()
 
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
@@ -121,6 +113,7 @@
   let prev_scroll_target_distance: number = Infinity
   let last_invalid_selector_warning: string | null = null
   let last_reported_open: boolean | undefined = undefined
+  let heading_data: TocHeadingData[] = $state([])
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -133,8 +126,10 @@
   }
 
   // helper to immediately set active heading and track scroll target
-  function set_scroll_target(node: HTMLHeadingElement) {
-    const idx = headings.indexOf(node)
+  function set_scroll_target(
+    node: HTMLHeadingElement,
+    idx = headings.indexOf(node),
+  ) {
     // only proceed if heading exists in array (could be removed between click and handler)
     if (idx < 0) return
     activeHeading = node
@@ -154,7 +149,11 @@
     onOpenChange?.({ open: value, desktop, trigger })
   }
 
-  let levels: number[] = $derived(headings.map(getHeadingLevels))
+  type LiEvent = (MouseEvent | KeyboardEvent) & {
+    currentTarget: EventTarget & HTMLLIElement
+  }
+
+  let levels: number[] = $derived(heading_data.map(({ level }) => level))
   let minLevel: number = $derived(Math.min(...levels) || 0)
 
   // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
@@ -285,12 +284,19 @@
 
     const new_headings = query_toc_headings()
     const invalid_selector = new_headings === null
+    const heading_entries = (new_headings ?? []).flatMap((heading) => {
+      const data = getHeadingData(heading)
+      return data === null ? [] : [{ data, heading }]
+    })
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
-      headings = new_headings ?? []
-      set_active_heading()
+      headings = heading_entries.map(({ heading }) => heading)
+      heading_data = heading_entries.map(({ data }) => data)
+      if (scroll_target && !headings.includes(scroll_target)) clear_scroll_target()
       if (headings.length === 0) {
+        activeHeading = null
+        activeTocLi = null
         if (warnOnEmpty && !invalid_selector) {
           const exclude_msg = excludeSelector
             ? ` after applying excludeSelector='${excludeSelector}'`
@@ -302,7 +308,10 @@
           )
         }
         if (autoHide) hide = true
-      } else if (hide && autoHide) hide = false
+      } else {
+        set_active_heading()
+        if (hide && autoHide) hide = false
+      }
     })
   }
 
@@ -324,6 +333,7 @@
   function set_active_heading() {
     // if we're in a programmatic scroll (click/keyboard initiated), keep the target active
     // until scrollend fires to prevent highlighting intermediate headings during smooth scroll
+    if (scroll_target && !headings.includes(scroll_target)) clear_scroll_target()
     if (scroll_target) {
       // detect if user manually scrolled away from scroll_target by checking if distance
       // is increasing (user scrolling away) rather than decreasing (smooth scroll in progress)
@@ -375,15 +385,20 @@
 
   // click and key handler for ToC items that scrolls to the heading
   const li_click_key_handler =
-    (node: HTMLHeadingElement) => (event: MouseEvent | KeyboardEvent) => {
+    (node: HTMLHeadingElement) => (event: LiEvent) => {
+      if (event instanceof KeyboardEvent) liProps.onkeydown?.(event)
+      else liProps.onclick?.(event)
+      if (event.defaultPrevented) return
       if (event instanceof KeyboardEvent && ![`Enter`, ` `].includes(event.key)) {
         return
       }
+      const idx = headings.indexOf(node)
+      if (idx < 0) return
       set_open(false, `toc-item`)
-      set_scroll_target(node) // immediately set active heading to prevent flicker during scroll
+      set_scroll_target(node, idx) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })
 
-      const id = getHeadingIds(node)
+      const id = heading_data[idx]?.id
       if (id) history.replaceState({}, ``, `#${id}`)
 
       if (flashClickedHeadingsFor) {
@@ -480,8 +495,8 @@
 />
 
 <aside
-  {...rest}
-  class="toc {asideClass || null}"
+  {...asideProps}
+  class={[`toc`, asideProps.class]}
   class:collapsible={collapseSubheadings}
   class:desktop
   class:hidden={hide}
@@ -490,18 +505,21 @@
   bind:this={aside}
   hidden={hide}
   aria-hidden={hide || intersecting}
-  style={asideStyle || null}
+  style={asideProps.style ?? null}
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
+      {...openButtonProps}
       onclick={(event) => {
+        openButtonProps.onclick?.(event)
+        if (event.defaultPrevented) return
         event.stopPropagation()
         event.preventDefault()
         set_open(true, `button`)
       }}
       aria-label={openButtonLabel}
-      class={openButtonClass || null}
-      style={openButtonStyle || null}
+      class={openButtonProps.class ?? null}
+      style={openButtonProps.style ?? null}
     >
       {#if openTocIcon}{@render openTocIcon()}{:else}
         <!-- https://iconify.design/icon-sets/heroicons-solid/menu.html -->
@@ -515,34 +533,42 @@
   {/if}
   {#if open || (desktop && headings.length >= minItems)}
     <nav
+      {...navProps}
       transition:blur={blurParams}
       bind:this={nav}
-      class={navClass || null}
-      style={navStyle || null}
+      class={navProps.class ?? null}
+      style={navProps.style ?? null}
     >
       {#if titleSnippet}
         {@render titleSnippet()}
       {:else if title}
         <h2
-          class="toc-title toc-exclude {titleElementClass || null}"
-          style={titleElementStyle || null}
+          {...titleProps}
+          class={[`toc-title`, `toc-exclude`, titleProps.class]}
+          style={titleProps.style ?? null}
         >
           {title}
         </h2>
       {/if}
-      <ol role="menu" class={olClass || null} style={olStyle || null}>
+      <ol
+        {...olProps}
+        role="menu"
+        class={olProps.class ?? null}
+        style={olProps.style ?? null}
+      >
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const indent = levels[idx] - minLevel}
           {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
           <li
+            {...liProps}
             role="menuitem"
             tabindex={collapsed ? -1 : 0}
             class:active={heading === activeHeading}
             class:collapsed
             aria-hidden={collapsed || undefined}
-            class={liClass || null}
+            class={liProps.class ?? null}
             bind:this={tocItems[idx]}
-            style={liStyle || null}
+            style={liProps.style ?? null}
             style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
             style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
             onclick={li_click_key_handler(heading)}
@@ -551,7 +577,7 @@
             {#if tocItem}
               {@render tocItem(heading)}
             {:else}
-              {getHeadingTitles(heading)}
+              {heading_data[idx]?.title}
             {/if}
           </li>
         {/each}
