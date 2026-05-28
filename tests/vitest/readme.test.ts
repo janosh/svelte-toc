@@ -2,7 +2,7 @@ import src from '$lib/Toc.svelte?raw'
 import readme from '$root/readme.md?raw'
 import { expect, test } from 'vitest'
 
-const props_block_regex = /}: \{([\s\S]*?)\}\s*&\s*[^\n=]+ = \$props\(\)/
+const props_block_regex = /}: \{([\s\S]*?)\}\s*(?:&\s*[^\n=]+)? = \$props\(\)/
 const prop_type_line_regex = /^\s+(\w+)\??:/
 const readme_prop_line_regex = /^\s+(\w+)/
 

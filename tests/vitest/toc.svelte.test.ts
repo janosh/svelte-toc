@@ -168,6 +168,30 @@ describe(`Toc`, () => {
     },
   )
 
+  test(`getHeadingData customizes listed headings`, async () => {
+    set_body(`<h2>Keep</h2><h3>Skip</h3>`)
+    const replace_state_mock = vi.spyOn(history, `replaceState`)
+    mount(Toc, {
+      target: document.body,
+      props: {
+        getHeadingData: (node: HTMLHeadingElement) =>
+          node.textContent === `Skip`
+            ? null
+            : { id: `custom`, level: 2, title: `Custom` },
+        headingSelector: `:is(h2, h3)`,
+      },
+    })
+    await tick()
+
+    const toc_items = document.querySelectorAll(`aside.toc li`)
+    expect(toc_items).toHaveLength(1)
+    const toc_item = toc_items[0]
+    expect(toc_item.textContent).toBe(`Custom`)
+
+    toc_item.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+    expect(replace_state_mock).toHaveBeenCalledWith({}, ``, `#custom`)
+  })
+
   test.each([
     [`headingSelector`, { headingSelector: `[` }],
     [`excludeSelector`, { excludeSelector: `[` }],
@@ -633,29 +657,39 @@ describe(`Toc`, () => {
     },
   )
 
-  test(`mutation observer updates ToC when heading is dynamically added`, async () => {
+  test(`mutation observer updates ToC when headings change`, async () => {
     document.body.innerHTML = `
       <div id="content">
-        <h2>Initial Heading</h2>
+        <h2 id="initial">Initial Heading</h2>
       </div>
     `
+    const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
+    Element.prototype.scrollIntoView = scroll_into_view_mock
 
     mount(Toc, { target: document.body })
     await tick()
 
     let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(1)
+    expect(toc_items).toHaveLength(1)
     expect(toc_items[0].textContent.trim()).toBe(`Initial Heading`)
+    const stale_item = toc_items[0]
 
     const new_heading = document.createElement(`h3`)
     new_heading.textContent = `Dynamically Added Heading`
-    document.querySelector(`#content`)?.append(new_heading)
+    doc_query(`#content`).append(new_heading)
 
     await tick()
 
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(2)
+    expect(toc_items).toHaveLength(2)
     expect(toc_items[1].textContent.trim()).toBe(`Dynamically Added Heading`)
+
+    doc_query(`#initial`).remove()
+    await tick()
+    expect(doc_query(`aside.toc ol li`).textContent).toBe(`Dynamically Added Heading`)
+
+    stale_item.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+    expect(scroll_into_view_mock).not.toHaveBeenCalled()
   })
 
   // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
@@ -726,6 +760,20 @@ describe(`Toc`, () => {
       globalThis.dispatchEvent(new Event(`scroll`))
       await tick()
       // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+      expect(active_text()).toBe(`Heading 3`)
+    })
+
+    test(`removing scroll target activates a remaining heading`, async () => {
+      mount(Toc, { target: document.body, props: { open: true } })
+      await tick()
+
+      doc_query(`aside.toc ol li`).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      doc_query(`#heading-1`).remove()
+      await tick()
+
       expect(active_text()).toBe(`Heading 3`)
     })
 
@@ -967,8 +1015,6 @@ describe(`Element Prop Bags`, () => {
         class: [`custom-aside-class`, { 'custom-aside-object-class': true }],
         style: `color: rgb(255, 0, 0);`,
         'data-testid': `toc-aside`,
-        hidden: false,
-        'aria-hidden': `false`,
       },
       extra_props: { hide: true, autoHide: false },
       selector: `aside.toc`,
@@ -1008,7 +1054,6 @@ describe(`Element Prop Bags`, () => {
         class: `custom-ol-class`,
         style: `list-style-type: square;`,
         'data-testid': `toc-list`,
-        role: `list`,
         start: 3,
         reversed: true,
       },
@@ -1024,13 +1069,13 @@ describe(`Element Prop Bags`, () => {
         class: `custom-li-class`,
         style: `padding-left: 10px;`,
         'data-testid': `toc-item`,
-        role: `presentation`,
-        tabindex: -1,
+        onclick: vi.fn<() => void>(),
         value: 7,
       },
       selector: `aside.toc nav ol li`,
       expected_classes: [`active`, `custom-li-class`],
       expected_attributes: { role: `menuitem`, tabindex: `0`, value: `7` },
+      expected_open_changes: 0,
       setup: ensure_single_heading,
     },
     {
@@ -1040,9 +1085,8 @@ describe(`Element Prop Bags`, () => {
         class: `custom-button-class`,
         style: `border: 1px solid rgb(0, 128, 0);`,
         'data-testid': `toc-open-button`,
-        'aria-label': `Wrong label`,
         disabled: true,
-        onclick: vi.fn<() => void>(),
+        onclick: vi.fn<(event: MouseEvent) => void>((event) => event.preventDefault()),
         type: `button`,
       },
       extra_props: { desktop: false },
@@ -1053,6 +1097,7 @@ describe(`Element Prop Bags`, () => {
         disabled: ``,
         type: `button`,
       },
+      expected_open_changes: 0,
       setup: ensure_mobile_button_is_visible,
     },
   ]
@@ -1066,16 +1111,25 @@ describe(`Element Prop Bags`, () => {
       selector,
       expected_classes,
       expected_attributes = {},
+      expected_open_changes,
       setup,
     }) => {
       setup()
-      const blocked_click = `onclick` in bag ? bag.onclick : vi.fn<() => void>()
+      const has_user_click = `onclick` in bag
+      const user_click = has_user_click ? bag.onclick : vi.fn<() => void>()
+      const on_open_change = vi.fn<OpenChangeHandler>()
+      const expected_open_change_count = expected_open_changes ?? (has_user_click ? 1 : 0)
 
       mount(Toc, {
         target: document.body,
-        props: { ...extra_props, [prop_name]: bag },
+        props: {
+          ...extra_props,
+          ...(has_user_click ? { onOpenChange: on_open_change } : {}),
+          [prop_name]: bag,
+        },
       })
       await tick()
+      on_open_change.mockClear()
 
       const element = doc_query(selector)
       expect(element.getAttribute(`style`)).toContain(bag.style)
@@ -1087,10 +1141,13 @@ describe(`Element Prop Bags`, () => {
         expect(element.getAttribute(attribute)).toBe(value)
       }
       if (`onclick` in bag) {
-        element.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
+        element.dispatchEvent(
+          new MouseEvent(`click`, { bubbles: true, cancelable: true }),
+        )
         await tick()
       }
-      expect(blocked_click).not.toHaveBeenCalled()
+      expect(user_click).toHaveBeenCalledTimes(has_user_click ? 1 : 0)
+      expect(on_open_change).toHaveBeenCalledTimes(expected_open_change_count)
     },
   )
 
