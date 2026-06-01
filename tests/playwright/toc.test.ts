@@ -399,7 +399,7 @@ test.describe(`Toc`, () => {
     page,
   }) => {
     await page.goto(`/contributing`, { waitUntil: `networkidle` })
-    const active_toc_li = await page.innerText(`aside.toc > nav > ol > li.active`)
+    const active_toc_li = await page.textContent(`aside.toc > nav > ol > li.active`)
     expect(active_toc_li).toContain(`🙋 How can I help?`)
 
     // scroll to the bottom of the page

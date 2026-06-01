@@ -145,7 +145,8 @@
 
   function set_open(value: boolean, trigger: OpenChangeTrigger) {
     if ((last_reported_open ?? open) === value) return
-    open = last_reported_open = value
+    last_reported_open = value
+    open = value
     onOpenChange?.({ open: value, desktop, trigger })
   }
 
@@ -393,7 +394,7 @@
         return
       }
       const idx = headings.indexOf(node)
-      if (idx < 0) return
+      if (idx === -1) return
       set_open(false, `toc-item`)
       set_scroll_target(node, idx) // immediately set active heading to prevent flicker during scroll
       node.scrollIntoView?.({ behavior: scrollBehavior, block: `start` })

@@ -10,7 +10,7 @@ const readme_prop_line_regex = /^\s+(\w+)/
 const source_props = (props_block_regex.exec(src)?.[1] ?? ``)
   .split(`\n`)
   .map((line) => prop_type_line_regex.exec(line)?.[1])
-  .filter((prop): prop is string => Boolean(prop))
+  .filter((prop) => prop !== undefined)
 
 // Extract prop names from readme (format: "1. ```ts\n   propName:")
 const readme_props = readme.split(`\n`).flatMap((line, idx, lines) => {
@@ -21,7 +21,7 @@ const readme_props = readme.split(`\n`).flatMap((line, idx, lines) => {
 
 // Extract unique CSS variable names (null coalesce for no matches)
 const extract_css_vars = (text: string) =>
-  [...new Set(text.match(/var\((--toc-[\w-]+)/g) ?? [])].map((match) => match.slice(4)) // remove "var("
+  [...new Set(text.match(/var\((--toc-[\w-]+)/g))].map((match) => match.slice(4)) // remove "var("
 
 const source_css_vars = extract_css_vars(src)
 const readme_css_vars = extract_css_vars(readme)

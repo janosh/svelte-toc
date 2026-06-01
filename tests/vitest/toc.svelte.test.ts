@@ -126,7 +126,7 @@ describe(`Toc`, () => {
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
-      expect(toc_list.children.length).toBe(expected_lis)
+      expect(toc_list.children).toHaveLength(expected_lis)
       expect(toc_list.textContent.trim()).toBe(expected_text.join(``))
     },
   )
@@ -163,7 +163,7 @@ describe(`Toc`, () => {
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
-      expect(toc_list.children.length).toBe(expected_headings.length)
+      expect(toc_list.children).toHaveLength(expected_headings.length)
       expect(toc_list.textContent.trim()).toBe(expected_headings.join(``))
     },
   )
@@ -241,7 +241,7 @@ describe(`Toc`, () => {
         expect(node).toBeInstanceOf(HTMLElement)
         expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
         expect(node.className).not.toContain(`hidden`)
-        expect(node.getAttribute(`hidden`)).toBe(null)
+        expect(node.getAttribute(`hidden`)).toBeNull()
       })
     },
   )
@@ -272,7 +272,7 @@ describe(`Toc`, () => {
     await tick()
 
     const toc_list = doc_query(`aside.toc > nav > ol`)
-    expect(toc_list.children.length).toBe(3)
+    expect(toc_list.children).toHaveLength(3)
 
     const lis = toc_list.querySelectorAll<HTMLLIElement>(`:scope > li`)
     // Indent is applied via CSS calc with --toc-indent-per-level variable
@@ -605,7 +605,7 @@ describe(`Toc`, () => {
     await tick()
 
     let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(2)
+    expect(toc_items).toHaveLength(2)
     expect(toc_items[0].textContent.trim()).toBe(`First Page Heading 1`)
     expect(toc_items[1].textContent.trim()).toBe(`First Page Heading 2`)
 
@@ -621,7 +621,7 @@ describe(`Toc`, () => {
     await tick()
 
     toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items.length).toBe(3)
+    expect(toc_items).toHaveLength(3)
     expect(toc_items[0].textContent.trim()).toBe(`Second Page Heading 1`)
     expect(toc_items[1].textContent.trim()).toBe(`Second Page Heading 2`)
     expect(toc_items[2].textContent.trim()).toBe(`Second Page Heading 3`)

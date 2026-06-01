@@ -16,9 +16,10 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
-      - run: npm install
+          node-version: 24
+      # use the project's pinned pnpm (packageManager field) via corepack
+      - run: corepack enable && pnpm install
       - name: Lint and format check
-        run: npx vp check
+        run: pnpm exec vp check
       - name: Svelte type check
-        run: npx svelte-kit sync && npx svelte-check-rs --threshold error
+        run: pnpm exec svelte-kit sync && pnpm exec svelte-check --threshold error
