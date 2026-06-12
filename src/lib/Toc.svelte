@@ -96,6 +96,11 @@
     openButtonIconProps?: SVGAttributes<SVGSVGElement>
   } = $props()
 
+  // fallback to clear scroll_target if scrollend never fires (e.g. no scroll needed)
+  const scroll_target_fallback_ms = 1000
+  // distance increase (px) that counts as the user manually scrolling away from a target
+  const manual_scroll_threshold_px = 50
+
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
   // scrolling in chrome. see https://github.com/janosh/svelte-toc/issues/57
@@ -111,7 +116,8 @@
   // tracks previous distance to scroll_target to detect manual scroll direction
   // initialized to Infinity so first scroll event always passes the "distance increasing" check
   let prev_scroll_target_distance: number = Infinity
-  let last_invalid_selector_warning: string | null = null
+  // cache selector validity (keyed by `name:selector`) to avoid re-querying every update
+  let selector_validity: Record<string, boolean> = {}
   let last_reported_open: boolean | undefined = undefined
   let heading_data: TocHeadingData[] = $state([])
 
@@ -138,9 +144,7 @@
     prev_scroll_target_distance = Infinity
     // clear any existing timeout and set a new fallback
     if (scroll_target_timeout) clearTimeout(scroll_target_timeout)
-    scroll_target_timeout = setTimeout(() => {
-      clear_scroll_target()
-    }, 1000)
+    scroll_target_timeout = setTimeout(clear_scroll_target, scroll_target_fallback_ms)
   }
 
   function set_open(value: boolean, trigger: OpenChangeTrigger) {
@@ -155,7 +159,7 @@
   }
 
   let levels: number[] = $derived(heading_data.map(({ level }) => level))
-  let minLevel: number = $derived(Math.min(...levels) || 0)
+  let minLevel: number = $derived(levels.length ? Math.min(...levels) : 0)
 
   // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
   let collapse_threshold: number = $derived(
@@ -166,20 +170,23 @@
       : Infinity,
   )
 
-  // Check if heading at idx is "expanded" (active or contains active in subtree)
-  function is_expanded(idx: number): boolean {
-    if (headings[idx] === activeHeading) return true
-    const level = levels[idx]
-    for (let jdx = idx + 1; jdx < headings.length && levels[jdx] > level; jdx++) {
-      if (headings[jdx] === activeHeading) return true
-    }
-    return false
-  }
-
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
-    if (!collapseSubheadings || activeHeading === null) {
-      return Array.from({ length: headings.length }, () => true)
+    if (!collapseSubheadings || activeHeading === null) return headings.map(() => true)
+
+    // a heading is "expanded" iff it is the active one or an ancestor of it. precompute
+    // the active heading's ancestor chain in one pass to avoid O(n²) subtree scans.
+    const expanded: boolean[] = headings.map(() => false)
+    const active_idx = headings.indexOf(activeHeading)
+    if (active_idx !== -1) {
+      expanded[active_idx] = true
+      let need = levels[active_idx]
+      for (let idx = active_idx - 1; idx >= 0 && need > minLevel; idx--) {
+        if (levels[idx] < need) {
+          expanded[idx] = true
+          need = levels[idx]
+        }
+      }
     }
 
     const visible: boolean[] = []
@@ -191,7 +198,7 @@
         // Find immediate parent and check if expanded
         let parent_idx = idx - 1
         while (parent_idx >= 0 && levels[parent_idx] >= level) parent_idx--
-        visible.push(parent_idx < 0 || is_expanded(parent_idx))
+        visible.push(parent_idx < 0 || expanded[parent_idx])
       } else {
         // Beyond threshold - chain to nearest ancestor at threshold level
         let ancestor_idx = idx - 1
@@ -250,19 +257,18 @@
   ) {
     if (selector_name === `excludeSelector` && selector === ``) return true
 
-    const warning_key = `${selector_name}:${selector}`
+    const key = `${selector_name}:${selector}`
+    if (key in selector_validity) return selector_validity[key]
     try {
       document.querySelector(selector)
-      return true
+      selector_validity[key] = true
     } catch {
-      if (last_invalid_selector_warning !== warning_key) {
-        last_invalid_selector_warning = warning_key
-        console.warn(
-          `svelte-toc received invalid ${selector_name}='${selector}'. Showing empty table of contents.`,
-        )
-      }
-      return false
+      console.warn(
+        `svelte-toc received invalid ${selector_name}='${selector}'. Showing empty table of contents.`,
+      )
+      selector_validity[key] = false
     }
+    return selector_validity[key]
   }
 
   function query_toc_headings() {
@@ -271,7 +277,6 @@
       !selector_is_valid(`excludeSelector`, excludeSelector)
     ) return null
 
-    last_invalid_selector_warning = null
     return Array.from(document.querySelectorAll<HTMLHeadingElement>(headingSelector)).filter(
       (heading) =>
         !heading.closest(`aside.toc`) &&
@@ -281,17 +286,26 @@
 
   // (re-)query headings on mount and on route changes
   function update_toc_headings() {
-    if (typeof document === `undefined`) return // for SSR
+    // guards the async MutationObserver callback firing after document teardown
+    if (typeof document === `undefined`) return
 
-    const new_headings = query_toc_headings()
-    const invalid_selector = new_headings === null
-    const heading_entries = (new_headings ?? []).flatMap((heading) => {
+    const queried_headings = query_toc_headings()
+    const invalid_selector = queried_headings === null
+    const heading_entries = (queried_headings ?? []).flatMap((heading) => {
       const data = getHeadingData(heading)
       return data === null ? [] : [{ data, heading }]
     })
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
+      // skip state churn when an unrelated DOM mutation left the heading set unchanged
+      const unchanged = !invalid_selector && heading_entries.length > 0 &&
+        heading_entries.length === headings.length &&
+        heading_entries.every(({ heading, data }, idx) =>
+          heading === headings[idx] && data.id === heading_data[idx]?.id &&
+          data.level === heading_data[idx]?.level && data.title === heading_data[idx]?.title)
+      if (unchanged) return
+
       headings = heading_entries.map(({ heading }) => heading)
       heading_data = heading_entries.map(({ data }) => data)
       if (scroll_target && !headings.includes(scroll_target)) clear_scroll_target()
@@ -325,7 +339,6 @@
     observer.observe(document.body, {
       childList: true, // Watch for added/removed nodes
       subtree: true, // Watch all descendants, not just direct children
-      characterData: true, // Watch for text content changes
     })
 
     return () => observer.disconnect()
@@ -338,10 +351,11 @@
     if (scroll_target) {
       // detect if user manually scrolled away from scroll_target by checking if distance
       // is increasing (user scrolling away) rather than decreasing (smooth scroll in progress)
-      const target_rect = scroll_target.getBoundingClientRect()
-      const distance = Math.abs(target_rect.top - activeHeadingScrollOffset)
-      // threshold of 50px increase detects manual scroll while tolerating scroll jitter
-      if (distance > prev_scroll_target_distance + 50) {
+      const distance = Math.abs(
+        scroll_target.getBoundingClientRect().top - activeHeadingScrollOffset,
+      )
+      // a large enough increase detects manual scroll while tolerating scroll jitter
+      if (distance > prev_scroll_target_distance + manual_scroll_threshold_px) {
         // user manually scrolled away from target, clear and allow normal detection
         clear_scroll_target()
       } else {
@@ -416,8 +430,8 @@
   ) {
     if (keepActiveTocItemInView && activeTocLi && nav) {
       // scroll the active ToC item into the middle of the ToC container
-      const top = activeTocLi?.offsetTop - nav.offsetHeight / 2
-      nav?.scrollTo?.({ top, behavior })
+      const top = activeTocLi.offsetTop - nav.offsetHeight / 2
+      nav.scrollTo?.({ top, behavior })
     }
   }
 
@@ -461,6 +475,9 @@
       activeTocLi = sibling_prop
         ? visible_toc_sibling(current_toc_li, sibling_prop) ?? current_toc_li
         : current_toc_li
+      // move DOM focus onto the navigated item so a focused li's own keydown handler
+      // can't override arrow-navigation on the next Enter/Space (tab->arrow->Enter)
+      if (sibling_prop) activeTocLi?.focus({ preventScroll: true })
       // update active heading
       activeHeading = headings[tocItems.indexOf(activeTocLi)]
     }
@@ -506,7 +523,6 @@
   bind:this={aside}
   hidden={hide}
   aria-hidden={hide || intersecting}
-  style={asideProps.style ?? null}
 >
   {#if !open && !desktop && headings.length >= minItems}
     <button
@@ -519,8 +535,6 @@
         set_open(true, `button`)
       }}
       aria-label={openButtonLabel}
-      class={openButtonProps.class ?? null}
-      style={openButtonProps.style ?? null}
     >
       {#if openTocIcon}{@render openTocIcon()}{:else}
         <!-- https://iconify.design/icon-sets/heroicons-solid/menu.html -->
@@ -537,8 +551,6 @@
       {...navProps}
       transition:blur={blurParams}
       bind:this={nav}
-      class={navProps.class ?? null}
-      style={navProps.style ?? null}
     >
       {#if titleSnippet}
         {@render titleSnippet()}
@@ -546,7 +558,6 @@
         <h2
           {...titleProps}
           class={[`toc-title`, `toc-exclude`, titleProps.class]}
-          style={titleProps.style ?? null}
         >
           {title}
         </h2>
@@ -554,8 +565,6 @@
       <ol
         {...olProps}
         role="menu"
-        class={olProps.class ?? null}
-        style={olProps.style ?? null}
       >
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const indent = levels[idx] - minLevel}
@@ -566,10 +575,9 @@
             tabindex={collapsed ? -1 : 0}
             class:active={heading === activeHeading}
             class:collapsed
+            aria-current={heading === activeHeading ? `location` : undefined}
             aria-hidden={collapsed || undefined}
-            class={liProps.class ?? null}
             bind:this={tocItems[idx]}
-            style={liProps.style ?? null}
             style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
             style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
             onclick={li_click_key_handler(heading)}

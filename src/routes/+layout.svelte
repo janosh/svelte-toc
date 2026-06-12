@@ -27,6 +27,9 @@
     label: route,
     action: () => goto(route),
   }))
+
+  // demos that render their own <Toc>, so the layout omits the global one
+  const routes_without_toc = [`/collapse-headings`, `/dynamic-headings`, `/no-toc-page`]
 </script>
 
 <CmdPalette {actions} --sms-options-bg="rgba(0, 0, 0, 0.7)" />
@@ -38,9 +41,7 @@
   {@render children?.()}
 </main>
 
-{#if ![`/collapse-headings`, `/dynamic-headings`, `/no-toc-page`].includes(
-    page.url.pathname,
-  )}
+{#if !routes_without_toc.includes(page.url.pathname)}
   <Toc
     headingSelector={page.url.pathname === `/changelog` ? `main > h2` : `main :where(h2, h3)`}
     hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .info-banner` : null}

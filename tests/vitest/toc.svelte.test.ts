@@ -1,4 +1,5 @@
-import Toc, { type OpenChangeHandler } from '$lib'
+import Toc from '$lib'
+import type { OpenChangeHandler } from '$lib'
 import { mount, tick } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
@@ -468,22 +469,52 @@ describe(`Toc`, () => {
     expect(after_up.textContent).toBe(`Heading 1`)
   })
 
-  test(`arrow keys navigate focused ToC item on desktop without hover`, async () => {
+  test(`desktop (focused, no hover) arrow keys move focus + selection and Enter follows`, async () => {
     document.body.innerHTML = `
       <h2 id="heading-1">Heading 1</h2>
       <h2 id="heading-2">Heading 2</h2>
     `
     set_window_width(1200)
     mock_active_heading(`heading-1`)
+    Element.prototype.scrollIntoView = vi.fn<Element[`scrollIntoView`]>()
+    const replace_mock = vi.spyOn(history, `replaceState`)
 
     mount(Toc, { target: document.body })
     await tick()
 
     doc_query(`aside.toc > nav > ol > li.active`).focus()
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
+    // dispatch on the focused li (bubbles) to mirror real keyboard usage
+    document.activeElement?.dispatchEvent(
+      new KeyboardEvent(`keydown`, { key: `ArrowDown`, bubbles: true }),
+    )
     await tick()
 
+    // selection AND DOM focus move together; otherwise the focused li's own keydown
+    // handler would override the arrow-navigation on the next Enter
+    const active = doc_query(`aside.toc > nav > ol > li.active`)
+    expect(active.textContent).toBe(`Heading 2`)
+    expect(document.activeElement).toBe(active)
+
+    // Enter activates the arrow-selected Heading 2, not the originally-focused Heading 1
+    document.activeElement?.dispatchEvent(
+      new KeyboardEvent(`keydown`, { key: `Enter`, bubbles: true }),
+    )
     expect(doc_query(`aside.toc > nav > ol > li.active`).textContent).toBe(`Heading 2`)
+    expect(replace_mock).toHaveBeenCalledWith({}, ``, `#heading-2`)
+  })
+
+  test(`only the active ToC item carries aria-current="location"`, async () => {
+    document.body.innerHTML = `<h2 id="a">Heading 1</h2><h2 id="b">Heading 2</h2>`
+    mount(Toc, { target: document.body })
+    await tick()
+
+    const items = document.querySelectorAll<HTMLLIElement>(`aside.toc li`)
+    expect(doc_query(`aside.toc li.active`).getAttribute(`aria-current`)).toBe(`location`)
+    for (const li of items) {
+      if (!li.classList.contains(`active`)) {
+        expect(li.getAttribute(`aria-current`)).toBeNull()
+      }
+    }
   })
 
   test.each([
@@ -692,6 +723,79 @@ describe(`Toc`, () => {
     expect(scroll_into_view_mock).not.toHaveBeenCalled()
   })
 
+  test(`unrelated DOM mutations skip the heading rebuild while real changes don't`, async () => {
+    set_body(`<h2 id="a">Alpha</h2><h2 id="b">Beta</h2>`)
+    mount(Toc, { target: document.body })
+    await tick()
+
+    // jsdom returns all-zero rects, so set_active_heading picks the last heading
+    expect(doc_query(`aside.toc li.active`).textContent.trim()).toBe(`Beta`)
+
+    // arrange rects so any rebuild's set_active_heading() would switch active to Alpha
+    mock_active_heading(`a`)
+
+    // appending a non-heading is an unrelated mutation: the skip must avoid rebuilding
+    // (and re-running set_active_heading), so the active heading stays put
+    document.body.append(document.createElement(`p`))
+    await tick()
+    expect(doc_query(`aside.toc li.active`).textContent.trim()).toBe(`Beta`)
+
+    // appending a real heading changes the set, so the rebuild runs and active updates
+    const new_heading = document.createElement(`h2`)
+    new_heading.id = `c`
+    new_heading.textContent = `Gamma`
+    document.body.append(new_heading)
+    await tick()
+    expect(doc_query(`aside.toc li.active`).textContent.trim()).toBe(`Gamma`)
+  })
+
+  // the observer watches childList but not characterData, so in-place text edits only
+  // update the ToC when they change the heading's child nodes
+  test.each([
+    {
+      desc: `text-node data edits (characterData) are ignored`,
+      mutate: (heading: HTMLElement) => {
+        ;(heading.firstChild as Text).data = `Changed`
+      },
+      expected: `Original`,
+    },
+    {
+      desc: `in-place textContent edits (childList) update the ToC`,
+      mutate: (heading: HTMLElement) => {
+        heading.textContent = `Changed`
+      },
+      expected: `Changed`,
+    },
+  ])(`heading $desc`, async ({ mutate, expected }) => {
+    set_body(`<h2 id="a">Original</h2>`)
+    mount(Toc, { target: document.body })
+    await tick()
+    expect(doc_query(`aside.toc li`).textContent.trim()).toBe(`Original`)
+
+    mutate(doc_query(`#a`))
+    await tick()
+    expect(doc_query(`aside.toc li`).textContent.trim()).toBe(expected)
+  })
+
+  test(`rebinds when a heading element is replaced with identical content`, async () => {
+    set_body(`<h2 id="a">Title</h2>`)
+    mount(Toc, { target: document.body })
+    await tick()
+
+    // a framework re-render can swap in a fresh element with the same id/text; the
+    // element-identity check must rebuild so clicks target the live (attached) heading
+    const replacement = document.createElement(`h2`)
+    replacement.id = `a`
+    replacement.textContent = `Title`
+    const scroll_spy = vi.fn()
+    replacement.scrollIntoView = scroll_spy
+    doc_query(`#a`).replaceWith(replacement)
+    await tick()
+
+    doc_query(`aside.toc li`).click()
+    expect(scroll_spy).toHaveBeenCalled()
+  })
+
   // Tests for issue #50: scroll_target prevents flicker during programmatic scrolling
   // https://github.com/janosh/svelte-toc/issues/50
   describe(`scroll_target behavior`, () => {
@@ -761,6 +865,32 @@ describe(`Toc`, () => {
       await tick()
       // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
       expect(active_text()).toBe(`Heading 3`)
+    })
+
+    test(`fallback timeout clears scroll_target when scrollend never fires`, async () => {
+      vi.useFakeTimers()
+      try {
+        mount(Toc, { target: document.body, props: { open: true } })
+        await tick()
+
+        doc_query(`aside.toc ol li`).click()
+        await tick()
+        expect(active_text()).toBe(`Heading 1`)
+
+        // scroll while scroll_target is set keeps the clicked heading active
+        globalThis.dispatchEvent(new Event(`scroll`))
+        await tick()
+        expect(active_text()).toBe(`Heading 1`)
+
+        // no scrollend fires, so the fallback timeout clears scroll_target after 1s
+        vi.advanceTimersByTime(1000)
+        globalThis.dispatchEvent(new Event(`scroll`))
+        await tick()
+        // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+        expect(active_text()).toBe(`Heading 3`)
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     test(`removing scroll target activates a remaining heading`, async () => {
@@ -1251,6 +1381,14 @@ describe(`collapseSubheadings`, () => {
       true,
       `detail-1-1-1`,
       [false, false, false, false, false, true, false, true],
+    ],
+    [
+      // deep active under a second-position parent: a preceding uncle's subtree
+      // (detail-1-1-*) must stay collapsed, exercising the ancestor-chain walk
+      `full nesting with deep active under second h3`,
+      true,
+      `detail-1-2-1`,
+      [false, false, true, true, false, false, false, true],
     ],
     [
       `h3 threshold with h2 active`,

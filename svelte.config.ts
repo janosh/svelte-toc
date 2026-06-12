@@ -1,14 +1,15 @@
+import type { Config } from '@sveltejs/kit'
 import adapter from '@sveltejs/adapter-static'
 import { mdsvex } from 'mdsvex'
+import pkg from './package.json' with { type: 'json' }
 import { heading_ids } from 'svelte-multiselect/heading-anchors'
 import {
   mdsvex_transform,
-  starry_night_highlighter,
+  starry_night_highlighter as highlighter,
 } from 'svelte-multiselect/live-examples'
 
-const { default: pkg } = await import(`./package.json`, {
-  with: { type: `json` },
-})
+if (!pkg.repository) throw new Error(`package.json missing "repository" field`)
+
 const defaults = {
   Wrapper: [`svelte-multiselect`, `CodeExample`],
   repo: pkg.repository,
@@ -16,7 +17,6 @@ const defaults = {
 }
 const remarkPlugins = [[mdsvex_transform, { defaults }]]
 
-/** @type {import('@sveltejs/kit').Config} */
 export default {
   extensions: [`.svelte`, `.md`],
 
@@ -24,14 +24,13 @@ export default {
     mdsvex({
       remarkPlugins,
       extensions: [`.md`],
-      highlight: { highlighter: starry_night_highlighter },
+      highlight: { highlighter },
     }),
     heading_ids(),
   ],
 
   kit: {
     adapter: adapter(),
-
     alias: { $root: `.` },
   },
-}
+} satisfies Config
