@@ -40,29 +40,29 @@
   "scripts": {
     "test": "vp test --run && playwright test",
     "package": "svelte-package",
-    "prepublishOnly": "npm run package",
+    "prepublishOnly": "pnpm run package",
     "changelog": "npx tsx https://github.com/janosh/workflows/raw/refs/heads/main/scripts/make-release-notes.ts"
   },
   "devDependencies": {
     "@janosh/vite-config": "github:janosh/dotfiles",
-    "@playwright/test": "1.60.0",
+    "@playwright/test": "1.61.1",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.65.0",
+    "@sveltejs/kit": "^2.68.0",
     "@sveltejs/package": "^2.5.8",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "@vitest/coverage-v8": "^4.1.8",
+    "@vitest/coverage-v8": "^4.1.9",
     "@wooorm/starry-night": "^3.10.0",
     "abstract-syntax-tree": "^2.22.0",
     "acorn": "^8.17.0",
     "jsdom": "^29.1.1",
     "mdsvex": "^0.12.7",
-    "svelte": "^5.56.3",
-    "svelte-check": "^4.6.0",
+    "svelte": "^5.56.4",
+    "svelte-check": "^4.7.1",
     "svelte-multiselect": "^11.7.2",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
+    "vite": "^8.1.0",
     "vite-plus": "latest",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.9"
   },
   "peerDependencies": {
     "svelte": "^5.0.0"

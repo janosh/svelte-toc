@@ -27,8 +27,8 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - name: Install dependencies
-        run: npm install
+        run: corepack enable && pnpm install
 
-      # prepublishOnly builds dist/ via `npm run package`; OIDC attaches provenance
+      # prepublishOnly builds dist/ via `pnpm run package`; OIDC attaches provenance
       - name: Publish to npm
-        run: npm publish --provenance
+        run: pnpm publish --provenance --no-git-checks

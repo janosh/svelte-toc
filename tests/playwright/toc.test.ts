@@ -144,13 +144,13 @@ test.describe(`collapseSubheadings`, () => {
     const collapsed = toc_items.filter({ hasText: /^NPM Setup$/ })
     const visible = toc_items.filter({ hasText: /^Getting Started$/ })
 
-    // Collapsed items: aria-hidden="true", tabindex="-1"
+    // Collapsed items: aria-hidden="true", link tabindex="-1"
     await expect(collapsed).toHaveAttribute(`aria-hidden`, `true`)
-    await expect(collapsed).toHaveAttribute(`tabindex`, `-1`)
+    await expect(collapsed.locator(`a`)).toHaveAttribute(`tabindex`, `-1`)
 
-    // Visible items: no aria-hidden, tabindex="0"
+    // Visible items: no aria-hidden, link tabindex="0"
     await expect(visible).not.toHaveAttribute(`aria-hidden`)
-    await expect(visible).toHaveAttribute(`tabindex`, `0`)
+    await expect(visible.locator(`a`)).toHaveAttribute(`tabindex`, `0`)
   })
 
   test(`clicking a TOC item scrolls to heading and updates collapse state`, async ({

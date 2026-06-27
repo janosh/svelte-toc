@@ -71,7 +71,7 @@ Full list of props and bindable variables for this component (all of them option
    The DOM node of the outer-most `aside` element. This is the element that gets the `toc` class. Cannot be passed in as a prop, only for external access!
 
 1. ```ts
-   blurParams: BlurParams | undefined = { duration: 200 }
+   blurParams: BlurParams | null | undefined = { duration: 200 }
    ```
 
    Parameters to pass to `transition:blur` from `svelte/transition`. Set to `null` or `{ duration: 0 }` to disable blurring.
@@ -156,6 +156,12 @@ Full list of props and bindable variables for this component (all of them option
    CSS selector string or array of DOM elements. When provided, the ToC automatically hides on desktop when it visually overlaps with any matching element (e.g., full-width banners or images). The TOC reappears when scrolling past the overlapping element. This feature only applies on desktop; mobile ToC behavior is unaffected. Example: `hideOnIntersect=".full-width-banner"`
 
 1. ```ts
+   autoIds: boolean = true
+   ```
+
+   Whether headings without IDs should receive generated IDs automatically. This makes default `<Toc />` usage work with plain headings like `<h2>Section</h2>`. Existing heading IDs are preserved. Generated IDs are based on `slugifyHeading` and de-duplicated against IDs already present in the document.
+
+1. ```ts
    autoHide: boolean = true
    ```
 
@@ -228,7 +234,7 @@ Full list of props and bindable variables for this component (all of them option
    liProps: SvelteHTMLElements[`li`] = {}
    ```
 
-   Props passed to every rendered ToC `<li>` item. Internal role, focus, active/collapsed classes, and generated indentation styles are preserved.
+   Props passed to every rendered ToC `<li>` item. Internal active/collapsed classes, generated indentation styles, and link focus behavior are preserved.
 
 1. ```ts
    openButtonProps: SvelteHTMLElements[`button`] = {}
@@ -250,7 +256,7 @@ Full list of props and bindable variables for this component (all of them option
    Callback fired when the ToC open state changes. Receives an `OpenChangeEvent` with `open`, `desktop`, and `trigger`.
 
 1. ```ts
-   reactToKeys: string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
+   reactToKeys: false | string[] = [`ArrowDown`, `ArrowUp`, ` `, `Enter`, `Escape`, `Tab`]
    ```
 
    Which keyboard events to listen for. The default set of keys closes the ToC on `Escape` and `Tab` out, navigates the ToC list with `ArrowDown`, `ArrowUp`, and scrolls to the active ToC item on `Space`, and `Enter`. Set `reactToKeys = false` or `[]` to disable keyboard support entirely. Remove individual keys from the array to disable specific behaviors.
@@ -290,6 +296,12 @@ Full list of props and bindable variables for this component (all of them option
 
    Example with `collapseSubheadings="h3"`: When an h2 section is active, all h3s in that section are visible, and ALL h4s under those h3s expand together (rather than each h4 requiring its h3 to be active).
 
+1. ```ts
+   slugifyHeading: SlugifyHeading = (node, idx) => /* slugified heading text */
+   ```
+
+   Function used by `autoIds` to generate IDs for headings that do not already have one. Return a stable ID base without `#`; the component appends numeric suffixes when needed to avoid collisions.
+
 To control how far from the viewport top headings come to rest when scrolled into view from clicking on them in the ToC, use
 
 ```css
@@ -303,7 +315,8 @@ To control how far from the viewport top headings come to rest when scrolled int
 
 `Toc.svelte` accepts 3 named snippets:
 
-- `tocItem(heading)` customizes how individual headings are rendered inside the ToC.
+- `tocItem(heading)` replaces the default generated ToC link for each heading.
+  Custom snippets are responsible for their own link or interactive markup.
 
   ```svelte
   <Toc>
@@ -335,8 +348,8 @@ The HTML structure of this component is
   <nav>
     <h2>{title}</h2>
     <ol>
-      <li>{heading1}</li>
-      <li>{heading2}</li>
+      <li><a href="#heading1">{heading1}</a></li>
+      <li><a href="#heading2">{heading2}</a></li>
       ...
     </ol>
   </nav>
@@ -434,9 +447,7 @@ Example:
 
 ## 🧪 &thinsp; Coverage
 
-| Statements                                                                         | Branches                                                                             | Lines                                                                    |
-| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
-| ![Statements](https://img.shields.io/badge/statements-78.57%25-red.svg?style=flat) | ![Branches](https://img.shields.io/badge/branches-100%25-brightgreen.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-78.57%25-red.svg?style=flat) |
+Run `pnpm exec vitest run --coverage` for the current coverage report.
 
 ## 🆕 &nbsp; Changelog
 

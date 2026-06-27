@@ -15,4 +15,5 @@ export type OpenChangeEvent = {
 }
 export type OpenChangeHandler = (event: OpenChangeEvent) => void
 
+export type SlugifyHeading = (node: HTMLHeadingElement, idx: number) => string
 export type TocHeadingData = { id: string; level: number; title: string }
