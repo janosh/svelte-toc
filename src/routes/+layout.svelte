@@ -19,9 +19,7 @@
     .filter((route) => route !== `/`) // home handled separately
 
   // Show home link in nav when not on home page
-  let nav_routes = $derived(
-    page.url.pathname === `/` ? all_routes : [`/`, ...all_routes],
-  )
+  let nav_routes = $derived(page.url.pathname === `/` ? all_routes : [`/`, ...all_routes])
 
   const actions = all_routes.map((route) => ({
     label: route,
@@ -43,7 +41,11 @@
 
 {#if !routes_without_toc.includes(page.url.pathname)}
   <Toc
-    headingSelector={page.url.pathname === `/changelog` ? `main > h2` : `main :where(h2, h3)`}
-    hideOnIntersect={page.url.pathname === `/hide-on-intersect` ? `.hero-banner, .info-banner` : null}
+    headingSelector={page.url.pathname === `/changelog`
+      ? `main > h2`
+      : `main :where(h2, h3)`}
+    hideOnIntersect={page.url.pathname === `/hide-on-intersect`
+      ? `.hero-banner, .info-banner`
+      : null}
   />
 {/if}

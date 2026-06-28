@@ -317,6 +317,7 @@ describe(`Toc`, () => {
 
     const item = doc_query(`aside.toc li`)
     expect(item.getAttribute(`tabindex`)).toBe(`0`)
+    expect(item.getAttribute(`role`)).toBe(`link`)
     expect(item.getAttribute(`aria-current`)).toBe(`location`)
     expect(item.querySelector(`a`)).toBeNull()
     expect(item.querySelector(`.custom-toc-item`)?.textContent).toBe(`intro:Intro`)
@@ -338,6 +339,7 @@ describe(`Toc`, () => {
       n_anchors: 0,
       selector: `aside.toc li > button.custom-button`,
       scrolls: false,
+      checks_keyboard: true,
     },
     {
       desc: `non-interactive span scrolls to the heading`,
@@ -347,34 +349,63 @@ describe(`Toc`, () => {
       selector: `aside.toc li > span.plain`,
       scrolls: true,
     },
-  ])(`tocItem $desc`, async ({ html, n_anchors, selector, scrolls }) => {
-    set_body(`<h2 id="intro">Intro</h2>`)
-    const replace_state_mock = vi.spyOn(history, `replaceState`)
-    const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
-    Element.prototype.scrollIntoView = scroll_into_view_mock
+  ])(
+    `tocItem $desc`,
+    async ({ html, n_anchors, selector, scrolls, checks_keyboard = false }) => {
+      set_body(`<h2 id="first">First</h2><h2 id="second">Second</h2>`)
+      mock_active_heading(`first`)
+      const replace_state_mock = vi.spyOn(history, `replaceState`)
+      const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
+      Element.prototype.scrollIntoView = scroll_into_view_mock
 
-    mount(Toc, {
-      target: document.body,
-      props: {
-        tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
-          render: () => html(heading()),
-        })),
-      },
-    })
-    await tick()
+      mount(Toc, {
+        target: document.body,
+        props: {
+          tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
+            render: () => html(heading()),
+          })),
+        },
+      })
+      await tick()
 
-    const item = doc_query(`aside.toc li`)
-    expect(item.querySelectorAll(`a`)).toHaveLength(n_anchors)
+      const item = doc_query(`aside.toc li`)
+      expect(item.querySelectorAll(`a`)).toHaveLength(n_anchors)
+      expect(item.getAttribute(`role`)).toBe(scrolls ? `link` : null)
+      expect(item.getAttribute(`tabindex`)).toBe(scrolls ? `0` : null)
 
-    const event = new MouseEvent(`click`, { bubbles: true, cancelable: true })
-    doc_query(selector).dispatchEvent(event)
+      const event = new MouseEvent(`click`, { bubbles: true, cancelable: true })
+      doc_query(selector).dispatchEvent(event)
 
-    // a nested interactive element keeps native behavior (no preventDefault, no scroll);
-    // plain content falls through to the li handler which scrolls and updates the fragment
-    expect(event.defaultPrevented).toBe(scrolls)
-    expect(scroll_into_view_mock).toHaveBeenCalledTimes(scrolls ? 1 : 0)
-    expect(replace_state_mock.mock.calls).toEqual(scrolls ? [[{}, ``, `#intro`]] : [])
-  })
+      // a nested interactive element keeps native behavior (no preventDefault, no scroll);
+      // plain content falls through to the li handler which scrolls and updates the fragment
+      expect(event.defaultPrevented).toBe(scrolls)
+      expect(scroll_into_view_mock).toHaveBeenCalledTimes(scrolls ? 1 : 0)
+      expect(replace_state_mock.mock.calls).toEqual(scrolls ? [[{}, ``, `#first`]] : [])
+
+      if (checks_keyboard) {
+        const buttons =
+          document.querySelectorAll<HTMLButtonElement>(`aside.toc li > button`)
+        buttons[0].focus()
+        buttons[0].dispatchEvent(
+          new KeyboardEvent(`keydown`, { key: `ArrowDown`, bubbles: true }),
+        )
+        await tick()
+
+        expect(document.activeElement).toBe(buttons[1])
+
+        const enter_event = new KeyboardEvent(`keydown`, {
+          key: `Enter`,
+          bubbles: true,
+          cancelable: true,
+        })
+        buttons[1].dispatchEvent(enter_event)
+
+        expect(enter_event.defaultPrevented).toBe(false)
+        expect(scroll_into_view_mock).not.toHaveBeenCalled()
+        expect(replace_state_mock).not.toHaveBeenCalled()
+      }
+    },
+  )
 
   test(`modified clicks on ToC links keep native browser behavior`, async () => {
     set_body(`<h2 id="intro">Intro</h2>`)
@@ -1032,6 +1063,22 @@ describe(`Toc`, () => {
     expect(doc_query(`aside.toc li > a`).getAttribute(`href`)).toBe(`#new`)
   })
 
+  test(`selector-driven attribute changes update heading membership`, async () => {
+    set_body(`<h2 class="toc-exclude">Alpha</h2><h2>Beta</h2><h5 id="gamma">Gamma</h5>`)
+    mount(Toc, {
+      target: document.body,
+      props: { headingSelector: `:is(h2, h5[data-toc-heading])` },
+    })
+    await tick()
+    expect(doc_query(`aside.toc ol`).textContent).toBe(`Beta`)
+
+    doc_query(`.toc-exclude`).classList.remove(`toc-exclude`)
+    doc_query(`#gamma`).setAttribute(`data-toc-heading`, ``)
+    await tick()
+
+    expect(doc_query(`aside.toc ol`).textContent).toBe(`AlphaBetaGamma`)
+  })
+
   test(`rebinds when a heading element is replaced with identical content`, async () => {
     set_body(`<h2 id="a">Title</h2>`)
     mount(Toc, { target: document.body })
@@ -1537,8 +1584,11 @@ describe(`Element Prop Bags`, () => {
     },
   )
 
-  test(`liProps.style preserves generated margin-left and font-size styles`, async () => {
-    ensure_content_for_toc_elements([`<h2>Single Heading</h2>`])
+  test(`liProps.style preserves generated styles without multiline whitespace`, async () => {
+    ensure_content_for_toc_elements([
+      `<h2>Parent Heading</h2>`,
+      `<h3>Nested Heading</h3>`,
+    ])
 
     mount(Toc, {
       target: document.body,
@@ -1546,10 +1596,17 @@ describe(`Element Prop Bags`, () => {
     })
     await tick()
 
-    const style_attribute = doc_query(`aside.toc nav ol li`).getAttribute(`style`)
+    const style_attribute = doc_query(`aside.toc nav ol li:nth-child(2)`).getAttribute(
+      `style`,
+    )
     expect(style_attribute).toContain(`padding-left: 10px;`)
-    expect(style_attribute).toContain(`margin-left`)
-    expect(style_attribute).toContain(`font-size`)
+    expect(style_attribute).toContain(
+      `margin-left: calc(1 * var(--toc-indent-per-level, 1em))`,
+    )
+    expect(style_attribute).toContain(
+      `font-size: max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - 1 * var(--toc-li-font-size-step, 0.1ex)))`,
+    )
+    expect(style_attribute).not.toContain(`\n`)
   })
 
   test.each([

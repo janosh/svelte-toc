@@ -10,11 +10,7 @@
     SlugifyHeading,
     TocHeadingData,
   } from './index'
-  import {
-    get_heading_visibility,
-    slugify_heading_text,
-    unique_id,
-  } from './toc-utils'
+  import { get_heading_visibility, slugify_heading_text, unique_id } from './toc-utils'
 
   let {
     activeHeading = $bindable(null),
@@ -111,15 +107,10 @@
   const scroll_target_fallback_ms = 1000
   // distance increase (px) that counts as the user manually scrolling away from a target
   const manual_scroll_threshold_px = 50
-  const custom_interactive_selector =
-    `a, button, input, select, textarea, summary, [role="button"], [role="link"], [tabindex]`
+  const custom_interactive_selector = `a, button, input, select, textarea, summary, [role="button"], [role="link"], [tabindex]`
   const is_activation_key = (key: string) => key === `Enter` || key === ` `
   const is_modified_click = (event: MouseEvent) =>
-    event.button !== 0 ||
-    event.metaKey ||
-    event.ctrlKey ||
-    event.shiftKey ||
-    event.altKey
+    event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey
 
   let window_width: number = $state(0)
   // page_has_scrolled controls ignoring spurious scrollend events on page load before any actual
@@ -152,10 +143,7 @@
   }
 
   // helper to immediately set active heading and track scroll target
-  function set_scroll_target(
-    node: HTMLHeadingElement,
-    idx = headings.indexOf(node),
-  ) {
+  function set_scroll_target(node: HTMLHeadingElement, idx = headings.indexOf(node)) {
     // only proceed if heading exists in array (could be removed between click and handler)
     if (idx < 0) return
     activeHeading = node
@@ -181,29 +169,27 @@
   function event_targets_custom_interactive(event: LiEvent) {
     if (!tocItem || !(event.target instanceof Element)) return false
     // only bypass scroll-to-heading when the event lands on an interactive element
-    // nested *inside* the li; the li itself matches the selector (role=link/tabindex)
-    // and must not count, so compare against currentTarget
+    // nested *inside* the li; fallback li semantics must not count as custom content
     const interactive = event.target.closest(custom_interactive_selector)
     return interactive !== null && interactive !== event.currentTarget
   }
 
   let levels: number[] = $derived(heading_data.map(({ level }) => level))
-  let minLevel: number = $derived(levels.length ? Math.min(...levels) : 0)
+  let min_level: number = $derived(levels.length ? Math.min(...levels) : 0)
 
   // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
   let collapse_threshold: number = $derived(
     collapseSubheadings === true
       ? 6
       : typeof collapseSubheadings === `string`
-      ? parseInt(collapseSubheadings.slice(1), 10)
-      : Infinity,
+        ? parseInt(collapseSubheadings.slice(1), 10)
+        : Infinity,
   )
 
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
-    const active_idx = collapseSubheadings && activeHeading
-      ? headings.indexOf(activeHeading)
-      : null
+    const active_idx =
+      collapseSubheadings && activeHeading ? headings.indexOf(activeHeading) : null
     return get_heading_visibility(levels, active_idx, collapse_threshold)
   })
 
@@ -247,8 +233,27 @@
   }
 
   function focus_toc_item(node: HTMLLIElement | null) {
-    const focus_target = node?.querySelector<HTMLAnchorElement>(`a`) ?? node
+    const focus_target = first_custom_interactive(node) ?? node
     focus_target?.focus({ preventScroll: true })
+  }
+
+  function first_custom_interactive(node: HTMLLIElement | null) {
+    return node?.querySelector<HTMLElement>(custom_interactive_selector) ?? null
+  }
+
+  function focus_is_in_custom_interactive_toc_item() {
+    if (!tocItem || !(document.activeElement instanceof HTMLElement)) return false
+    const current_toc_li = document.activeElement.closest<HTMLLIElement>(`li`)
+    const interactive = document.activeElement.closest<HTMLElement>(
+      custom_interactive_selector,
+    )
+    return (
+      current_toc_li !== null &&
+      nav?.contains(current_toc_li) === true &&
+      interactive !== null &&
+      interactive !== current_toc_li &&
+      current_toc_li.contains(interactive)
+    )
   }
 
   function href_for_id(id: string | undefined): string | undefined {
@@ -268,10 +273,7 @@
 
     if (flashClickedHeadingsFor) {
       node.classList.add(`toc-clicked`)
-      setTimeout(
-        () => node.classList.remove(`toc-clicked`),
-        flashClickedHeadingsFor,
-      )
+      setTimeout(() => node.classList.remove(`toc-clicked`), flashClickedHeadingsFor)
     }
   }
 
@@ -286,9 +288,10 @@
       document.querySelector(selector)
       selector_validity[key] = true
     } catch {
-      const fallback = selector_name === `hideOnIntersect`
-        ? `Ignoring selector.`
-        : `Showing empty table of contents.`
+      const fallback =
+        selector_name === `hideOnIntersect`
+          ? `Ignoring selector.`
+          : `Showing empty table of contents.`
       console.warn(
         `svelte-toc received invalid ${selector_name}='${selector}'. ${fallback}`,
       )
@@ -301,7 +304,8 @@
     if (
       !selector_is_valid(`headingSelector`, headingSelector) ||
       !selector_is_valid(`excludeSelector`, excludeSelector)
-    ) return null
+    )
+      return null
 
     return Array.from(
       document.querySelectorAll<HTMLHeadingElement>(headingSelector),
@@ -325,9 +329,15 @@
       if (record.type === `characterData`) {
         return element_matches_heading_selector(record.target.parentElement)
       }
-      if (record.type !== `attributes` || record.attributeName !== `id`) return false
-      return record.target instanceof Element &&
-        element_matches_heading_selector(record.target)
+      if (record.type !== `attributes` || !(record.target instanceof Element))
+        return false
+      const target = record.target
+      return (
+        selector_is_valid(`headingSelector`, headingSelector) &&
+        (target.closest(headingSelector) !== null ||
+          target.querySelector(headingSelector) !== null ||
+          headings.some((heading) => target.contains(heading)))
+      )
     })
   }
 
@@ -356,10 +366,12 @@
     const queried_headings = query_toc_headings()
     const invalid_selector = queried_headings === null
     let used_ids: Set<string> | undefined
-    const get_used_ids = () => used_ids ??= new Set(
-      Array.from(document.querySelectorAll<HTMLElement>(`[id]`), ({ id }) => id)
-        .filter(Boolean),
-    )
+    const get_used_ids = () =>
+      (used_ids ??= new Set(
+        Array.from(document.querySelectorAll<HTMLElement>(`[id]`), ({ id }) => id).filter(
+          Boolean,
+        ),
+      ))
     const heading_entries: { data: TocHeadingData; heading: HTMLHeadingElement }[] = []
     for (const [idx, heading] of (queried_headings ?? []).entries()) {
       const data = getHeadingData(heading)
@@ -373,11 +385,17 @@
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
       // skip state churn when an unrelated DOM mutation left the heading set unchanged
-      const unchanged = !invalid_selector && heading_entries.length > 0 &&
+      const unchanged =
+        !invalid_selector &&
+        heading_entries.length > 0 &&
         heading_entries.length === headings.length &&
-        heading_entries.every(({ heading, data }, idx) =>
-          heading === headings[idx] && data.id === heading_data[idx]?.id &&
-          data.level === heading_data[idx]?.level && data.title === heading_data[idx]?.title)
+        heading_entries.every(
+          ({ heading, data }, idx) =>
+            heading === headings[idx] &&
+            data.id === heading_data[idx]?.id &&
+            data.level === heading_data[idx]?.level &&
+            data.title === heading_data[idx]?.title,
+        )
       if (unchanged) return
 
       headings = heading_entries.map(({ heading }) => heading)
@@ -406,16 +424,21 @@
 
   $effect(update_toc_headings)
 
+  let toc_item_has_interactive = $derived(
+    tocItem
+      ? tocItems.map((toc_item) => Boolean(first_custom_interactive(toc_item)))
+      : [],
+  )
+
   $effect(() => {
     const observer = new MutationObserver((records) => {
       if (should_update_for_mutations(records)) update_toc_headings()
     })
 
-    // Configure the observer to watch for changes in the DOM structure
+    // Attribute changes can affect headingSelector/excludeSelector membership.
     observer.observe(document.body, {
-      attributes: true, // Watch heading id changes
-      attributeFilter: [`id`],
-      childList: true, // Watch for added/removed nodes
+      attributes: true,
+      childList: true,
       characterData: true, // Watch text changes inside existing headings
       subtree: true, // Watch all descendants, not just direct children
     })
@@ -466,10 +489,14 @@
     }
 
     const toc = aside.getBoundingClientRect()
-    intersecting = hide_on_intersect_elements().some((el) => {
-      const rect = el.getBoundingClientRect()
-      return !(toc.right < rect.left || toc.left > rect.right ||
-        toc.bottom < rect.top || toc.top > rect.bottom)
+    intersecting = hide_on_intersect_elements().some((element) => {
+      const rect = element.getBoundingClientRect()
+      return !(
+        toc.right < rect.left ||
+        toc.left > rect.right ||
+        toc.bottom < rect.top ||
+        toc.top > rect.bottom
+      )
     })
   }
 
@@ -482,26 +509,23 @@
   }
 
   // click and key handler for ToC items that scrolls to the heading
-  const li_click_key_handler =
-    (node: HTMLHeadingElement) => (event: LiEvent) => {
-      if (event instanceof KeyboardEvent) liProps.onkeydown?.(event)
-      else liProps.onclick?.(event)
-      if (event.defaultPrevented) return
-      if (event_targets_custom_interactive(event)) return
-      if (event instanceof MouseEvent && is_modified_click(event)) return
-      if (event instanceof KeyboardEvent && !is_activation_key(event.key)) {
-        return
-      }
-      const idx = headings.indexOf(node)
-      if (idx === -1) return
-      event.preventDefault()
-      set_open(false, `toc-item`)
-      activate_heading(node, idx)
+  const li_click_key_handler = (node: HTMLHeadingElement) => (event: LiEvent) => {
+    if (event instanceof KeyboardEvent) liProps.onkeydown?.(event)
+    else liProps.onclick?.(event)
+    if (event.defaultPrevented) return
+    if (event_targets_custom_interactive(event)) return
+    if (event instanceof MouseEvent && is_modified_click(event)) return
+    if (event instanceof KeyboardEvent && !is_activation_key(event.key)) {
+      return
     }
+    const idx = headings.indexOf(node)
+    if (idx === -1) return
+    event.preventDefault()
+    set_open(false, `toc-item`)
+    activate_heading(node, idx)
+  }
 
-  function scroll_to_active_toc_item(
-    behavior: `auto` | `smooth` | `instant` = `smooth`,
-  ) {
+  function scroll_to_active_toc_item(behavior: `auto` | `smooth` | `instant` = `smooth`) {
     if (keepActiveTocItemInView && activeTocLi && nav) {
       // scroll the active ToC item into the middle of the ToC container
       const top = activeTocLi.offsetTop - nav.offsetHeight / 2
@@ -532,10 +556,14 @@
       // ignore keyboard events when ToC is closed on mobile or inactive on desktop
       (!desktop && !is_open) ||
       (desktop && !toc_is_hovered && !toc_has_focus)
-    ) return
+    )
+      return
 
     if (event.key === `Tab`) {
       if (toc_has_focus) set_open(false, `tab`)
+      return
+    }
+    if (is_activation_key(event.key) && focus_is_in_custom_interactive_toc_item()) {
       return
     }
 
@@ -545,10 +573,13 @@
     if (event.key === `Escape` && is_open) set_open(false, `escape`)
     else if (current_toc_li) {
       const sibling_prop =
-        event.key === `ArrowDown` ? `nextElementSibling` :
-        event.key === `ArrowUp` ? `previousElementSibling` : null
+        event.key === `ArrowDown`
+          ? `nextElementSibling`
+          : event.key === `ArrowUp`
+            ? `previousElementSibling`
+            : null
       activeTocLi = sibling_prop
-        ? visible_toc_sibling(current_toc_li, sibling_prop) ?? current_toc_li
+        ? (visible_toc_sibling(current_toc_li, sibling_prop) ?? current_toc_li)
         : current_toc_li
       // move DOM focus onto the navigated item so the focused link's own keydown handler
       // can't override arrow-navigation on the next Enter/Space (tab->arrow->Enter)
@@ -635,23 +666,22 @@
       {#if titleSnippet}
         {@render titleSnippet()}
       {:else if title}
-        <h2
-          {...titleProps}
-          class={[`toc-title`, `toc-exclude`, titleProps.class]}
-        >
+        <h2 {...titleProps} class={[`toc-title`, `toc-exclude`, titleProps.class]}>
           {title}
         </h2>
       {/if}
-      <ol
-        {...olProps}
-      >
+      <ol {...olProps}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
-          {@const indent = levels[idx] - minLevel}
+          {@const indent = levels[idx] - min_level}
           {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
           {@const heading_id = heading_data[idx]?.id}
           {@const is_active = heading === activeHeading}
           {@const item_tabindex = collapsed ? -1 : 0}
-          <!-- svelte-ignore a11y_no_noninteractive_tabindex - custom tocItem snippets may not provide their own focusable element -->
+          {@const use_fallback_toc_item =
+            tocItem && toc_item_has_interactive[idx] === false}
+          {@const item_margin_left = `calc(${indent} * var(--toc-indent-per-level, 1em))`}
+          {@const item_font_size = `max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - ${indent} * var(--toc-li-font-size-step, 0.1ex)))`}
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex - fallback for custom tocItem snippets without their own focusable element -->
           <li
             {...liProps}
             class:active={is_active}
@@ -659,10 +689,10 @@
             aria-hidden={collapsed || undefined}
             aria-current={tocItem && is_active ? `location` : undefined}
             bind:this={tocItems[idx]}
-            role={tocItem ? `link` : undefined}
-            tabindex={tocItem ? item_tabindex : undefined}
-            style:margin-left="calc({indent} * var(--toc-indent-per-level, 1em))"
-            style:font-size="max(var(--toc-li-font-size-min, 2ex), calc(var(--toc-li-font-size-base, 3ex) - {indent} * var(--toc-li-font-size-step, 0.1ex)))"
+            role={use_fallback_toc_item ? `link` : undefined}
+            tabindex={use_fallback_toc_item ? item_tabindex : undefined}
+            style:margin-left={item_margin_left}
+            style:font-size={item_font_size}
             onclick={li_click_key_handler(heading)}
             onkeydown={li_click_key_handler(heading)}
           >
@@ -731,7 +761,10 @@
     display: block;
     text-decoration: none;
   }
-  aside.toc > nav > ol > li > a:focus-visible {
+  :is(
+    aside.toc > nav > ol > li:focus-visible,
+    aside.toc > nav > ol > li > a:focus-visible
+  ) {
     outline: var(--toc-focus-outline, 2px solid currentColor);
     outline-offset: var(--toc-focus-outline-offset, 1px);
   }
