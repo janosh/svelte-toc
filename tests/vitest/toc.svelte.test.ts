@@ -1038,16 +1038,24 @@ describe(`Toc`, () => {
 
   test(`unrelated text-node data edits do not rebuild active heading`, async () => {
     set_body(`<h2 id="a">Alpha</h2><h2 id="b">Beta</h2><p>Original</p>`)
-    mount(Toc, { target: document.body })
+    const get_heading_data = vi.fn((node: HTMLHeadingElement) => ({
+      id: node.id,
+      level: Number(node.nodeName[1]),
+      title: node.textContent ?? ``,
+    }))
+    mount(Toc, { target: document.body, props: { getHeadingData: get_heading_data } })
     await tick()
+    get_heading_data.mockClear()
 
     expect(doc_query(`aside.toc li.active`).textContent.trim()).toBe(`Beta`)
     mock_active_heading(`a`)
 
     ;(doc_query(`p`).firstChild as Text).data = `Changed`
+    document.body.setAttribute(`data-theme`, `dark`)
     await tick()
 
     expect(doc_query(`aside.toc li.active`).textContent.trim()).toBe(`Beta`)
+    expect(get_heading_data).not.toHaveBeenCalled()
   })
 
   test(`heading id attribute changes update link targets`, async () => {

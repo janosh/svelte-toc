@@ -9,14 +9,14 @@ test.describe(`collapseSubheadings`, () => {
   async function scroll_to_element(page: Page, selector: string): Promise<void> {
     const heading_text = await page.evaluate((selector_to_scroll) => {
       const element = document.querySelector(selector_to_scroll)
-      if (element) {
-        element.scrollIntoView({ behavior: `instant`, block: `start` })
-        return element.textContent?.trim() ?? null
+      if (!element) {
+        throw new Error(`scroll_to_element target not found: ${selector_to_scroll}`)
       }
-      return null
+      element.scrollIntoView({ behavior: `instant`, block: `start` })
+      return element.textContent?.trim() ?? ``
     }, selector)
     // Wait for active heading to update in TOC
-    if (heading_text !== null && heading_text !== ``) {
+    if (heading_text !== ``) {
       await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
         heading_text,
         { timeout: 1000 },

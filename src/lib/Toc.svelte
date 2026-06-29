@@ -332,6 +332,7 @@
       if (record.type !== `attributes` || !(record.target instanceof Element))
         return false
       const target = record.target
+      if (target === document.body) return false
       return (
         selector_is_valid(`headingSelector`, headingSelector) &&
         (target.closest(headingSelector) !== null ||
