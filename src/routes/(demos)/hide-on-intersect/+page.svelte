@@ -1,8 +1,8 @@
 <h2>The hideOnIntersect Feature</h2>
 <p>
-  This page demonstrates how the <code>hideOnIntersect</code> prop automatically hides the
-  table of contents when it would overlap with full-width elements like hero sections,
-  banners, or images. Scroll down to see the TOC disappear and reappear.
+  This page demonstrates how the <code>hideOnIntersect</code> prop automatically hides the table
+  of contents when it would overlap with full-width elements like hero sections, banners, or
+  images. Scroll down to see the TOC disappear and reappear.
 </p>
 <p>
   Watch the TOC on the right side of the screen. As you scroll through this page, it will
@@ -12,8 +12,8 @@
 <h2>Why This Matters</h2>
 <p>
   Fixed or sticky sidebars can clash visually with full-width content that's designed to
-  span the entire viewport. The <code>hideOnIntersect</code> prop solves this by
-  temporarily hiding the TOC when such elements scroll into its space.
+  span the entire viewport. The <code>hideOnIntersect</code> prop solves this by temporarily
+  hiding the TOC when such elements scroll into its space.
 </p>
 <p>
   This is useful for documentation with hero sections, image galleries, or any layout that
@@ -29,10 +29,12 @@
 
 <h3>Usage Example</h3>
 <pre>
-<code>&lt;Toc hideOnIntersect=".full-width-banner" /&gt;
+<code
+    >&lt;Toc hideOnIntersect=".full-width-banner" /&gt;
 
 &lt;!-- Or with multiple selectors --&gt;
-&lt;Toc hideOnIntersect=".hero, .full-width-image" /&gt;</code></pre>
+&lt;Toc hideOnIntersect=".hero, .full-width-image" /&gt;</code
+  ></pre>
 
 <h2>Desktop Only</h2>
 <p>
@@ -41,8 +43,8 @@
   is unnecessary.
 </p>
 <p>
-  The breakpoint for desktop/mobile is controlled by the <code>breakpoint</code> prop,
-  which defaults to 1000px.
+  The breakpoint for desktop/mobile is controlled by the <code>breakpoint</code> prop, which
+  defaults to 1000px.
 </p>
 
 <div class="hero-banner" data-testid="banner-1">
@@ -66,12 +68,13 @@
 <p>
   When hidden by intersection, the TOC sets <code>aria-hidden="true"</code> so screen
   readers skip the temporarily hidden content. Visibility is controlled via CSS (<code
-  >opacity: 0</code>, <code>pointer-events: none</code>) to enable smooth fade transitions
-  while keeping the element in the layout flow.
+    >opacity: 0</code
+  >, <code>pointer-events: none</code>) to enable smooth fade transitions while keeping
+  the element in the layout flow.
 </p>
 <p>
-  This approach is preferred over using the <code>hidden</code> attribute or removing the
-  element from the DOM, as it maintains layout stability and allows for smooth animations.
+  This approach is preferred over using the <code>hidden</code> attribute or removing the element
+  from the DOM, as it maintains layout stability and allows for smooth animations.
 </p>
 
 <h2>Edge Cases Handled</h2>
@@ -115,9 +118,9 @@
 
 <h2>Summary</h2>
 <p>
-  The <code>hideOnIntersect</code> prop provides a clean solution for pages that need both
-  a sticky table of contents and full-width visual elements. It's performant, accessible,
-  and handles edge cases gracefully.
+  The <code>hideOnIntersect</code> prop provides a clean solution for pages that need both a
+  sticky table of contents and full-width visual elements. It's performant, accessible, and
+  handles edge cases gracefully.
 </p>
 
 <style>
@@ -149,7 +152,8 @@
     text-align: center;
     color: white;
   }
-  .hero-banner::before, .info-banner::before {
+  .hero-banner::before,
+  .info-banner::before {
     content: '';
     position: absolute;
     inset: 0;

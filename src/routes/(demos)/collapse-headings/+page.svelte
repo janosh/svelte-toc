@@ -12,17 +12,15 @@
   ]
 
   const lorem = `Lorem ipsum dolor sit amet. `.repeat(8)
-  const filler = `This is sample content to demonstrate scrolling behavior. `.repeat(
-    4,
-  )
+  const filler = `This is sample content to demonstrate scrolling behavior. `.repeat(4)
 </script>
 
 <main>
   <h1>Collapse Subheadings Demo</h1>
   <p>
-    This demo shows the <code>collapseSubheadings</code> feature. Select different modes
-    to see how the TOC collapses and expands based on the active heading. Scroll through
-    the page to watch child headings appear and disappear in the TOC as you navigate.
+    This demo shows the <code>collapseSubheadings</code> feature. Select different modes to
+    see how the TOC collapses and expands based on the active heading. Scroll through the page
+    to watch child headings appear and disappear in the TOC as you navigate.
   </p>
 
   <div class="controls">

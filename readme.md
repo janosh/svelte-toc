@@ -391,7 +391,7 @@ The HTML structure of this component is
   - `transition: var(--toc-li-transition)`: Custom transition for hover/focus effects.
   - `max-height: var(--toc-li-max-height, 10em)`: Used for collapse animation.
   - `transition: ... var(--toc-collapse-duration, 0.2s) ...`: Duration for collapse/expand animation.
-- `aside.toc > nav > ol > li:focus-visible`
+- `aside.toc > nav > ol > li > a:focus-visible`, `aside.toc > nav > ol > li:focus-visible`
   - `outline: var(--toc-focus-outline, 2px solid currentColor)`: Focus outline for keyboard navigation.
   - `outline-offset: var(--toc-focus-outline-offset, 1px)`
 - `aside.toc > nav > ol > li:hover`

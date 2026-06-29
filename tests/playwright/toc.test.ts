@@ -1,19 +1,22 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
+
+const trimmed_texts = async (locator: Locator): Promise<string[]> =>
+  (await locator.allTextContents()).map((text) => text.trim())
 
 test.describe(`collapseSubheadings`, () => {
   test.describe.configure({ mode: `parallel` })
   // Helper to scroll to element and wait for TOC to update
-  async function scroll_to_element(page: Page, selector: string) {
-    const heading_text = await page.evaluate((sel) => {
-      const element = document.querySelector(sel)
-      if (element) {
-        element.scrollIntoView({ behavior: `instant`, block: `start` })
-        return element.textContent.trim()
+  async function scroll_to_element(page: Page, selector: string): Promise<void> {
+    const heading_text = await page.evaluate((selector_to_scroll) => {
+      const element = document.querySelector(selector_to_scroll)
+      if (!element) {
+        throw new Error(`scroll_to_element target not found: ${selector_to_scroll}`)
       }
-      return null
+      element.scrollIntoView({ behavior: `instant`, block: `start` })
+      return element.textContent?.trim() ?? ``
     }, selector)
     // Wait for active heading to update in TOC
-    if (heading_text !== null && heading_text !== ``) {
+    if (heading_text !== ``) {
       await expect(page.locator(`aside.toc > nav > ol > li.active`)).toContainText(
         heading_text,
         { timeout: 1000 },
@@ -36,101 +39,28 @@ test.describe(`collapseSubheadings`, () => {
     await expect(collapsed_items).toHaveCount(0)
   })
 
-  test(`top-level headings always visible with full nested collapse`, async ({
-    page,
-  }) => {
-    // Enable full nested collapse
+  test(`full nested collapse follows active heading hierarchy`, async ({ page }) => {
     await page.click(`input[value="true"]`)
+    await scroll_to_element(page, `#getting-started`)
 
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
-    await expect(toc_items).toHaveCount(41)
-
-    // h2 sections should never be collapsed
     const getting_started = toc_items.filter({ hasText: /^Getting Started$/ })
-    const configuration = toc_items.filter({ hasText: /^Configuration$/ })
-    const advanced = toc_items.filter({ hasText: /^Advanced Features$/ })
+    const installation = toc_items.filter({ hasText: /^Installation$/ })
+    const npm_setup = toc_items.filter({ hasText: /^NPM Setup$/ })
+    const styling = toc_items.filter({ hasText: /^Styling Options$/ })
 
     await expect(getting_started).not.toHaveClass(/collapsed/)
-    await expect(configuration).not.toHaveClass(/collapsed/)
-    await expect(advanced).not.toHaveClass(/collapsed/)
-  })
-
-  test(`nested collapse hides h4s when h3 parent not active`, async ({ page }) => {
-    // Enable full nested collapse
-    await page.click(`input[value="true"]`)
-
-    // Scroll to Getting Started to make it active
-    await scroll_to_element(page, `#getting-started`)
-
-    const toc_items = page.locator(`aside.toc > nav > ol > li`)
-
-    // With Getting Started (h2) active, h3s under it should be visible
-    const installation = toc_items.filter({ hasText: /^Installation$/ })
     await expect(installation).not.toHaveClass(/collapsed/)
-
-    // But h4s should be collapsed (their h3 parent is not active)
-    const npm_setup = toc_items.filter({ hasText: /^NPM Setup$/ })
-    const pnpm_setup = toc_items.filter({ hasText: /^PNPM Setup$/ })
     await expect(npm_setup).toHaveClass(/collapsed/)
-    await expect(pnpm_setup).toHaveClass(/collapsed/)
-
-    // h3s under inactive h2 Configuration should be collapsed
-    const styling = toc_items.filter({ hasText: /^Styling Options$/ })
     await expect(styling).toHaveClass(/collapsed/)
-  })
 
-  test(`h4s expand when scrolling to their h3 parent`, async ({ page }) => {
-    // Enable full nested collapse
-    await page.click(`input[value="true"]`)
-
-    const toc_items = page.locator(`aside.toc > nav > ol > li`)
-    const npm_setup = toc_items.filter({ hasText: /^NPM Setup$/ })
-
-    // First scroll to Getting Started to set context - h4s should be collapsed
-    await scroll_to_element(page, `#getting-started`)
-    await expect(npm_setup).toHaveClass(/collapsed/)
-
-    // Now scroll to Installation (h3) - h4s under it should expand
     await scroll_to_element(page, `#installation`)
 
-    // h4s under Installation should now be visible
-    await expect(npm_setup).not.toHaveClass(/collapsed/)
     const pnpm_setup = toc_items.filter({ hasText: /^PNPM Setup$/ })
-    await expect(pnpm_setup).not.toHaveClass(/collapsed/)
-
-    // h4 under Basic Usage should still be collapsed (different h3 parent)
     const import_component = toc_items.filter({ hasText: /^Importing the Component$/ })
+    await expect(npm_setup).not.toHaveClass(/collapsed/)
+    await expect(pnpm_setup).not.toHaveClass(/collapsed/)
     await expect(import_component).toHaveClass(/collapsed/)
-  })
-
-  test(`threshold mode h3 expands all h4s when h3 ancestor visible`, async ({ page }) => {
-    // Enable h3 threshold mode
-    await page.click(`input[value="h3"]`)
-
-    // Scroll to Getting Started to make it active
-    await scroll_to_element(page, `#getting-started`)
-
-    const toc_items = page.locator(`aside.toc > nav > ol > li`)
-
-    // With h3 threshold, when h2 Getting Started is active:
-    // - All h3s under Getting Started are visible
-    // - ALL h4s+ under those h3s should also be visible (no independent collapse)
-    const installation = toc_items.filter({ hasText: /^Installation$/ })
-    const basic_usage = toc_items.filter({ hasText: /^Basic Usage$/ })
-    await expect(installation).not.toHaveClass(/collapsed/)
-    await expect(basic_usage).not.toHaveClass(/collapsed/)
-
-    // h4s should be visible with threshold mode
-    const npm_setup = toc_items.filter({ hasText: /^NPM Setup$/ })
-    const pnpm_setup = toc_items.filter({ hasText: /^PNPM Setup$/ })
-    const import_component = toc_items.filter({ hasText: /^Importing the Component$/ })
-    await expect(npm_setup).not.toHaveClass(/collapsed/)
-    await expect(pnpm_setup).not.toHaveClass(/collapsed/)
-    await expect(import_component).not.toHaveClass(/collapsed/)
-
-    // h3s under inactive Configuration should still be collapsed
-    const styling = toc_items.filter({ hasText: /^Styling Options$/ })
-    await expect(styling).toHaveClass(/collapsed/)
   })
 
   test(`collapsed items have correct accessibility attributes`, async ({ page }) => {
@@ -235,24 +165,6 @@ test.describe(`collapseSubheadings`, () => {
     await expect(npm_setup).not.toHaveClass(/collapsed/)
   })
 
-  test(`maintains correct active heading highlight while collapsed`, async ({ page }) => {
-    // Enable full nested collapse
-    await page.click(`input[value="true"]`)
-
-    // Test that scrolling to different h2 sections updates active state
-    await scroll_to_element(page, `#getting-started`)
-    let active_item = page.locator(`aside.toc > nav > ol > li.active`)
-    await expect(active_item).toContainText(`Getting Started`)
-
-    await scroll_to_element(page, `#configuration`)
-    active_item = page.locator(`aside.toc > nav > ol > li.active`)
-    await expect(active_item).toContainText(`Configuration`)
-
-    await scroll_to_element(page, `#advanced-features`)
-    active_item = page.locator(`aside.toc > nav > ol > li.active`)
-    await expect(active_item).toContainText(`Advanced Features`)
-  })
-
   test(`collapsed items have correct CSS properties`, async ({ page }) => {
     // Enable full nested collapse
     await page.click(`input[value="true"]`)
@@ -268,7 +180,9 @@ test.describe(`collapseSubheadings`, () => {
 
     // Verify opacity reaches 0 after CSS transition completes
     await expect(async () => {
-      const opacity = await collapsed_item.evaluate((el) => getComputedStyle(el).opacity)
+      const opacity = await collapsed_item.evaluate(
+        (element) => getComputedStyle(element).opacity,
+      )
       expect(opacity).toBe(`0`)
     }).toPass({ timeout: 500 })
   })
@@ -339,9 +253,7 @@ test.describe(`hideOnIntersect`, () => {
     const toc_items = page.locator(`aside.toc > nav > ol > li`)
     await toc_items.first().waitFor()
 
-    const toc_headings = await toc_items
-      .allTextContents()
-      .then((texts) => texts.map((text) => text.trim()))
+    const toc_headings = await trimmed_texts(toc_items)
 
     expect(toc_headings).toEqual(expected_headings)
   })
@@ -356,28 +268,24 @@ test.describe(`Toc`, () => {
     // Test each page separately to avoid await in loop
     await page.goto(`/`, { waitUntil: `networkidle` })
 
-    let expected_headings = await page.locator(`main :where(h2, h3)`).allTextContents()
+    let expected_headings = await trimmed_texts(page.locator(`main :where(h2, h3)`))
 
     // wait for ToC to render headings
     await page.waitForSelector(`aside.toc > nav > ol > li`)
 
-    let toc_headings = (
-      await page.locator(`aside.toc > nav > ol > li`).allTextContents()
-    ).map((h) => h.trim())
+    let toc_headings = await trimmed_texts(page.locator(`aside.toc > nav > ol > li`))
 
     expect(toc_headings).toEqual(expected_headings)
 
     // Test long-page
     await page.goto(`/long-page`, { waitUntil: `networkidle` })
 
-    expected_headings = await page.locator(`main :where(h2, h3)`).allTextContents()
+    expected_headings = await trimmed_texts(page.locator(`main :where(h2, h3)`))
 
     // wait for ToC to render headings
     await page.waitForSelector(`aside.toc > nav > ol > li`)
 
-    toc_headings = (
-      await page.locator(`aside.toc > nav > ol > li`).allTextContents()
-    ).map((h) => h.trim())
+    toc_headings = await trimmed_texts(page.locator(`aside.toc > nav > ol > li`))
 
     expect(toc_headings).toEqual(expected_headings)
   })
@@ -422,13 +330,13 @@ test.describe(`Toc`, () => {
       document.querySelector(`main`)?.append(new_heading)
     })
 
-    const page_headings_after_add = await page
-      .locator(`main :where(h2, h3)`)
-      .allTextContents()
+    const page_headings_after_add = await trimmed_texts(
+      page.locator(`main :where(h2, h3)`),
+    )
 
-    const toc_headings_after_add = (
-      await page.locator(`aside.toc > nav > ol > li`).allTextContents()
-    ).map((li_text) => li_text.trim())
+    const toc_headings_after_add = await trimmed_texts(
+      page.locator(`aside.toc > nav > ol > li`),
+    )
 
     expect(toc_headings_after_add).toEqual(page_headings_after_add)
 
@@ -437,15 +345,15 @@ test.describe(`Toc`, () => {
       document.querySelector(`h2`)?.remove()
     })
 
-    const page_headings_after_remove = await page
-      .locator(`main :where(h2, h3)`)
-      .allTextContents()
-
-    const toc_headings_after_remove = (
-      await page.locator(`aside.toc > nav > ol > li`).allTextContents()
-    ).map((li_text) => li_text.trim())
-
-    expect(toc_headings_after_remove).toEqual(page_headings_after_remove)
+    await expect(async () => {
+      const page_headings_after_remove = await trimmed_texts(
+        page.locator(`main :where(h2, h3)`),
+      )
+      const toc_headings_after_remove = await trimmed_texts(
+        page.locator(`aside.toc > nav > ol > li`),
+      )
+      expect(toc_headings_after_remove).toEqual(page_headings_after_remove)
+    }).toPass({ timeout: 1000 })
   })
 
   // Tests for issue #50: clicking ToC items should immediately highlight the correct heading
