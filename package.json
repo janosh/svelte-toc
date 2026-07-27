@@ -52,8 +52,6 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@vitest/coverage-v8": "^4.1.9",
     "@wooorm/starry-night": "^3.10.0",
-    "abstract-syntax-tree": "^2.22.0",
-    "acorn": "^8.17.0",
     "jsdom": "^29.1.1",
     "mdsvex": "^0.12.7",
     "svelte": "^5.56.4",

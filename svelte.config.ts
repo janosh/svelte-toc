@@ -8,6 +8,7 @@ import {
   starry_night_highlighter as highlighter,
 } from 'svelte-multiselect/live-examples'
 
+// mdsvex_transform turns pkg.repository into source links on live examples
 if (!pkg.repository) throw new Error(`package.json missing "repository" field`)
 
 const defaults = {
