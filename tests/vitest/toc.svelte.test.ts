@@ -1,19 +1,17 @@
 import Toc from '$lib'
 import type { OpenChangeHandler } from '$lib'
-import type { Component, MountOptions } from 'svelte'
-import { createRawSnippet, mount as svelte_mount, tick, unmount } from 'svelte'
+import type { ComponentProps } from 'svelte'
+import { createRawSnippet, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
 import { doc_query } from './index.js'
 
+type TocProps = ComponentProps<typeof Toc>
+
 const mounted_components: Record<string, unknown>[] = []
 
-function mount<
-  Props extends Record<string, unknown>,
-  Exports extends Record<string, unknown>,
->(component: Component<Props, Exports>, options: MountOptions<Props>): Exports {
-  const mounted = svelte_mount(component, options)
-  mounted_components.push(mounted)
-  return mounted
+// mounts into document.body and registers for teardown in afterEach
+const mount_toc = (props: TocProps = {}) => {
+  mounted_components.push(mount(Toc, { target: document.body, props }))
 }
 
 const set_body = (html: string) => {
@@ -21,29 +19,31 @@ const set_body = (html: string) => {
 }
 
 const setup_empty_page = () =>
-  set_body(`
-      <h1>Heading 1</h1>
-      <h2 class="toc-exclude">Heading 2</h2>
-      <h5>Heading 5</h5>
-      <h6>Heading 6</h6>
-    `)
+  set_body(`<h1>H1</h1><h2 class="toc-exclude">H2</h2><h5>H5</h5>`)
+
+// `Heading 1`..`Heading n` as h2s with matching `heading-n` ids, the shape most
+// interaction tests want. jsdom gives every heading top=0, so the last one starts active.
+const set_headings = (count: number) =>
+  set_body(
+    Array.from(
+      { length: count },
+      (_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`,
+    ).join(``),
+  )
 
 const set_window_width = (width: number) => {
   globalThis.innerWidth = width
   globalThis.dispatchEvent(new Event(`resize`))
 }
 
+const scroll = async () => {
+  globalThis.dispatchEvent(new Event(`scroll`))
+  await tick()
+}
+
 const ensure_content_for_toc_elements = (
   headings = [`<h2>Content Heading 1</h2>`, `<h3>Content Heading 2</h3>`],
 ) => set_body(headings.join(`\n`))
-
-const ensure_single_heading = () =>
-  ensure_content_for_toc_elements([`<h2>Single Heading</h2>`])
-
-const ensure_mobile_button_is_visible = () => {
-  ensure_content_for_toc_elements() // Need headings for the button to appear
-  set_window_width(500) // Simulate mobile (default breakpoint is 1000px)
-}
 
 const setup_nested_headings = () =>
   set_body(`
@@ -57,13 +57,16 @@ const setup_nested_headings = () =>
       <h3 id="sub-2-1">Sub 2.1</h3>
     `)
 
-const dom_rect = (rect: Partial<DOMRect> = {}): DOMRect => {
-  const x = rect.left ?? rect.x ?? 0
-  const y = rect.top ?? rect.y ?? 0
-  const width = rect.right === undefined ? (rect.width ?? 0) : rect.right - x
-  const height = rect.bottom === undefined ? (rect.height ?? 0) : rect.bottom - y
-  return DOMRect.fromRect({ x, y, width, height })
-}
+// only top/bottom/left/right matter to the component, so derive the rest from those.
+// bottom/right collapse onto top/left rather than 0, since a negative width or height
+// makes DOMRect normalize by swapping the edges back.
+const dom_rect = ({
+  top = 0,
+  left = 0,
+  bottom = top,
+  right = left,
+}: Partial<DOMRect> = {}) =>
+  DOMRect.fromRect({ x: left, y: top, width: right - left, height: bottom - top })
 
 // Mock scroll position to make a specific heading "active" (scrolled past viewport top)
 const mock_active_heading = (active_id: string) => {
@@ -76,6 +79,11 @@ const mock_active_heading = (active_id: string) => {
     vi.spyOn(heading, `getBoundingClientRect`).mockReturnValue(dom_rect({ top }))
   })
 }
+
+const toc_texts = () =>
+  Array.from(document.querySelectorAll(`aside.toc > nav > ol > li`), (li) =>
+    li.textContent.trim(),
+  )
 
 // Get collapsed state as array of booleans for easy assertion
 const get_collapsed_states = () =>
@@ -108,7 +116,7 @@ afterEach(async () => {
 
 describe(`Toc`, () => {
   test(`renders default title element`, () => {
-    mount(Toc, { target: document.body, props: { title: `Custom title` } })
+    mount_toc({ title: `Custom title` })
 
     const title_node = doc_query(`h2`)
     expect(title_node.textContent).toBe(`Custom title`)
@@ -116,33 +124,31 @@ describe(`Toc`, () => {
     expect(title_node.classList.contains(`toc-exclude`)).toBe(true)
   })
 
+  // undefined headingSelector exercises the component default of `:is(h2, h3, h4)`
   test.each([
-    [null, 3, [0, 1, 2].map((lvl) => `Heading ${lvl + 2}`)],
+    [undefined, [0, 1, 2].map((lvl) => `Heading ${lvl + 2}`)],
     [
       `body > :is(h1, h2, h3, h4, h5, h6)`,
-      5,
       Array.from({ length: 5 }, (_, lvl) => `Heading ${lvl + 2}`),
     ],
-    [`h1`, 0, []],
+    [`h1`, []],
   ])(
     `ToC lists expected headings for headingSelector='%s'`,
-    async (headingSelector, expected_lis, expected_text) => {
-      document.body.innerHTML = `
+    async (headingSelector, expected_text) => {
+      set_body(`
       <h1 class="toc-exclude">Heading 1</h1>
       <h2>Heading 2</h2>
       <h3>Heading 3</h3>
       <h4>Heading 4</h4>
       <h5>Heading 5</h5>
       <h6>Heading 6</h6>
-    `
-      let props = {}
-      if (headingSelector !== null) props = { headingSelector }
+    `)
 
-      mount(Toc, { target: document.body, props })
+      mount_toc({ headingSelector })
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
-      expect(toc_list.children).toHaveLength(expected_lis)
+      expect(toc_list.children).toHaveLength(expected_text.length)
       expect(toc_list.textContent.trim()).toBe(expected_text.join(``))
     },
   )
@@ -172,10 +178,7 @@ describe(`Toc`, () => {
       <h2>Included heading</h2>
     `)
 
-      mount(Toc, {
-        target: document.body,
-        props: { headingSelector: `:is(h2, h3)`, ...props },
-      })
+      mount_toc({ headingSelector: `:is(h2, h3)`, ...props })
       await tick()
 
       const toc_list = doc_query(`aside.toc > nav > ol`)
@@ -187,15 +190,10 @@ describe(`Toc`, () => {
   test(`getHeadingData customizes listed headings`, async () => {
     set_body(`<h2>Keep</h2><h3>Skip</h3>`)
     const replace_state_mock = vi.spyOn(history, `replaceState`)
-    mount(Toc, {
-      target: document.body,
-      props: {
-        getHeadingData: (node: HTMLHeadingElement) =>
-          node.textContent === `Skip`
-            ? null
-            : { id: `custom`, level: 2, title: `Custom` },
-        headingSelector: `:is(h2, h3)`,
-      },
+    mount_toc({
+      getHeadingData: (node: HTMLHeadingElement) =>
+        node.textContent === `Skip` ? null : { id: `custom`, level: 2, title: `Custom` },
+      headingSelector: `:is(h2, h3)`,
     })
     await tick()
 
@@ -216,7 +214,7 @@ describe(`Toc`, () => {
     const replace_state_mock = vi.spyOn(history, `replaceState`)
     Element.prototype.scrollIntoView = vi.fn<Element[`scrollIntoView`]>()
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     // the <a href> is a valid percent-encoded URL string
@@ -233,15 +231,12 @@ describe(`Toc`, () => {
   test(`existing heading ids stay the fragment target over getHeadingData ids`, async () => {
     set_body(`<h2 id="real">Keep</h2>`)
 
-    mount(Toc, {
-      target: document.body,
-      props: {
-        getHeadingData: (node: HTMLHeadingElement) => ({
-          id: `custom`,
-          level: 2,
-          title: node.textContent ?? ``,
-        }),
-      },
+    mount_toc({
+      getHeadingData: (node: HTMLHeadingElement) => ({
+        id: `custom`,
+        level: 2,
+        title: node.textContent ?? ``,
+      }),
     })
     await tick()
 
@@ -257,7 +252,7 @@ describe(`Toc`, () => {
       <h3 id="custom-id">Custom</h3>
     `)
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     const headings = document.querySelectorAll<HTMLHeadingElement>(`body > :is(h2, h3)`)
@@ -276,7 +271,7 @@ describe(`Toc`, () => {
   test(`autoIds=false leaves headings without ids or hrefs`, async () => {
     set_body(`<h2>No id</h2>`)
 
-    mount(Toc, { target: document.body, props: { autoIds: false } })
+    mount_toc({ autoIds: false })
     await tick()
 
     expect(doc_query(`body > h2`).id).toBe(``)
@@ -286,11 +281,8 @@ describe(`Toc`, () => {
   test(`slugifyHeading customizes generated ids`, async () => {
     set_body(`<h2>First</h2><h2>Second</h2>`)
 
-    mount(Toc, {
-      target: document.body,
-      props: {
-        slugifyHeading: (_heading: HTMLHeadingElement, idx: number) => `section-${idx}`,
-      },
+    mount_toc({
+      slugifyHeading: (_heading: HTMLHeadingElement, idx: number) => `section-${idx}`,
     })
     await tick()
 
@@ -304,14 +296,11 @@ describe(`Toc`, () => {
   test(`tocItem snippet replaces default link content`, async () => {
     set_body(`<h2 id="intro">Intro</h2>`)
 
-    mount(Toc, {
-      target: document.body,
-      props: {
-        tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
-          render: () =>
-            `<span class="custom-toc-item">${heading().id}:${heading().textContent}</span>`,
-        })),
-      },
+    mount_toc({
+      tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
+        render: () =>
+          `<span class="custom-toc-item">${heading().id}:${heading().textContent}</span>`,
+      })),
     })
     await tick()
 
@@ -358,13 +347,10 @@ describe(`Toc`, () => {
       const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
       Element.prototype.scrollIntoView = scroll_into_view_mock
 
-      mount(Toc, {
-        target: document.body,
-        props: {
-          tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
-            render: () => html(heading()),
-          })),
-        },
+      mount_toc({
+        tocItem: createRawSnippet<[HTMLHeadingElement]>((heading) => ({
+          render: () => html(heading()),
+        })),
       })
       await tick()
 
@@ -413,7 +399,7 @@ describe(`Toc`, () => {
     const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
     Element.prototype.scrollIntoView = scroll_into_view_mock
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     const event = new MouseEvent(`click`, {
@@ -433,10 +419,7 @@ describe(`Toc`, () => {
     try {
       set_body(`<h2 id="intro">Intro</h2>`)
 
-      mount(Toc, {
-        target: document.body,
-        props: { flashClickedHeadingsFor: 10 },
-      })
+      mount_toc({ flashClickedHeadingsFor: 10 })
       await tick()
 
       const heading = doc_query(`#intro`)
@@ -457,10 +440,7 @@ describe(`Toc`, () => {
     document.body.innerHTML = `<h2>Visible heading</h2>`
     const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
 
-    mount(Toc, {
-      target: document.body,
-      props: { warnOnEmpty: true, ...props },
-    })
+    mount_toc({ warnOnEmpty: true, ...props })
     await tick()
 
     expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
@@ -469,52 +449,45 @@ describe(`Toc`, () => {
     expect(doc_query(`aside.toc`).getAttribute(`hidden`)).toBe(``)
   })
 
-  describe.each([undefined, `foobar`, `h2`, `h4`])(
-    `with headingSelector='%s'`,
-    (headingSelector) => {
-      test(`autoHide=true hides ToC when no headings match`, async () => {
-        setup_empty_page()
-        mount(Toc, {
-          target: document.body,
-          props: { headingSelector, autoHide: true },
-        })
-        await tick()
+  // no selector below matches anything on setup_empty_page ('h2' only hits the excluded one)
+  test.each(
+    [undefined, `foobar`, `h2`, `h4`].flatMap((headingSelector) =>
+      [true, false].map((autoHide) => ({ headingSelector, autoHide })),
+    ),
+  )(
+    `autoHide=$autoHide with headingSelector='$headingSelector' on an empty page`,
+    async ({ headingSelector, autoHide }) => {
+      setup_empty_page()
+      mount_toc({ headingSelector, autoHide })
+      await tick()
 
-        const node = doc_query(`aside.toc`)
-        expect(node).toBeInstanceOf(HTMLElement)
-        expect(node.getAttribute(`aria-hidden`)).toBe(`true`)
-        expect(node.className).toContain(`hidden`)
-        expect(node.getAttribute(`hidden`)).toBe(``)
-      })
-
-      test(`autoHide=false keeps ToC visible when no headings match`, async () => {
-        setup_empty_page()
-        mount(Toc, {
-          target: document.body,
-          props: { headingSelector, autoHide: false },
-        })
-        await tick()
-
-        const node = doc_query(`aside.toc`)
-        expect(node).toBeInstanceOf(HTMLElement)
-        expect(node.getAttribute(`aria-hidden`)).toBe(`false`)
-        expect(node.className).not.toContain(`hidden`)
-        expect(node.getAttribute(`hidden`)).toBeNull()
-      })
+      const node = doc_query(`aside.toc`)
+      expect(node.getAttribute(`aria-hidden`)).toBe(String(autoHide))
+      expect(node.classList.contains(`hidden`)).toBe(autoHide)
+      expect(node.getAttribute(`hidden`)).toBe(autoHide ? `` : null)
     },
   )
 
-  test(`console.warns when empty and warnOnEmpty=true`, async () => {
+  test(`warnOnEmpty=true warns exactly once, even across later mutations`, async () => {
     const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
-    mount(Toc, { target: document.body, props: { warnOnEmpty: true } })
+    mount_toc({ warnOnEmpty: true })
     await tick()
     const msg = `svelte-toc found no headings for headingSelector=':is(h2, h3, h4)' after applying excludeSelector='.toc-exclude'. Hiding table of contents.`
-    expect(warn_mock).toHaveBeenCalledWith(msg)
+    expect(warn_mock).toHaveBeenCalledExactlyOnceWith(msg)
+
+    // rendering the ToC itself and any later unrelated childList mutation both notify the
+    // MutationObserver. the empty heading set is unchanged, so neither may rebuild and re-warn
+    document.body.append(document.createElement(`p`))
+    await tick()
+    document.body.append(document.createElement(`p`))
+    await tick()
+
+    expect(warn_mock).toHaveBeenCalledExactlyOnceWith(msg)
   })
 
   test(`no console.warn when warnOnEmpty=false`, () => {
     const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
-    mount(Toc, { target: document.body, props: { warnOnEmpty: false } })
+    mount_toc({ warnOnEmpty: false })
     expect(warn_mock).not.toHaveBeenCalled()
   })
 
@@ -526,7 +499,7 @@ describe(`Toc`, () => {
       <h4>Heading 4</h4>
     `
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     const toc_list = doc_query(`aside.toc > nav > ol`)
@@ -539,45 +512,25 @@ describe(`Toc`, () => {
     expect(lis[2].style.marginLeft).toContain(`calc(2 *`)
   })
 
-  // heading_levels [1,2,3,4] has 3 matches for :is(h2,h3,h4), so minItems 1-3 render
-  test.each([[1], [2], [3]])(
-    `renders TOC when minItems=%s and enough headings match`,
-    async (minItems) => {
-      document.body.innerHTML = [1, 2, 3, 4]
-        .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
-        .join(``)
-
-      mount(Toc, {
-        target: document.body,
-        props: { headingSelector: `:is(h2, h3, h4)`, minItems },
-      })
-      await tick()
-
-      const toc_list = doc_query(`aside.toc > nav > ol`)
-      expect(toc_list.children.length).toBeGreaterThanOrEqual(minItems)
-    },
-  )
-
-  // heading_levels [1,2,3,4] has 3 matches, so minItems=4 hides; [1,5,6] has 0 matches
+  // :is(h2, h3, h4) matches 3 of levels [1, 2, 3, 4] and none of [1, 5, 6]
   test.each([
-    [[1, 2, 3, 4], 4],
-    [[1, 5, 6], 1],
-    [[1, 5, 6], 2],
+    [[1, 2, 3, 4], 1, 3],
+    [[1, 2, 3, 4], 3, 3],
+    [[1, 2, 3, 4], 4, 0],
+    [[1, 5, 6], 1, 0],
   ])(
-    `hides TOC when fewer than minItems headings match (levels=%j, minItems=%s)`,
-    async (heading_levels, minItems) => {
-      document.body.innerHTML = heading_levels
-        .map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`)
-        .join(``)
+    `levels=%j with minItems=%s renders %s items`,
+    async (levels, minItems, expected) => {
+      set_body(levels.map((lvl) => `<h${lvl}>Heading ${lvl}</h${lvl}>`).join(``))
 
-      mount(Toc, {
-        target: document.body,
-        props: { headingSelector: `:is(h2, h3, h4)`, minItems },
-      })
+      mount_toc({ headingSelector: `:is(h2, h3, h4)`, minItems })
       await tick()
 
-      const nav = document.querySelector(`aside.toc nav`)
-      expect(nav).toBeNull()
+      // below minItems the whole nav is dropped rather than rendered empty
+      expect(document.querySelectorAll(`aside.toc > nav > ol > li`)).toHaveLength(
+        expected,
+      )
+      expect(document.querySelector(`aside.toc nav`) === null).toBe(expected === 0)
     },
   )
 
@@ -588,10 +541,7 @@ describe(`Toc`, () => {
   ])(
     `should handle custom breakpoint with small=%i, breakpoint=%i, large=%i`,
     async (smaller, breakpoint, larger) => {
-      mount(Toc, {
-        target: document.body,
-        props: { breakpoint },
-      })
+      mount_toc({ breakpoint })
 
       set_window_width(larger)
 
@@ -612,10 +562,7 @@ describe(`Toc`, () => {
     ensure_content_for_toc_elements()
     const on_open_change = vi.fn<OpenChangeHandler>()
 
-    mount(Toc, {
-      target: document.body,
-      props: { onOpenChange: on_open_change, open: false },
-    })
+    mount_toc({ onOpenChange: on_open_change, open: false })
     await tick()
 
     expect(on_open_change).toHaveBeenCalledExactlyOnceWith(
@@ -652,110 +599,64 @@ describe(`Toc`, () => {
     )
   })
 
-  test(`should toggle mobile ToC visibility`, async () => {
+  test(`mobile button opens the ToC`, async () => {
     globalThis.innerWidth = 600
-    document.body.innerHTML = `
-      <h2>Heading 1</h2>
-      <h2>Heading 2</h2>
-    `
+    set_headings(2)
 
-    mount(Toc, { target: document.body, props: { desktop: false } })
+    mount_toc({ desktop: false })
+    expect(document.querySelector(`aside.toc > nav`)).toBeNull()
 
-    const button = doc_query(`aside.toc button`)
-
-    const nav_before_open = document.querySelector(`aside.toc > nav`)
-    expect(nav_before_open).toBeNull()
-
-    button.click()
+    doc_query(`aside.toc button`).click()
     await tick()
 
-    const nav_after_open = document.querySelector(`aside.toc > nav`)
-    expect(nav_after_open).not.toBeNull()
+    expect(document.querySelector(`aside.toc > nav`)).not.toBeNull()
   })
 
   test(`active heading is scrolled into view and highlighted when opening ToC on mobile`, async () => {
-    const n_headings = 100
-    document.body.innerHTML = Array.from(
-      { length: n_headings },
-      (_, idx) => `<h2 id="heading-${idx + 1}">Heading ${idx + 1}</h2>`,
-    ).join(`\n`)
-
+    set_headings(100)
     globalThis.innerWidth = 600
 
-    mount(Toc, { target: document.body, props: { open: true } })
+    mount_toc({ open: true })
     await tick()
 
-    const active_li = doc_query(`aside.toc ol li.active`)
-    expect(active_li).not.toBeNull()
-    expect(active_li.textContent.trim()).toBe(`Heading ${n_headings}`)
+    expect(doc_query(`aside.toc ol li.active`).textContent.trim()).toBe(`Heading 100`)
   })
 
-  test(`arrow keys navigate the active ToC item when open`, async () => {
-    document.body.innerHTML = `
-      <h2 id="heading-1">Heading 1</h2>
-      <h2 id="heading-2">Heading 2</h2>
-      <h2 id="heading-3">Heading 3</h2>
-      <h2 id="heading-4">Heading 4</h2>
-    `
+  // arrows walk the visible list and stop at its ends rather than wrapping
+  test.each([
+    [
+      `ArrowDown then ArrowUp returns to the start`,
+      4,
+      `heading-1`,
+      [`ArrowDown`, `ArrowUp`],
+      `Heading 1`,
+    ],
+    [`ArrowDown moves to the next item`, 4, `heading-1`, [`ArrowDown`], `Heading 2`],
+    [`ArrowDown holds at the last item`, 2, `heading-2`, [`ArrowDown`], `Heading 2`],
+    [`ArrowUp holds at the first item`, 2, `heading-1`, [`ArrowUp`], `Heading 1`],
+  ] as const)(`%s`, async (_, count, active_id, keys, expected) => {
+    set_headings(count)
     set_window_width(600)
-    mock_active_heading(`heading-1`)
-    mount(Toc, {
-      target: document.body,
-      props: { breakpoint: 10_000, desktop: false, open: true },
-    })
+    mock_active_heading(active_id)
+    mount_toc({ breakpoint: 10_000, desktop: false, open: true })
     await tick()
 
-    const initial_active = doc_query(`aside.toc > nav > ol > li.active`)
-    initial_active.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
-    await tick()
-    doc_query(`aside.toc button`).dispatchEvent(
-      new MouseEvent(`click`, { bubbles: true }),
-    )
-    await tick()
+    for (const key of keys) {
+      globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
+      await tick()
+    }
 
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
-    await tick()
-
-    const after_down = doc_query(`aside.toc > nav > ol > li.active`)
-    expect(after_down.textContent).toBe(`Heading 2`)
-
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowUp` }))
-    await tick()
-
-    const after_up = doc_query(`aside.toc > nav > ol > li.active`)
-    expect(after_up.textContent).toBe(`Heading 1`)
-  })
-
-  test(`arrow keys keep selection at visible list boundaries`, async () => {
-    document.body.innerHTML = `
-      <h2 id="heading-1">Heading 1</h2>
-      <h2 id="heading-2">Heading 2</h2>
-    `
-    set_window_width(600)
-    mock_active_heading(`heading-2`)
-    mount(Toc, {
-      target: document.body,
-      props: { breakpoint: 10_000, desktop: false, open: true },
-    })
-    await tick()
-
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `ArrowDown` }))
-    await tick()
-
-    expect(doc_query(`aside.toc > nav > ol > li.active`).textContent).toBe(`Heading 2`)
+    expect(doc_query(`aside.toc > nav > ol > li.active`).textContent).toBe(expected)
   })
 
   test(`desktop (focused, no hover) arrow keys move focus + selection and Enter follows`, async () => {
-    document.body.innerHTML = `
-      <h2 id="heading-1">Heading 1</h2>
-      <h2 id="heading-2">Heading 2</h2>
-    `
+    set_headings(2)
     set_window_width(1200)
     mock_active_heading(`heading-1`)
     Element.prototype.scrollIntoView = vi.fn<Element[`scrollIntoView`]>()
     const replace_mock = vi.spyOn(history, `replaceState`)
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     doc_query(`aside.toc > nav > ol > li.active > a`).focus()
@@ -781,7 +682,7 @@ describe(`Toc`, () => {
 
   test(`only the active ToC item carries aria-current="location"`, async () => {
     document.body.innerHTML = `<h2 id="a">Heading 1</h2><h2 id="b">Heading 2</h2>`
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     const links = document.querySelectorAll<HTMLAnchorElement>(`aside.toc li > a`)
@@ -795,198 +696,100 @@ describe(`Toc`, () => {
     }
   })
 
+  // a null key means activate by clicking the first item instead of pressing a key
   test.each([
-    [` `, `smooth`, `smooth`],
-    [`Enter`, `smooth`, `smooth`],
-    [` `, `auto`, `auto`],
-    [`Enter`, `auto`, `auto`],
-    [`Enter`, undefined, `smooth`], // default scrollBehavior when prop omitted
+    [`space`, ` `, `smooth`, `smooth`],
+    [`enter`, `Enter`, `smooth`, `smooth`],
+    [`space`, ` `, `auto`, `auto`],
+    [`enter`, `Enter`, `auto`, `auto`],
+    [`enter`, `Enter`, undefined, `smooth`], // default scrollBehavior when prop omitted
+    [`click`, null, `auto`, `auto`],
+    [`click`, null, `smooth`, `smooth`],
   ] as const)(
-    `%s key with scrollBehavior=%s scrolls with behavior %s`,
-    async (key, scroll_behavior, expected_behavior) => {
-      document.body.innerHTML = `
-        <h2 id="heading-1">Heading 1</h2>
-        <h2 id="heading-2">Heading 2</h2>
-      `
+    `%s with scrollBehavior=%s scrolls with behavior %s`,
+    async (_, key, scrollBehavior, expected_behavior) => {
+      set_headings(2)
 
       const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
       Element.prototype.scrollIntoView = scroll_into_view_mock
       const replace_state_mock = vi.spyOn(history, `replaceState`)
 
-      // Use breakpoint higher than JSDOM's default width to simulate mobile mode
-      // On mobile, keyboard events work when open=true (no hover check needed)
-      mount(Toc, {
-        target: document.body,
-        props: {
-          open: true,
-          breakpoint: 2000,
-          ...(scroll_behavior ? { scrollBehavior: scroll_behavior } : {}),
-        },
-      })
+      // breakpoint above the jsdom window width forces mobile mode, where open=true is
+      // enough for keys to be handled (no hover check)
+      mount_toc({ open: true, breakpoint: 2000, scrollBehavior })
       await tick()
 
-      const active_item = doc_query(`aside.toc ol li.active`)
-      expect(active_item).not.toBeNull()
-
-      globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
+      // keys act on the active item, which is the last heading in jsdom; a click picks the first
+      if (key === null) doc_query(`aside.toc ol li`).click()
+      else globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key }))
 
       expect(scroll_into_view_mock).toHaveBeenCalledWith({
         behavior: expected_behavior,
         block: `start`,
       })
-      expect(replace_state_mock).toHaveBeenCalledWith({}, ``, `#heading-2`)
+      const expected_hash = key === null ? `#heading-1` : `#heading-2`
+      expect(replace_state_mock).toHaveBeenCalledWith({}, ``, expected_hash)
     },
   )
 
+  // a null trigger means the key is absent from reactToKeys, so nothing should happen
   test.each([
-    { key: `Escape`, trigger: `escape`, focus_toc: false, default_prevented: true },
-    { key: `Tab`, trigger: `tab`, focus_toc: true, default_prevented: false },
-  ] as const)(
-    `$key key closes ToC on mobile when reactToKeys includes it`,
-    async ({ key, trigger, focus_toc, default_prevented }) => {
-      document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
-      set_window_width(600)
-      const on_open_change = vi.fn<OpenChangeHandler>()
-
-      mount(Toc, {
-        target: document.body,
-        props: { open: true, reactToKeys: [key], onOpenChange: on_open_change },
-      })
-      await tick()
-      on_open_change.mockClear()
-
-      if (focus_toc) doc_query(`aside.toc > nav > ol > li.active > a`).focus()
-      const key_event = new KeyboardEvent(`keydown`, { key, cancelable: true })
-      globalThis.dispatchEvent(key_event)
-      await tick()
-
-      expect(key_event.defaultPrevented).toBe(default_prevented)
-      expect(on_open_change).toHaveBeenCalledExactlyOnceWith(
-        expect.objectContaining({ desktop: false, open: false, trigger }),
-      )
-    },
-  )
-
-  test(`Escape key does nothing when reactToKeys is empty`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2><h2>Heading 2</h2>`
-    globalThis.innerWidth = 600
+    { desc: `Escape closes the mobile ToC`, key: `Escape`, trigger: `escape` },
+    { desc: `Tab out of a focused ToC closes it`, key: `Tab`, trigger: `tab` },
+    { desc: `an empty reactToKeys ignores Escape`, key: `Escape`, trigger: null },
+  ] as const)(`$desc`, async ({ key, trigger }) => {
+    set_headings(2)
+    set_window_width(600)
     const on_open_change = vi.fn<OpenChangeHandler>()
 
-    mount(Toc, {
-      target: document.body,
-      props: { open: true, reactToKeys: [], onOpenChange: on_open_change },
-    })
+    const reactToKeys = trigger === null ? [] : [key]
+    mount_toc({ open: true, reactToKeys, onOpenChange: on_open_change })
     await tick()
     on_open_change.mockClear()
 
-    globalThis.dispatchEvent(new KeyboardEvent(`keydown`, { key: `Escape` }))
+    if (trigger === `tab`) doc_query(`aside.toc > nav > ol > li.active > a`).focus()
+    const key_event = new KeyboardEvent(`keydown`, { key, cancelable: true })
+    globalThis.dispatchEvent(key_event)
     await tick()
 
-    expect(on_open_change).not.toHaveBeenCalled()
-  })
-
-  test(`updates ToC when page content changes`, async () => {
-    document.body.innerHTML = `
-      <div id="content-container">
-        <h2>First Page Heading 1</h2>
-        <h3>First Page Heading 2</h3>
-      </div>
-    `
-
-    mount(Toc, { target: document.body })
-    await tick()
-
-    let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items).toHaveLength(2)
-    expect(toc_items[0].textContent.trim()).toBe(`First Page Heading 1`)
-    expect(toc_items[1].textContent.trim()).toBe(`First Page Heading 2`)
-
-    const container = document.querySelector(`#content-container`)
-    if (container) {
-      container.innerHTML = `
-        <h2>Second Page Heading 1</h2>
-        <h3>Second Page Heading 2</h3>
-        <h4>Second Page Heading 3</h4>
-      `
+    // Tab must stay un-prevented so focus still leaves the ToC
+    expect(key_event.defaultPrevented).toBe(trigger === `escape`)
+    if (trigger === null) expect(on_open_change).not.toHaveBeenCalled()
+    else {
+      expect(on_open_change).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ desktop: false, open: false, trigger }),
+      )
     }
-
-    await tick()
-
-    toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items).toHaveLength(3)
-    expect(toc_items[0].textContent.trim()).toBe(`Second Page Heading 1`)
-    expect(toc_items[1].textContent.trim()).toBe(`Second Page Heading 2`)
-    expect(toc_items[2].textContent.trim()).toBe(`Second Page Heading 3`)
   })
 
-  test.each([`auto`, `smooth`] as const)(
-    `custom scroll behavior %s is applied when clicking ToC items`,
-    async (scroll_behavior) => {
-      document.body.innerHTML = `
-        <h2 id="heading-1">Heading 1</h2>
-        <h2 id="heading-2">Heading 2</h2>
-      `
-
-      const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
-      Element.prototype.scrollIntoView = scroll_into_view_mock
-
-      mount(Toc, {
-        target: document.body,
-        props: {
-          open: true,
-          scrollBehavior: scroll_behavior,
-        },
-      })
-      await tick()
-
-      const toc_item = doc_query(`aside.toc ol li`)
-      toc_item.click()
-
-      expect(scroll_into_view_mock).toHaveBeenCalledWith({
-        behavior: scroll_behavior,
-        block: `start`,
-      })
-    },
-  )
-
-  test(`mutation observer updates ToC when headings change`, async () => {
-    document.body.innerHTML = `
-      <div id="content">
-        <h2 id="initial">Initial Heading</h2>
-      </div>
-    `
+  test(`mutation observer tracks headings added and removed after mount`, async () => {
+    set_body(`<div id="content"><h2 id="initial">Initial Heading</h2></div>`)
     const scroll_into_view_mock = vi.fn<Element[`scrollIntoView`]>()
     Element.prototype.scrollIntoView = scroll_into_view_mock
 
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
-
-    let toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items).toHaveLength(1)
-    expect(toc_items[0].textContent.trim()).toBe(`Initial Heading`)
-    const stale_item = toc_items[0]
+    expect(toc_texts()).toEqual([`Initial Heading`])
+    const stale_item = doc_query(`aside.toc ol li`)
 
     const new_heading = document.createElement(`h3`)
-    new_heading.textContent = `Dynamically Added Heading`
+    new_heading.textContent = `Added Heading`
     doc_query(`#content`).append(new_heading)
-
     await tick()
-
-    toc_items = document.querySelectorAll(`aside.toc > nav > ol > li`)
-    expect(toc_items).toHaveLength(2)
-    expect(toc_items[1].textContent.trim()).toBe(`Dynamically Added Heading`)
+    expect(toc_texts()).toEqual([`Initial Heading`, `Added Heading`])
 
     doc_query(`#initial`).remove()
     await tick()
-    expect(doc_query(`aside.toc ol li`).textContent).toBe(`Dynamically Added Heading`)
+    expect(toc_texts()).toEqual([`Added Heading`])
 
+    // the li captured before the rebuild no longer maps to a live heading, so it can't scroll
     stale_item.dispatchEvent(new MouseEvent(`click`, { bubbles: true }))
     expect(scroll_into_view_mock).not.toHaveBeenCalled()
   })
 
   test(`unrelated DOM mutations skip the heading rebuild while real changes don't`, async () => {
     set_body(`<h2 id="a">Alpha</h2><h2 id="b">Beta</h2>`)
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     // jsdom returns all-zero rects, so set_active_heading picks the last heading
@@ -1027,7 +830,7 @@ describe(`Toc`, () => {
     },
   ])(`heading $desc`, async ({ mutate, expected }) => {
     set_body(`<h2 id="a">Original</h2>`)
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
     expect(doc_query(`aside.toc li`).textContent.trim()).toBe(`Original`)
 
@@ -1043,7 +846,7 @@ describe(`Toc`, () => {
       level: Number(node.nodeName[1]),
       title: node.textContent ?? ``,
     }))
-    mount(Toc, { target: document.body, props: { getHeadingData: get_heading_data } })
+    mount_toc({ getHeadingData: get_heading_data })
     await tick()
     get_heading_data.mockClear()
 
@@ -1060,7 +863,7 @@ describe(`Toc`, () => {
 
   test(`heading id attribute changes update link targets`, async () => {
     set_body(`<h2 id="old">Title</h2>`)
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     expect(doc_query(`aside.toc li > a`).getAttribute(`href`)).toBe(`#old`)
@@ -1073,10 +876,7 @@ describe(`Toc`, () => {
 
   test(`selector-driven attribute changes update heading membership`, async () => {
     set_body(`<h2 class="toc-exclude">Alpha</h2><h2>Beta</h2><h5 id="gamma">Gamma</h5>`)
-    mount(Toc, {
-      target: document.body,
-      props: { headingSelector: `:is(h2, h5[data-toc-heading])` },
-    })
+    mount_toc({ headingSelector: `:is(h2, h5[data-toc-heading])` })
     await tick()
     expect(doc_query(`aside.toc ol`).textContent).toBe(`Beta`)
 
@@ -1089,7 +889,7 @@ describe(`Toc`, () => {
 
   test(`rebinds when a heading element is replaced with identical content`, async () => {
     set_body(`<h2 id="a">Title</h2>`)
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     // a framework re-render can swap in a fresh element with the same id/text; the
@@ -1112,99 +912,70 @@ describe(`Toc`, () => {
     const active_text = () => doc_query(`aside.toc ol li.active`).textContent.trim()
     const scroll_mock = vi.fn<Element[`scrollIntoView`]>()
 
+    // jsdom reports top=0 for every unmocked heading, so plain scroll detection always lands
+    // on the last one. `Heading 3` therefore means scroll_target was released, `Heading 1`
+    // that it still pins the clicked heading.
     beforeEach(() => {
-      document.body.innerHTML = `
-        <h2 id="heading-1">Heading 1</h2>
-        <h2 id="heading-2">Heading 2</h2>
-        <h2 id="heading-3">Heading 3</h2>
-      `
+      set_headings(3)
       scroll_mock.mockClear()
       Element.prototype.scrollIntoView = function (arg) {
         scroll_mock(arg)
       }
     })
 
-    test(`clicking ToC item immediately sets active heading`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
-      await tick()
-
-      // In JSDOM, last heading is initially active (getBoundingClientRect returns 0 for all)
-      expect(active_text()).toBe(`Heading 3`)
-
-      // Click first heading - should be immediately active
-      const first_item = doc_query(`aside.toc ol li`)
-      first_item.click()
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-      expect(scroll_mock).toHaveBeenCalled()
-    })
-
-    test(`scroll events during click-initiated scroll do not change active heading`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
-      await tick()
-
-      // Click first item (differs from JSDOM's default of last)
-      const first_item = doc_query(`aside.toc ol li`)
-      first_item.click()
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // Simulate scroll events - should not change active heading
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-    })
-
-    test(`scrollend clears scroll_target allowing normal detection`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
-      await tick()
-
-      const first_item = doc_query(`aside.toc ol li`)
-      first_item.click()
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // Scroll event while scroll_target set - no change
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // scrollend clears scroll_target, next scroll can update
-      globalThis.dispatchEvent(new Event(`scrollend`))
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
-      expect(active_text()).toBe(`Heading 3`)
-    })
-
-    test(`fallback timeout clears scroll_target when scrollend never fires`, async () => {
-      vi.useFakeTimers()
+    test.each([
+      [`scrollend`, () => globalThis.dispatchEvent(new Event(`scrollend`))],
+      [`the fallback timeout`, () => vi.advanceTimersByTime(1000)],
+    ])(`%s releases scroll_target back to scroll detection`, async (_, release) => {
+      vi.useFakeTimers() // keeps the fallback dormant unless a case advances it
       try {
-        mount(Toc, { target: document.body, props: { open: true } })
+        mount_toc({ open: true })
         await tick()
+        expect(active_text()).toBe(`Heading 3`)
 
         doc_query(`aside.toc ol li`).click()
         await tick()
+        // the clicked heading goes active at once and survives intermediate scrolls
+        expect(active_text()).toBe(`Heading 1`)
+        expect(scroll_mock).toHaveBeenCalledOnce()
+        await scroll()
         expect(active_text()).toBe(`Heading 1`)
 
-        // scroll while scroll_target is set keeps the clicked heading active
-        globalThis.dispatchEvent(new Event(`scroll`))
-        await tick()
-        expect(active_text()).toBe(`Heading 1`)
-
-        // no scrollend fires, so the fallback timeout clears scroll_target after 1s
-        vi.advanceTimersByTime(1000)
-        globalThis.dispatchEvent(new Event(`scroll`))
-        await tick()
-        // JSDOM: all getBoundingClientRect return 0, so last heading becomes active
+        release()
+        await scroll()
         expect(active_text()).toBe(`Heading 3`)
       } finally {
         vi.useRealTimers()
       }
     })
 
+    // a distance to the target that grows past the 50px threshold reads as the user
+    // scrolling away; a shrinking one as the smooth scroll still closing in
+    test.each([
+      [`holds while the smooth scroll closes in`, 2000, [1500, 800, 200], `Heading 1`],
+      [`releases when the user scrolls away`, 150, [150, 500], `Heading 3`],
+    ] as const)(`scroll_target %s`, async (_, initial_top, tops, expected) => {
+      mount_toc({ open: true })
+      await tick()
+
+      let mock_top: number = initial_top
+      vi.spyOn(doc_query(`#heading-1`), `getBoundingClientRect`).mockImplementation(() =>
+        dom_rect({ top: mock_top }),
+      )
+
+      doc_query(`aside.toc ol li`).click()
+      await tick()
+      expect(active_text()).toBe(`Heading 1`)
+
+      for (const top of tops) {
+        mock_top = top
+        await scroll()
+      }
+      expect(active_text()).toBe(expected)
+    })
+
     test(`removing scroll target activates a remaining heading`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
+      mount_toc({ open: true })
       await tick()
 
       doc_query(`aside.toc ol li`).click()
@@ -1218,328 +989,183 @@ describe(`Toc`, () => {
     })
 
     test(`rapid clicks activate last clicked item`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
+      mount_toc({ open: true })
       await tick()
 
       const items = document.querySelectorAll<HTMLLIElement>(`aside.toc ol li`)
-      const item_0 = items[0]
-      const item_1 = items[1]
-      const item_2 = items[2]
-      item_2.click()
-      item_0.click()
-      item_1.click()
+      items[2].click()
+      items[0].click()
+      items[1].click()
       await tick()
 
       expect(active_text()).toBe(`Heading 2`)
       expect(scroll_mock).toHaveBeenCalledTimes(3)
     })
-
-    test(`scroll_target persists when heading far from destination during smooth scroll`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
-      await tick()
-
-      const headings = document.querySelectorAll(`h2`)
-      const first_heading = headings[0]
-
-      // Mock heading starting far from destination (simulating start of smooth scroll)
-      // First call: heading is at y=2000 (far from activeHeadingScrollOffset=100)
-      let mock_top = 2000
-      vi.spyOn(first_heading, `getBoundingClientRect`).mockImplementation(() =>
-        dom_rect({ top: mock_top }),
-      )
-
-      // Click first heading - should be immediately active
-      const first_item = doc_query(`aside.toc ol li`)
-      first_item.click()
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // Simulate scroll events during smooth scroll (heading moving toward destination)
-      // Distance is decreasing, so scroll_target should NOT be cleared
-      mock_top = 1500 // moved closer
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`) // still active, not cleared
-
-      mock_top = 800 // moved even closer
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`) // still active
-
-      mock_top = 200 // almost at destination
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`) // still active
-    })
-
-    test(`scroll_target clears when user manually scrolls away`, async () => {
-      mount(Toc, { target: document.body, props: { open: true } })
-      await tick()
-
-      const headings = document.querySelectorAll(`h2`)
-      const first_heading = headings[0]
-
-      // Start with heading near destination
-      let mock_top = 150
-      vi.spyOn(first_heading, `getBoundingClientRect`).mockImplementation(() =>
-        dom_rect({ top: mock_top }),
-      )
-
-      const first_item = doc_query(`aside.toc ol li`)
-      first_item.click()
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // First scroll event establishes baseline distance
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      expect(active_text()).toBe(`Heading 1`)
-
-      // User manually scrolls away - distance increases significantly (>50px threshold)
-      mock_top = 500 // user scrolled down, heading moved up in viewport
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-      // scroll_target should be cleared, normal detection resumes
-      // In JSDOM with default mocks, last heading becomes active
-      expect(active_text()).toBe(`Heading 3`)
-    })
   })
 })
 
 describe(`hideOnIntersect`, () => {
-  // Mocks getBoundingClientRect. Note: width/height are independent defaults—overlap
-  // detection only uses top/bottom/left/right, so geometry consistency isn't required.
-  const mock_bounding_rect = (element: Element, rect: Partial<DOMRect>) => {
-    vi.spyOn(element, `getBoundingClientRect`).mockReturnValue(
-      dom_rect({
-        top: 0,
-        left: 0,
-        bottom: 100,
-        right: 100,
-        width: 100,
-        height: 100,
-        x: 0,
-        y: 0,
-        ...rect,
-      }),
+  const mock_bounding_rect = (element: Element, rect: Partial<DOMRect>) =>
+    vi.spyOn(element, `getBoundingClientRect`).mockReturnValue(dom_rect(rect))
+
+  const clear_of_toc = { top: 0, bottom: 50, left: 0, right: 1200 }
+  const over_toc = { top: 150, bottom: 250, left: 0, right: 1200 }
+
+  // parks the ToC in the top-right corner so only a banner's vertical extent decides
+  // overlap, then leaves b1 clear of it and b2 wherever the case wants it
+  const setup_banners = async (
+    target: (b1: HTMLElement, b2: HTMLElement) => TocProps[`hideOnIntersect`],
+    {
+      window_width = 1200,
+      b2_rect = over_toc,
+    }: { window_width?: number; b2_rect?: Partial<DOMRect> } = {},
+  ) => {
+    set_body(
+      `<h2>Heading 1</h2><div class="banner" id="b1">B1</div><div class="banner" id="b2">B2</div>`,
     )
+    globalThis.innerWidth = window_width
+    const [b1, b2] = [doc_query(`#b1`), doc_query(`#b2`)]
+
+    mount_toc({ hideOnIntersect: target(b1, b2), open: true })
+    await tick()
+
+    const aside = doc_query(`aside.toc`)
+    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
+    mock_bounding_rect(b1, clear_of_toc)
+    mock_bounding_rect(b2, b2_rect)
+    return { aside, b2 }
   }
 
-  // Parameterized test for overlap detection on desktop
-  test.each([
-    { banner_rect: { top: 150, bottom: 250 }, should_hide: true, desc: `overlapping` },
-    { banner_rect: { top: 0, bottom: 50 }, should_hide: false, desc: `non-overlapping` },
-  ])(
-    `$desc banner: TOC hidden=$should_hide on desktop`,
-    async ({ banner_rect, should_hide }) => {
-      document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
-      globalThis.innerWidth = 1200
+  const is_intersecting = (aside: HTMLElement) => aside.classList.contains(`intersecting`)
 
-      mount(Toc, { target: document.body, props: { hideOnIntersect: `.banner` } })
-      await tick()
+  type IntersectCase = {
+    desc: string
+    target?: (b1: HTMLElement, b2: HTMLElement) => TocProps[`hideOnIntersect`]
+    window_width?: number
+    b2_rect?: Partial<DOMRect>
+    expected: boolean
+    warns?: boolean
+  }
 
-      const aside = doc_query(`aside.toc`)
-      mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
-      mock_bounding_rect(doc_query(`.banner`), { left: 0, right: 1200, ...banner_rect })
-
-      globalThis.dispatchEvent(new Event(`scroll`))
-      await tick()
-
-      expect(aside.classList.contains(`intersecting`)).toBe(should_hide)
+  test.each<IntersectCase>([
+    { desc: `hides the ToC when a banner overlaps it`, expected: true },
+    {
+      desc: `keeps the ToC when no banner overlaps`,
+      b2_rect: clear_of_toc,
+      expected: false,
     },
-  )
-
-  test(`does not hide on mobile even when overlapping`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
-    globalThis.innerWidth = 600
-
-    mount(Toc, {
-      target: document.body,
-      props: { hideOnIntersect: `.banner`, open: true },
-    })
-    await tick()
-
-    const aside = doc_query(`aside.toc`)
-    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 0, right: 200 })
-    mock_bounding_rect(doc_query(`.banner`), {
-      top: 150,
-      bottom: 250,
-      left: 0,
-      right: 600,
-    })
-
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-
-    expect(aside.classList.contains(`intersecting`)).toBe(false)
-  })
-
-  test(`accepts HTMLElement array`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2><div id="b1">B1</div><div id="b2">B2</div>`
-    globalThis.innerWidth = 1200
-
-    const b1 = doc_query(`#b1`)
-    const b2 = doc_query(`#b2`)
-    mount(Toc, { target: document.body, props: { hideOnIntersect: [b1, b2] } })
-    await tick()
-
-    const aside = doc_query(`aside.toc`)
-    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
-    mock_bounding_rect(b1, { top: 0, bottom: 50, left: 0, right: 1200 })
-    mock_bounding_rect(b2, { top: 150, bottom: 250, left: 0, right: 1200 }) // overlaps
-
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-
-    expect(aside.classList.contains(`intersecting`)).toBe(true)
-  })
-
-  test(`does not hide when selector matches nothing`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2>`
-    globalThis.innerWidth = 1200
-
-    mount(Toc, { target: document.body, props: { hideOnIntersect: `.nonexistent` } })
-    await tick()
-
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-
-    expect(doc_query(`aside.toc`).classList.contains(`intersecting`)).toBe(false)
-  })
-
-  test(`invalid hideOnIntersect selector warns and is ignored`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2>`
-    globalThis.innerWidth = 1200
+    { desc: `ignores overlap on mobile`, window_width: 600, expected: false },
+    {
+      desc: `accepts an HTMLElement array`,
+      target: (b1, b2) => [b1, b2],
+      expected: true,
+    },
+    { desc: `ignores a selector matching nothing`, target: () => `.x`, expected: false },
+    {
+      desc: `warns once for an invalid selector`,
+      target: () => `[`,
+      expected: false,
+      warns: true,
+    },
+  ])(`$desc`, async ({ target = () => `.banner`, expected, warns, ...rect }) => {
     const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
+    // explicit undefined still falls back to setup_banners' own defaults
+    const { aside } = await setup_banners(target, {
+      window_width: rect.window_width,
+      b2_rect: rect.b2_rect,
+    })
+    await scroll()
 
-    mount(Toc, { target: document.body, props: { hideOnIntersect: `[` } })
-    await tick()
-
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-
-    expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
-      expect.stringContaining(`invalid hideOnIntersect='['`),
-    )
-    expect(doc_query(`aside.toc`).classList.contains(`intersecting`)).toBe(false)
+    expect(is_intersecting(aside)).toBe(expected)
+    if (warns) {
+      expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
+        expect.stringContaining(`invalid hideOnIntersect='['`),
+      )
+    } else expect(warn_mock).not.toHaveBeenCalled()
   })
 
-  test(`re-shows TOC when overlap ends`, async () => {
-    document.body.innerHTML = `<h2>Heading 1</h2><div class="banner">Banner</div>`
-    globalThis.innerWidth = 1200
+  test(`re-shows the ToC once the overlap ends`, async () => {
+    const { aside, b2 } = await setup_banners(() => `.banner`)
+    await scroll()
+    expect(is_intersecting(aside)).toBe(true)
 
-    mount(Toc, { target: document.body, props: { hideOnIntersect: `.banner` } })
-    await tick()
-
-    const aside = doc_query(`aside.toc`)
-    const banner = doc_query(`.banner`)
-    mock_bounding_rect(aside, { top: 100, bottom: 300, left: 800, right: 1000 })
-    mock_bounding_rect(banner, { top: 150, bottom: 250, left: 0, right: 1200 })
-
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-    expect(aside.classList.contains(`intersecting`)).toBe(true)
-
-    mock_bounding_rect(banner, { top: 500, bottom: 600, left: 0, right: 1200 })
-    globalThis.dispatchEvent(new Event(`scroll`))
-    await tick()
-    expect(aside.classList.contains(`intersecting`)).toBe(false)
+    mock_bounding_rect(b2, { top: 500, bottom: 600, left: 0, right: 1200 })
+    await scroll()
+    expect(is_intersecting(aside)).toBe(false)
   })
 })
 
 describe(`Element Prop Bags`, () => {
+  // shared marker so one assertion covers style pass-through for every element. the class
+  // values deliberately vary (string / array / object) to cover Svelte's class forms.
+  const marker_style = `outline: 1px solid rgb(1, 2, 3);`
+
   const prop_bag_cases = [
     {
       element_name: `aside`,
       prop_name: `asideProps`,
-      bag: {
-        class: [`custom-aside-class`, { 'custom-aside-object-class': true }],
-        style: `color: rgb(255, 0, 0);`,
-        'data-testid': `toc-aside`,
-      },
+      bag: { class: [`custom-class`, { 'custom-object-class': true }] },
       extra_props: { hide: true, autoHide: false },
       selector: `aside.toc`,
-      expected_classes: [`toc`, `custom-aside-class`, `custom-aside-object-class`],
+      expected_classes: [`toc`, `custom-class`, `custom-object-class`],
       expected_attributes: { hidden: ``, 'aria-hidden': `true` },
-      setup: ensure_content_for_toc_elements,
     },
     {
       element_name: `nav`,
       prop_name: `navProps`,
-      bag: {
-        class: `custom-nav-class`,
-        style: `background-color: rgb(0, 0, 255);`,
-        'data-testid': `toc-nav`,
-      },
+      bag: { class: `custom-class` },
       selector: `aside.toc nav`,
-      expected_classes: [`custom-nav-class`],
-      setup: ensure_content_for_toc_elements,
+      expected_classes: [`custom-class`],
     },
     {
       element_name: `title`,
       prop_name: `titleProps`,
-      bag: {
-        class: { 'custom-title-class': true },
-        style: `font-style: italic;`,
-        'data-testid': `toc-title`,
-      },
+      bag: { class: { 'custom-class': true } },
       extra_props: { title: `Test Custom Title` },
       selector: `aside.toc nav .toc-title`,
-      expected_classes: [`toc-title`, `toc-exclude`, `custom-title-class`],
-      setup: ensure_content_for_toc_elements,
+      expected_classes: [`toc-title`, `toc-exclude`, `custom-class`],
     },
     {
       element_name: `ol`,
       prop_name: `olProps`,
-      bag: {
-        class: `custom-ol-class`,
-        style: `list-style-type: square;`,
-        'data-testid': `toc-list`,
-        start: 3,
-        reversed: true,
-      },
+      bag: { class: `custom-class`, start: 3, reversed: true },
       selector: `aside.toc nav ol`,
-      expected_classes: [`custom-ol-class`],
+      expected_classes: [`custom-class`],
       expected_attributes: { start: `3`, reversed: `` },
-      setup: ensure_content_for_toc_elements,
     },
     {
       element_name: `li`,
       prop_name: `liProps`,
-      bag: {
-        class: `custom-li-class`,
-        style: `padding-left: 10px;`,
-        'data-testid': `toc-item`,
-        onclick: vi.fn<() => void>(),
-        value: 7,
-      },
+      bag: { class: `custom-class`, onclick: vi.fn<() => void>(), value: 7 },
       selector: `aside.toc nav ol li`,
-      expected_classes: [`active`, `custom-li-class`],
+      expected_classes: [`active`, `custom-class`],
       expected_attributes: { value: `7` },
       expected_open_changes: 0,
-      setup: ensure_single_heading,
+      setup: () => set_body(`<h2>Single Heading</h2>`),
     },
     {
       element_name: `open button`,
       prop_name: `openButtonProps`,
       bag: {
-        class: `custom-button-class`,
-        style: `border: 1px solid rgb(0, 128, 0);`,
-        'data-testid': `toc-open-button`,
+        class: `custom-class`,
         disabled: true,
         onclick: vi.fn<(event: MouseEvent) => void>((event) => event.preventDefault()),
         type: `button`,
       },
       extra_props: { desktop: false },
       selector: `aside.toc > button`,
-      expected_classes: [`custom-button-class`],
+      expected_classes: [`custom-class`],
       expected_attributes: {
         'aria-label': `Open table of contents`,
         disabled: ``,
         type: `button`,
       },
       expected_open_changes: 0,
-      setup: ensure_mobile_button_is_visible,
+      // the button only renders on mobile, and only once there are headings to list
+      setup: () => {
+        ensure_content_for_toc_elements()
+        set_window_width(500)
+      },
     },
   ]
 
@@ -1553,28 +1179,26 @@ describe(`Element Prop Bags`, () => {
       expected_classes,
       expected_attributes = {},
       expected_open_changes,
-      setup,
+      setup = ensure_content_for_toc_elements,
     }) => {
       setup()
       const has_user_click = `onclick` in bag
       const user_click = has_user_click ? bag.onclick : vi.fn<() => void>()
       const on_open_change = vi.fn<OpenChangeHandler>()
       const expected_open_change_count = expected_open_changes ?? (has_user_click ? 1 : 0)
+      const full_bag = { ...bag, style: marker_style, 'data-testid': prop_name }
 
-      mount(Toc, {
-        target: document.body,
-        props: {
-          ...extra_props,
-          ...(has_user_click ? { onOpenChange: on_open_change } : {}),
-          [prop_name]: bag,
-        },
+      mount_toc({
+        ...extra_props,
+        ...(has_user_click ? { onOpenChange: on_open_change } : {}),
+        [prop_name]: full_bag,
       })
       await tick()
       on_open_change.mockClear()
 
       const element = doc_query(selector)
-      expect(element.getAttribute(`style`)).toContain(bag.style)
-      expect(element.getAttribute(`data-testid`)).toBe(bag[`data-testid`])
+      expect(element.getAttribute(`style`)).toContain(marker_style)
+      expect(element.getAttribute(`data-testid`)).toBe(prop_name)
       for (const cls of expected_classes) {
         expect(element.classList.contains(cls)).toBe(true)
       }
@@ -1598,10 +1222,7 @@ describe(`Element Prop Bags`, () => {
       `<h3>Nested Heading</h3>`,
     ])
 
-    mount(Toc, {
-      target: document.body,
-      props: { liProps: { style: `padding-left: 10px;` } },
-    })
+    mount_toc({ liProps: { style: `padding-left: 10px;` } })
     await tick()
 
     const style_attribute = doc_query(`aside.toc nav ol li:nth-child(2)`).getAttribute(
@@ -1650,7 +1271,7 @@ describe(`Element Prop Bags`, () => {
     async ({ declaration_pattern, expects_where, selector_pattern = /.*/ }) => {
       document.body.innerHTML = `<h2>Heading 1</h2><h3>Heading 2</h3>`
 
-      mount(Toc, { target: document.body })
+      mount_toc()
       await tick()
 
       const selector_line = find_matching_css_selector(
@@ -1666,20 +1287,10 @@ describe(`Element Prop Bags`, () => {
 describe(`collapseSubheadings`, () => {
   test(`all items visible when collapseSubheadings=false`, async () => {
     setup_nested_headings()
-    mount(Toc, { target: document.body })
+    mount_toc()
     await tick()
 
     expect(get_collapsed_states()).toEqual(Array.from({ length: 8 }, () => false))
-  })
-
-  test(`top-level h2s never collapse with collapseSubheadings=true`, async () => {
-    setup_nested_headings()
-    mount(Toc, { target: document.body, props: { collapseSubheadings: true } })
-    await tick()
-
-    const states = get_collapsed_states()
-    expect(states[0]).toBe(false) // Section 1 (h2)
-    expect(states[6]).toBe(false) // Section 2 (h2)
   })
 
   // Parameterized test for collapse behavior with different modes and active headings
@@ -1720,7 +1331,7 @@ describe(`collapseSubheadings`, () => {
   ] as const)(`%s`, async (_, mode, active_id, expected) => {
     setup_nested_headings()
     mock_active_heading(active_id)
-    mount(Toc, { target: document.body, props: { collapseSubheadings: mode } })
+    mount_toc({ collapseSubheadings: mode })
     await tick()
 
     expect(get_collapsed_states()).toEqual(expected)
@@ -1729,7 +1340,7 @@ describe(`collapseSubheadings`, () => {
   test(`collapsed items have aria-hidden=true and unfocusable links`, async () => {
     setup_nested_headings()
     mock_active_heading(`section-1`)
-    mount(Toc, { target: document.body, props: { collapseSubheadings: true } })
+    mount_toc({ collapseSubheadings: true })
     await tick()
 
     const items = document.querySelectorAll<HTMLLIElement>(`aside.toc > nav > ol > li`)
@@ -1742,19 +1353,24 @@ describe(`collapseSubheadings`, () => {
     expect(visible.querySelector(`a`)?.getAttribute(`tabindex`)).toBe(`0`)
   })
 
-  test(`first heading becomes active on mount, revealing its children`, async () => {
+  test(`unmocked mount expands only the active heading's ancestor chain`, async () => {
     setup_nested_headings()
-    // No mock - tests that set_active_heading() correctly selects first heading on mount
-    // In JSDOM, getBoundingClientRect returns 0 for all elements, so last heading would
-    // be selected by scroll logic, but idx===0 fallback ensures first heading is always set
-    mount(Toc, { target: document.body, props: { collapseSubheadings: true } })
+    // no rect mock: jsdom reports top=0 for every heading, so set_active_heading walks
+    // last-to-first and stops immediately, making the trailing h3 (Sub 2.1) active
+    mount_toc({ collapseSubheadings: true })
     await tick()
 
-    // set_active_heading sets last heading active in JSDOM (top=0 < offset=100)
-    // This tests that collapse logic works correctly with that active state
-    const states = get_collapsed_states()
-    // At least the top-level h2s should never be collapsed
-    expect(states[0]).toBe(false) // Section 1 (h2)
-    expect(states[6]).toBe(false) // Section 2 (h2)
+    // both h2s stay open (top level never collapses) plus Sub 2.1 as the active item;
+    // everything under the unrelated Section 1 subtree collapses
+    expect(get_collapsed_states()).toEqual([
+      false, // Section 1 (h2, top level)
+      true, // Sub 1.1
+      true, // Detail 1.1.1
+      true, // Detail 1.1.2
+      true, // Sub 1.2
+      true, // Detail 1.2.1
+      false, // Section 2 (h2, top level)
+      false, // Sub 2.1 (active)
+    ])
   })
 })
