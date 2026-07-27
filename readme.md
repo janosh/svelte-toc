@@ -18,7 +18,7 @@ Sticky responsive table of contents component. <strong class="hide-in-docs"><a h
 ## 🔨 &nbsp; Installation
 
 ```sh
-npm install --dev svelte-toc
+npm install --save-dev svelte-toc
 ```
 
 ## 📙 &nbsp; Usage
@@ -296,6 +296,8 @@ Full list of props and bindable variables for this component (all of them option
 
    Example with `collapseSubheadings="h3"`: When an h2 section is active, all h3s in that section are visible, and ALL h4s under those h3s expand together (rather than each h4 requiring its h3 to be active).
 
+   Any other string (reachable only from untyped callers) logs a console warning and disables collapsing.
+
 1. ```ts
    slugifyHeading: SlugifyHeading = (node, idx) => /* slugified heading text */
    ```
@@ -367,14 +369,14 @@ The HTML structure of this component is
 - `aside.toc > nav`
   - `overflow: var(--toc-overflow, auto)`
   - `max-height: var(--toc-max-height, 90vh)`: Height beyond which ToC will use scrolling instead of growing vertically.
-  - `padding: var(--toc-padding, 1em 1em 0)`
+  - `padding: var(--toc-padding, 1em 1em 0 3em)`
 - `aside.toc > nav > ol`
   - `list-style: var(--toc-ol-list-style, none)`
   - `padding: var(--toc-ol-padding, 0)`
   - `margin: var(--toc-ol-margin)`
 - `.toc-title`
   - `padding: var(--toc-title-padding)`
-  - `margin: var(--toc-title-margin)`
+  - `margin: var(--toc-title-margin, 1em 0)`
   - `font-size: var(--toc-title-font-size, initial)`
   - `color: var(--toc-title-color)`
   - `font-weight: var(--toc-title-font-weight)`
@@ -395,10 +397,10 @@ The HTML structure of this component is
   - `outline: var(--toc-focus-outline, 2px solid currentColor)`: Focus outline for keyboard navigation.
   - `outline-offset: var(--toc-focus-outline-offset, 1px)`
 - `aside.toc > nav > ol > li:hover`
-  - `color: var(--toc-li-hover-color, cornflowerblue)`: Text color of hovered headings.
+  - `color: var(--toc-li-hover-color)`: Text color of hovered headings.
   - `background: var(--toc-li-hover-bg)`
 - `aside.toc > nav > ol > li.active`
-  - `background: var(--toc-active-bg, cornflowerblue)`
+  - `background: var(--toc-active-bg)`
   - `color: var(--toc-active-color)`: Text color of the currently active heading (the one nearest but above top side of current viewport scroll position).
   - `font: var(--toc-active-li-font)`
   - `border: var(--toc-active-border)`
@@ -447,7 +449,7 @@ Example:
 
 ## 🧪 &thinsp; Coverage
 
-Run `pnpm exec vitest run --coverage` for the current coverage report.
+Run `pnpm exec vp test --run --coverage` for the current coverage report.
 
 ## 🆕 &nbsp; Changelog
 

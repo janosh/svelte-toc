@@ -16,6 +16,7 @@ test.each([
   expect(unique_id(base_id, new Set(used_ids))).toBe(expected)
 })
 
+// h2, h3, h4, h4, h3, h4, h2, h3
 const nested_levels = [2, 3, 4, 4, 3, 4, 2, 3]
 
 test.each([
@@ -37,8 +38,3 @@ test.each([
     )
   },
 )
-
-test(`get_heading_visibility test data mirrors h2-h4 nesting`, () => {
-  // h2, h3, h4, h4, h3, h4, h2, h3
-  expect(nested_levels).toEqual([2, 3, 4, 4, 3, 4, 2, 3])
-})
