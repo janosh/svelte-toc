@@ -15,6 +15,22 @@
 
 Sticky responsive table of contents component. <strong class="hide-in-docs"><a href="https://janosh.github.io/svelte-toc">Live Demo</a></strong>
 
+> [!IMPORTANT]
+> **This package has moved.** `Toc` now ships as part of
+> [`svelte-widgets`](https://github.com/janosh/svelte-widgets), together with
+> `MultiSelect`, `CommandMenu`, `Masonry` and a dozen other components.
+>
+> ```sh
+> npm install --save-dev svelte-widgets
+> ```
+>
+> ```diff
+> - import Toc from 'svelte-toc'
+> + import { Toc } from 'svelte-widgets'
+> ```
+>
+> This repo is archived and `svelte-toc` will receive no further updates.
+
 ## 🔨 &nbsp; Installation
 
 ```sh
