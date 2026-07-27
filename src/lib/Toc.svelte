@@ -131,6 +131,10 @@
   let selector_validity: Record<string, boolean> = {}
   let last_reported_open: boolean | undefined = undefined
   let heading_data: TocHeadingData[] = $state([])
+  // whether update_toc_headings has completed a pass. without this, a page that genuinely
+  // has no headings can't tell its first run apart from "nothing changed", since both
+  // compare an empty query result against the empty initial headings array.
+  let headings_initialized = false
 
   // helper to clear scroll_target state and cancel fallback timeout
   function clear_scroll_target() {
@@ -177,14 +181,15 @@
   let levels: number[] = $derived(heading_data.map(({ level }) => level))
   let min_level: number = $derived(levels.length ? Math.min(...levels) : 0)
 
+  function get_collapse_threshold(mode: CollapseMode): number {
+    if (mode === true) return 6
+    if (typeof mode !== `string`) return Infinity
+    const heading_level = Number(mode.slice(1))
+    return Math.trunc(heading_level)
+  }
+
   // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
-  let collapse_threshold: number = $derived(
-    collapseSubheadings === true
-      ? 6
-      : typeof collapseSubheadings === `string`
-        ? parseInt(collapseSubheadings.slice(1), 10)
-        : Infinity,
-  )
+  let collapse_threshold: number = $derived(get_collapse_threshold(collapseSubheadings))
 
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
@@ -212,7 +217,7 @@
     check_toc_overlap()
   })
 
-  function close(event: MouseEvent) {
+  const close = (event: MouseEvent) => {
     if (!(event.target instanceof Node) || !aside?.contains(event.target)) {
       set_open(false, `outside-click`)
     }
@@ -232,14 +237,11 @@
     return null
   }
 
-  function focus_toc_item(node: HTMLLIElement | null) {
-    const focus_target = first_custom_interactive(node) ?? node
-    focus_target?.focus({ preventScroll: true })
-  }
+  const first_custom_interactive = (node: HTMLLIElement | null) =>
+    node?.querySelector<HTMLElement>(custom_interactive_selector) ?? null
 
-  function first_custom_interactive(node: HTMLLIElement | null) {
-    return node?.querySelector<HTMLElement>(custom_interactive_selector) ?? null
-  }
+  const focus_toc_item = (node: HTMLLIElement | null) =>
+    (first_custom_interactive(node) ?? node)?.focus({ preventScroll: true })
 
   function focus_is_in_custom_interactive_toc_item() {
     if (!tocItem || !(document.activeElement instanceof HTMLElement)) return false
@@ -256,9 +258,8 @@
     )
   }
 
-  function href_for_id(id: string | undefined): string | undefined {
-    return id ? `#${encodeURIComponent(id)}` : undefined
-  }
+  const href_for_id = (id: string | undefined) =>
+    id ? `#${encodeURIComponent(id)}` : undefined
 
   function activate_heading(node: HTMLHeadingElement, idx = headings.indexOf(node)) {
     if (idx === -1) return
@@ -316,15 +317,13 @@
     )
   }
 
-  function element_matches_heading_selector(element: Element | null) {
-    if (!element || !selector_is_valid(`headingSelector`, headingSelector)) {
-      return false
-    }
-    return element.closest(headingSelector) !== null
-  }
+  const element_matches_heading_selector = (element: Element | null) =>
+    element !== null &&
+    selector_is_valid(`headingSelector`, headingSelector) &&
+    element.closest(headingSelector) !== null
 
-  function should_update_for_mutations(records: MutationRecord[]) {
-    return records.some((record) => {
+  const should_update_for_mutations = (records: MutationRecord[]) =>
+    records.some((record) => {
       if (record.type === `childList`) return true
       if (record.type === `characterData`) {
         return element_matches_heading_selector(record.target.parentElement)
@@ -340,7 +339,6 @@
           headings.some((heading) => target.contains(heading)))
       )
     })
-  }
 
   function normalize_heading_data(
     heading: HTMLHeadingElement,
@@ -385,10 +383,11 @@
 
     // Use untrack to avoid creating dependencies on the state we're about to modify
     untrack(() => {
-      // skip state churn when an unrelated DOM mutation left the heading set unchanged
+      // skip state churn when an unrelated DOM mutation left the heading set unchanged.
+      // this must also hold for the empty set, or every mutation on a heading-less page
+      // re-runs the whole rebuild and repeats the warnOnEmpty warning.
       const unchanged =
-        !invalid_selector &&
-        heading_entries.length > 0 &&
+        headings_initialized &&
         heading_entries.length === headings.length &&
         heading_entries.every(
           ({ heading, data }, idx) =>
@@ -398,6 +397,7 @@
             data.title === heading_data[idx]?.title,
         )
       if (unchanged) return
+      headings_initialized = true
 
       headings = heading_entries.map(({ heading }) => heading)
       heading_data = heading_entries.map(({ data }) => data)
@@ -534,12 +534,15 @@
     }
   }
 
-  // ensure active ToC is in view when ToC opens on mobile
+  // ensure active ToC is in view when ToC opens on mobile. untracked because both calls
+  // read (and set_active_heading writes) activeTocLi: tracking it would re-run this on
+  // every arrow-key move and snap the selection straight back to the scroll position.
   $effect(() => {
-    if (open && nav) {
+    if (!open || !nav) return
+    untrack(() => {
       set_active_heading()
       scroll_to_active_toc_item(`instant`)
-    }
+    })
   })
 
   // enable keyboard navigation
