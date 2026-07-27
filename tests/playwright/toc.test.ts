@@ -6,27 +6,26 @@ const desktop_viewport = { width: 1400, height: 800 }
 const trimmed_texts = async (locator: Locator): Promise<string[]> =>
   (await locator.allTextContents()).map((text) => text.trim())
 
-// waits until scrollY stops changing, which is when the browser fires scrollend and the
-// component clears scroll_target. polling beats a fixed sleep tied to its fallback timeout.
-type ScrollProbe = { last_y?: number; stable_polls?: number }
-
-const wait_for_scroll_idle = async (page: Page) => {
-  // clear any counters left by an earlier call so this one can't pass on stale state
-  await page.evaluate(() => {
-    delete (globalThis as ScrollProbe).last_y
-    delete (globalThis as ScrollProbe).stable_polls
-  })
-  await page.waitForFunction(
-    () => {
-      const probe = globalThis as ScrollProbe
-      probe.stable_polls = probe.last_y === scrollY ? (probe.stable_polls ?? 0) + 1 : 0
-      probe.last_y = scrollY
-      return probe.stable_polls >= 3
-    },
-    null,
-    { polling: 100 },
+// resolves once scrollY holds steady for three polls, by which point the browser has
+// fired scrollend and the component has cleared scroll_target. beats a fixed sleep tied
+// to that fallback timeout. counters live in the page callback, so repeat calls can't
+// inherit stale state.
+const wait_for_scroll_idle = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        let last_y = NaN
+        let stable_polls = 0
+        const timer = setInterval(() => {
+          stable_polls = scrollY === last_y ? stable_polls + 1 : 0
+          last_y = scrollY
+          if (stable_polls >= 3) {
+            clearInterval(timer)
+            resolve()
+          }
+        }, 100)
+      }),
   )
-}
 
 test.describe(`collapseSubheadings`, () => {
   // Helper to scroll to element and wait for TOC to update

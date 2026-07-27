@@ -92,13 +92,12 @@ const get_collapsed_states = () =>
   )
 
 const find_matching_css_selector = (style_text: string, declaration_pattern: RegExp) => {
-  const matching_block = Array.from(
-    style_text.matchAll(/(?<selector>[^{}]+)\{(?<block>[^{}]+)\}/g),
-  ).find((match) => declaration_pattern.test(match.groups?.block ?? ``))
-  if (!matching_block) throw new Error(`No CSS block matched ${declaration_pattern}`)
-  const selector = matching_block.groups?.selector
-  if (!selector) throw new Error(`No CSS selector matched ${declaration_pattern}`)
-  return selector.trim()
+  for (const { groups } of style_text.matchAll(
+    /(?<selector>[^{}]+)\{(?<block>[^{}]+)\}/g,
+  )) {
+    if (groups && declaration_pattern.test(groups.block)) return groups.selector.trim()
+  }
+  throw new Error(`No CSS block matched ${declaration_pattern}`)
 }
 
 beforeAll(() => {
@@ -1067,22 +1066,21 @@ describe(`hideOnIntersect`, () => {
       expected: false,
       warns: true,
     },
-  ])(`$desc`, async ({ target = () => `.banner`, expected, warns, ...rect }) => {
-    const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
-    // explicit undefined still falls back to setup_banners' own defaults
-    const { aside } = await setup_banners(target, {
-      window_width: rect.window_width,
-      b2_rect: rect.b2_rect,
-    })
-    await scroll()
+  ])(
+    `$desc`,
+    async ({ target = () => `.banner`, expected, warns, window_width, b2_rect }) => {
+      const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
+      const { aside } = await setup_banners(target, { window_width, b2_rect })
+      await scroll()
 
-    expect(is_intersecting(aside)).toBe(expected)
-    if (warns) {
-      expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
-        expect.stringContaining(`invalid hideOnIntersect='['`),
-      )
-    } else expect(warn_mock).not.toHaveBeenCalled()
-  })
+      expect(is_intersecting(aside)).toBe(expected)
+      if (warns) {
+        expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
+          expect.stringContaining(`invalid hideOnIntersect='['`),
+        )
+      } else expect(warn_mock).not.toHaveBeenCalled()
+    },
+  )
 
   test(`re-shows the ToC once the overlap ends`, async () => {
     const { aside, b2 } = await setup_banners(() => `.banner`)
