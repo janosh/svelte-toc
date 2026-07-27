@@ -1,5 +1,5 @@
 import Toc from '$lib'
-import type { OpenChangeHandler } from '$lib'
+import type { CollapseMode, OpenChangeHandler } from '$lib'
 import type { ComponentProps } from 'svelte'
 import { createRawSnippet, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'vitest'
@@ -1350,6 +1350,27 @@ describe(`collapseSubheadings`, () => {
     expect(visible.getAttribute(`aria-hidden`)).toBeNull()
     expect(visible.querySelector(`a`)?.getAttribute(`tabindex`)).toBe(`0`)
   })
+
+  test.each([`h9`, `hx`, `3`])(
+    `invalid collapseSubheadings='%s' warns once and collapses nothing`,
+    async (mode) => {
+      setup_nested_headings()
+      mock_active_heading(`section-1`)
+      const warn_mock = vi.spyOn(console, `warn`).mockImplementation(() => {})
+
+      // CollapseMode forbids these, so the cast stands in for an untyped JS caller
+      mount_toc({ collapseSubheadings: mode as CollapseMode })
+      await tick()
+
+      expect(warn_mock).toHaveBeenCalledExactlyOnceWith(
+        `svelte-toc received invalid collapseSubheadings='${mode}'. Not collapsing subheadings.`,
+      )
+      // falling back to Infinity alone would still collapse, since the template and the
+      // active-index lookup only test the mode for truthiness
+      expect(get_collapsed_states()).toEqual(Array.from({ length: 8 }, () => false))
+      expect(doc_query(`aside.toc`).classList.contains(`collapsible`)).toBe(false)
+    },
+  )
 
   test(`unmocked mount expands only the active heading's ancestor chain`, async () => {
     setup_nested_headings()

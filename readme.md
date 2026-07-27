@@ -296,6 +296,8 @@ Full list of props and bindable variables for this component (all of them option
 
    Example with `collapseSubheadings="h3"`: When an h2 section is active, all h3s in that section are visible, and ALL h4s under those h3s expand together (rather than each h4 requiring its h3 to be active).
 
+   Any other string (reachable only from untyped callers) logs a console warning and disables collapsing.
+
 1. ```ts
    slugifyHeading: SlugifyHeading = (node, idx) => /* slugified heading text */
    ```

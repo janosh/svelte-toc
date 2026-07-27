@@ -129,6 +129,8 @@
   let prev_scroll_target_distance: number = Infinity
   // cache selector validity (keyed by `name:selector`) to avoid re-querying every update
   let selector_validity: Record<string, boolean> = {}
+  // tracks which invalid collapseSubheadings values were already warned about
+  let collapse_mode_warned: Record<string, boolean> = {}
   let last_reported_open: boolean | undefined = undefined
   let heading_data: TocHeadingData[] = $state([])
   // whether update_toc_headings has completed a pass. without this, a page that genuinely
@@ -181,20 +183,40 @@
   let levels: number[] = $derived(heading_data.map(({ level }) => level))
   let min_level: number = $derived(levels.length ? Math.min(...levels) : 0)
 
+  // the CollapseMode type only permits h2-h6, so a bad level is reachable only from
+  // untyped callers. warn (once per value, like selector_is_valid) and fall back to no
+  // collapsing rather than quietly picking some threshold off a NaN.
+  function normalize_collapse_mode(mode: CollapseMode): CollapseMode {
+    if (typeof mode !== `string`) return mode
+    const heading_level = Number(mode.slice(1))
+    const valid = mode[0] === `h` && [2, 3, 4, 5, 6].includes(heading_level)
+    if (valid) return mode
+    if (!collapse_mode_warned[mode]) {
+      collapse_mode_warned[mode] = true
+      console.warn(
+        `svelte-toc received invalid collapseSubheadings='${mode}'. Not collapsing subheadings.`,
+      )
+    }
+    return false
+  }
+
+  // every consumer reads this rather than the raw prop, so an invalid value disables
+  // collapsing everywhere instead of only zeroing out the threshold
+  let collapse_mode: CollapseMode = $derived(normalize_collapse_mode(collapseSubheadings))
+
   function get_collapse_threshold(mode: CollapseMode): number {
     if (mode === true) return 6
     if (typeof mode !== `string`) return Infinity
-    const heading_level = Number(mode.slice(1))
-    return Math.trunc(heading_level)
+    return Number(mode.slice(1))
   }
 
   // Collapse threshold: true -> 6 (full nesting), 'h3' -> 3, false -> Infinity
-  let collapse_threshold: number = $derived(get_collapse_threshold(collapseSubheadings))
+  let collapse_threshold: number = $derived(get_collapse_threshold(collapse_mode))
 
   // Memoized visibility array - computed once per render cycle
   let heading_visibility: boolean[] = $derived.by(() => {
     const active_idx =
-      collapseSubheadings && activeHeading ? headings.indexOf(activeHeading) : null
+      collapse_mode && activeHeading ? headings.indexOf(activeHeading) : null
     return get_heading_visibility(levels, active_idx, collapse_threshold)
   })
 
@@ -629,7 +651,7 @@
 <aside
   {...asideProps}
   class={[`toc`, asideProps.class]}
-  class:collapsible={collapseSubheadings}
+  class:collapsible={collapse_mode}
   class:desktop
   class:hidden={hide}
   class:intersecting
@@ -677,7 +699,7 @@
       <ol {...olProps}>
         {#each headings as heading, idx (`${idx}-${heading.id}`)}
           {@const indent = levels[idx] - min_level}
-          {@const collapsed = collapseSubheadings && !heading_visibility[idx]}
+          {@const collapsed = collapse_mode && !heading_visibility[idx]}
           {@const heading_id = heading_data[idx]?.id}
           {@const is_active = heading === activeHeading}
           {@const item_tabindex = collapsed ? -1 : 0}
