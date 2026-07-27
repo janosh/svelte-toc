@@ -19,15 +19,20 @@ const readme_props = readme.split(`\n`).flatMap((line, idx, lines) => {
   return prop === undefined ? [] : [prop]
 })
 
-// Extract unique CSS variable names (null coalesce for no matches)
-const extract_css_vars = (text: string) => [
-  ...new Set(
-    [...text.matchAll(/var\((?<css_var>--toc-[\w-]+)/g)].flatMap((match) => {
-      const css_var = match.groups?.css_var
-      return css_var ? [css_var] : []
-    }),
-  ),
-]
+// Extract each CSS variable's first occurrence together with its fallback value, so the
+// readme is checked to document the actual defaults rather than just the variable names.
+// The inner alternation allows one nesting level, e.g. var(--toc-x, calc(2 * var(--toc-y))).
+const css_var_regex =
+  /var\(\s*(?<css_var>--toc-[\w-]+)\s*(?:,\s*(?<fallback>(?:[^()]|\([^()]*\))*?)\s*)?\)/g
+
+const extract_css_vars = (text: string): Map<string, string | null> => {
+  const css_vars = new Map<string, string | null>()
+  for (const { groups } of text.matchAll(css_var_regex)) {
+    const css_var = groups?.css_var
+    if (css_var && !css_vars.has(css_var)) css_vars.set(css_var, groups?.fallback ?? null)
+  }
+  return css_vars
+}
 
 const source_css_vars = extract_css_vars(src)
 const readme_css_vars = extract_css_vars(readme)
@@ -63,12 +68,16 @@ test.each([
   expect(readme).toContain(`${prop}: ${expected_type} = {}`)
 })
 
-test.each(source_css_vars)(`readme documents CSS var '%s'`, (css_var) => {
-  expect(readme_css_vars).toContain(css_var)
-})
+test.each([...source_css_vars])(
+  `readme documents CSS var '%s' with its source default`,
+  (css_var, fallback) => {
+    expect(readme_css_vars.has(css_var)).toBe(true)
+    expect(readme_css_vars.get(css_var)).toBe(fallback)
+  },
+)
 
-test.each(readme_css_vars)(`CSS var '%s' exists in Toc.svelte`, (css_var) => {
-  expect(source_css_vars).toContain(css_var)
+test.each([...readme_css_vars.keys()])(`CSS var '%s' exists in Toc.svelte`, (css_var) => {
+  expect(source_css_vars.has(css_var)).toBe(true)
 })
 
 test(`blurParams=null is documented and maps to zero-duration blur`, () => {
